@@ -18,6 +18,38 @@ AmmoTracker::AmmoTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger 
 AmmoTracker::~AmmoTracker(){
     
 }
+
+void ShooterCentral::to_json (LAS::json& j, const AmmoType& ammoType){
+    j = LAS::json {
+        { "name",           ammoType.name },
+        { "manufacturer",   ammoType.manufacturer },
+        { "cartridge",      ammoType.cartridge },
+        { "grain",          int{ammoType.grainWeight}}
+    };
+}
+void ShooterCentral::from_json(const LAS::json& j, AmmoType& ammoType){
+    j.at("name").get_to(ammoType.name);
+    j.at("manufacturer").get_to(ammoType.manufacturer);
+    j.at("cartridge").get_to(ammoType.cartridge);
+    j.at("grain").get_to(ammoType.grainWeight);
+}
+void ShooterCentral::to_json (LAS::json& j, const TrackedAmmo& ammo){
+    j = LAS::json {
+        { "name",           ammo.ammoType.name },
+        { "manufacturer",   ammo.ammoType.manufacturer },
+        { "cartridge",      ammo.ammoType.cartridge },
+        { "grain",          int{ammo.ammoType.grainWeight}},
+        { "amountOnHand",   ammo.amount }
+    };
+}
+void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
+    j.at("name").get_to(ammo.ammoType.name);
+    j.at("manufacturer").get_to(ammo.ammoType.manufacturer);
+    j.at("cartridge").get_to(ammo.ammoType.cartridge);
+    j.at("grain").get_to(ammo.ammoType.grainWeight);
+    j.at("amountOnHand").get_to(ammo.amount);
+}
+
 // MARK: STOCKPILE
 bool AmmoTracker::addAmmoToStockpile (uint64_t amount, const AmmoType& ammoType){
     if(ammoStockpile.contains(ammoType)){
@@ -160,7 +192,7 @@ bool AmmoTracker::readAllAmmo(){
 
             // Attempt adding to stockpile
             if(!addAmmoToStockpile(ammoBuf.amount, ammoBuf.ammoType))
-                 logger->log("Ammo object not added from file [" + dirEntry.path().string() + "]. It may already exist", LAS::Logging::Tags{"ROUTINE", "SC"});
+                logger->log("Ammo object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
 		}
 		catch(std::exception& e){
             if(dirEntry.path().filename().string() != CARTRIDGES_FILENAME)  // Ignore the cartridges file
@@ -220,28 +252,6 @@ std::string AmmoTracker::getDirectory() const{
 }
 
 // MARK: AMMO HELPER
-void AmmoHelper::ammoTypeToJson (const AmmoType& ammo, LAS::json& j){
-    using LAS::json;
-
-    j["name"]           = ammo.name;
-    j["manufacturer"]   = ammo.manufacturer;
-    j["cartridge"]      = ammo.cartridge;
-    j["grain"]          = int{ammo.grainWeight};
-}
-AmmoType AmmoHelper::jsonToAmmoType(const LAS::json& j){
-    using LAS::json;
-   
-    std::string nameBuf, manBuf, cartNameBuf; 
-    uint8_t grainBuf;
-
-    j.at("name").get_to(nameBuf);
-    j.at("manufacturer").get_to(manBuf);
-    j.at("cartridge").get_to(cartNameBuf);
-    j.at("grain").get_to(grainBuf);
-
-    return AmmoType{nameBuf, manBuf, cartNameBuf, grainBuf};
-}
-// MARK: R/W AMMO
 bool AmmoHelper::writeTrackedAmmo(std::string directory, const TrackedAmmo& ammo){
     using LAS::json;
 
@@ -255,9 +265,7 @@ bool AmmoHelper::writeTrackedAmmo(std::string directory, const TrackedAmmo& ammo
     
 
     // Make JSON
-    json j;
-    j["amountOnHand"] = ammo.amount;
-    AmmoHelper::ammoTypeToJson(ammo.ammoType, j);
+    json j = ammo;
 
     // Create JSON file name
     std::string fileName;
@@ -291,10 +299,7 @@ TrackedAmmo AmmoHelper::readTrackedAmmo(const std::string& path){
     std::ifstream inputFile{ path, std::ios::in };
     json j = json::parse(inputFile);
 
-    uint64_t amountBuf;
-    j.at("amountOnHand").get_to(amountBuf);
-
-    return TrackedAmmo{ AmmoHelper::jsonToAmmoType(j), amountBuf};
+    return TrackedAmmo{j.template get<ShooterCentral::TrackedAmmo>()};
 }
 // MARK: R/W CARTRIDGES
 bool AmmoHelper::writeAllCartridges(std::string path, const std::vector<std::string>& cartridges){
