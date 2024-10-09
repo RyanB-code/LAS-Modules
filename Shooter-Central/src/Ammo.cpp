@@ -34,10 +34,8 @@ bool AmmoTracker::addAmmoToStockpile (uint64_t amount, const AmmoType& ammoType)
     }
     else
         return false;
-
-    return false;    
 }
-bool AmmoTracker::removeAmmoFromStockPile (uint64_t amountUsed, const AmmoType& ammoType){
+bool AmmoTracker::removeAmmoFromStockpile (uint64_t amountUsed, const AmmoType& ammoType){
     if(!ammoStockpile.contains(ammoType))
         return true;
     
@@ -50,6 +48,13 @@ bool AmmoTracker::removeAmmoFromStockPile (uint64_t amountUsed, const AmmoType& 
 
     return true;
 }
+void AmmoTracker::removeAllAmmoFromStockpile  (){
+    if(ammoStockpile.empty())
+        return;
+
+    ammoStockpile.clear();
+}
+
 // MARK: GET INFO
 void AmmoTracker::getAllAmmoNames(StringVector& names) const{
     if(!names.empty())
@@ -139,6 +144,9 @@ bool AmmoTracker::writeAllAmmo() const{
 bool AmmoTracker::readAllAmmo(){
     if(!std::filesystem::exists(saveDirectory))
         return false;
+
+    // Clear all ammo to not add amount to existing ammo
+    removeAllAmmoFromStockpile();
 
 	const std::filesystem::path workingDirectory{saveDirectory};
 	for(auto const& dirEntry : std::filesystem::directory_iterator(workingDirectory)){
