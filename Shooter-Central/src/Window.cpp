@@ -71,6 +71,24 @@ void ShooterCentralWindow::drawStockpile() const{
 
         ImGui::SeparatorText("Stockpile");
 
+        // For testing
+        static int nameCount{0}, amountCount {10};
+        if(ImGui::Button("Make new ammo")){
+            std::ostringstream name;
+            ++nameCount; amountCount += 2;
+            name << "Test Ammo " << nameCount;
+            AmmoType ammoBuf { name.str(), "Test man", "Test cart", 69};
+            ammoTracker->addAmmoToStockpile(amountCount, ammoBuf);
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Write ammo")){
+            ammoTracker->writeAllAmmo();
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Read ammo")){
+            ammoTracker->readAllAmmo();
+        }
+
         static bool detailedView { false };
         ImGui::Checkbox("Detailed View", &detailedView);
 
@@ -125,24 +143,21 @@ void ShooterCentralWindow::drawStockpile() const{
                         for (int column{0}; column < columnsInDetailedTable; ++column)
                         {
                             ImGui::TableSetColumnIndex(column);
-                            std::ostringstream text;
                             switch( column ){
                                 case 0:
-                                    ImGui::Text(itr->ammoType.cartridge.c_str());
+                                    ImGui::Text("%s", itr->ammoType.cartridge.c_str());
                                     break;
                                 case 1:
-                                    ImGui::Text(itr->ammoType.name.c_str());
+                                    ImGui::Text("%s", itr->ammoType.name.c_str());
                                     break;
                                 case 2:
-                                    ImGui::Text(itr->ammoType.manufacturer.c_str());
+                                    ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
                                     break;
                                 case 3:
-                                    text << int{itr->ammoType.grainWeight};
-                                    ImGui::Text(text.str().c_str());
+                                    ImGui::Text("%d", int{itr->ammoType.grainWeight});
                                     break;
                                 case 4:
-                                    text << itr->amount;
-                                    ImGui::Text(text.str().c_str());
+                                    ImGui::Text("%lu", itr->amount);
                                     break;
                                 default:
                                     ImGui::Text("Broken table");
@@ -159,10 +174,10 @@ void ShooterCentralWindow::drawStockpile() const{
                             ImGui::TableSetColumnIndex(column);
                             switch( column ){
                                 case 0:
-                                    ImGui::Text(itr->ammoType.name.c_str());
+                                    ImGui::Text("%s", itr->ammoType.name.c_str());
                                     break;
                                 case 1:
-                                    ImGui::Text(itr->ammoType.manufacturer.c_str());
+                                    ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
                                     break;
                                 case 2:
                                     ImGui::Text("%d", int{itr->ammoType.grainWeight});
@@ -196,8 +211,8 @@ void ShooterCentralWindow::drawStockpile() const{
                                                     ImGuiTableFlags_NoHostExtendX
                                                     ))
             {
-                ImGui::TableSetupColumn("Cartridge",    NULL, 100);
-                ImGui::TableSetupColumn("Amount",       NULL, 100);
+                ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None, 100);
+                ImGui::TableSetupColumn("Amount",       ImGuiTableColumnFlags_None, 100);
                 ImGui::TableHeadersRow();
 
                 // Display each item
@@ -208,7 +223,7 @@ void ShooterCentralWindow::drawStockpile() const{
                         ImGui::TableSetColumnIndex(column);
                         switch( column ){
                             case 0:
-                                ImGui::Text(itr->first.c_str());
+                                ImGui::Text("%s", itr->first.c_str());
                                 break;
                             case 1:
                                 ImGui::Text("%lu", itr->second);
@@ -269,10 +284,10 @@ void ShooterCentralWindow::drawArmory() const{
                                     ImGuiTableFlags_NoHostExtendX
                             ))
         {
-            ImGui::TableSetupColumn("Weapon Type",  NULL, 100);
-            ImGui::TableSetupColumn("Cartridge",    NULL, 100);
-            ImGui::TableSetupColumn("Name",         NULL, 100);
-            ImGui::TableSetupColumn("Round Count",  NULL, 100);
+            ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Round Count",  ImGuiTableColumnFlags_None, 100);
 
             ImGui::TableHeadersRow();
 
@@ -286,13 +301,13 @@ void ShooterCentralWindow::drawArmory() const{
                         ImGui::TableSetColumnIndex(column);
                         switch( column ){
                             case 0:
-                                ImGui::Text(GunHelper::weaponTypeToStr(gun.getWeaponType()).c_str());
+                                ImGui::Text("%s", GunHelper::weaponTypeToStr(gun.getWeaponType()).c_str());
                                 break;
                             case 1:
-                                ImGui::Text(gun.getCartridge().c_str());
+                                ImGui::Text("%s", gun.getCartridge().c_str());
                                 break;
                             case 2:
-                                ImGui::Text(gun.getName().c_str());
+                                ImGui::Text("%s", gun.getName().c_str());
                                 break;
                             case 3:
                                 ImGui::Text("%lu", gun.getRoundCount());
