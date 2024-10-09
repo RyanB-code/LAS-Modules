@@ -7,19 +7,34 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include <vector>
+#include <array>
 
 namespace ShooterCentral{
 
-    enum class EventType{
-        MATCH,
-        SELF_TRAINING,
-        WORK_RANGE_DAY,
-        NOT_APPLICABLE,
+    class EventType {
+    public:
+        EventType(std::string setName);
+        ~EventType();
+
+        std::string getName() const;
+
+        operator std::string() const;
+        bool operator==(const EventType& other) const;
+        friend std::ostream& operator<<(std::ostream& stream, const EventType& event);
+
+    private:
+        std::string name;
     };
 
+    namespace EventTypes{
+        const EventType MATCH           { "MATCH" };
+        const EventType WORK_RANGE      { "WORK RANGE" };
+        const EventType PERSONAL_RANGE  { "PERSONAL RANGE" };
+        const EventType ET_NA           { "N/A" };
+    }
+
     struct EventLocation{
-        std::string name;
+        std::string location;
     };
 
     // MARK: MATCH INFO
