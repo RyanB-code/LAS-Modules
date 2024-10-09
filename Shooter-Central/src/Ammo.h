@@ -64,8 +64,9 @@ namespace ShooterCentral{
         AmmoTracker(LAS::Logging::LoggerPtr setLogger);
         ~AmmoTracker();
 
-        bool    addAmmoToStockpile      (uint64_t amount,   const AmmoType& ammoType);
-        bool    removeAmmoFromStockPile (uint64_t amount,   const AmmoType& ammoType);
+        bool    addAmmoToStockpile          (uint64_t amount,   const AmmoType& ammoType);
+        bool    removeAmmoFromStockpile     (uint64_t amount,   const AmmoType& ammoType);
+        void    removeAllAmmoFromStockpile  ();
 
         void    getAllAmmoNames         (StringVector& names)               const;          // Clears vector before adding elements
         void    getAllAmmo              (std::vector<TrackedAmmo>& list)    const;          // Clears vector before adding elements, only gives you copies of Ammo objects
@@ -86,8 +87,8 @@ namespace ShooterCentral{
         std::string getDirectory        () const;
 
     private:
-        std::unordered_map<AmmoType, TrackedAmmoPtr>      ammoStockpile;
-        std::map<std::string, std::string>      cartridges;
+        std::unordered_map<AmmoType, TrackedAmmoPtr>    ammoStockpile;
+        std::map<std::string, std::string>              cartridges;
 
         std::string             saveDirectory;
         LAS::Logging::LoggerPtr logger;
