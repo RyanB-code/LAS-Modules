@@ -1,6 +1,6 @@
 #include "Framework.h"
 
-#include <LAS/LASModuleAPI.h>
+#include <LAS/ModuleAPI.h>
 
 static ShooterCentral::Framework application {};
 
