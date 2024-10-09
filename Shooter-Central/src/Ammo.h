@@ -10,6 +10,7 @@
 #include <map>
 #include <vector>
 
+#include <iostream>
 
 
 namespace ShooterCentral{
@@ -23,6 +24,9 @@ namespace ShooterCentral{
         bool operator==(const AmmoType& other) const;
     };
 
+    void to_json    (LAS::json& j, const AmmoType& ammoType);
+    void from_json  (const LAS::json& j, AmmoType& ammoType);
+
     using AmmoTypePtr   = std::shared_ptr<AmmoType>;
 
     struct TrackedAmmo {
@@ -30,8 +34,10 @@ namespace ShooterCentral{
         uint64_t    amount;
     };
 
-    using TrackedAmmoPtr = std::shared_ptr<TrackedAmmo>;
+    void to_json    (LAS::json& j, const TrackedAmmo& ammo);
+    void from_json  (const LAS::json& j, TrackedAmmo& ammo);
 
+    using TrackedAmmoPtr = std::shared_ptr<TrackedAmmo>;
 }
 
 namespace std{
@@ -99,9 +105,6 @@ namespace ShooterCentral{
     using AmmoTrackerPtr = std::shared_ptr<AmmoTracker>;
 
     namespace AmmoHelper{
-        void   ammoTypeToJson           (const AmmoType& ammo, LAS::json& j);
-        AmmoType    jsonToAmmoType      (const LAS::json& j);
-
         bool        writeTrackedAmmo    (std::string directory, const TrackedAmmo& ammo);
         TrackedAmmo readTrackedAmmo     (const std::string& path);
 
