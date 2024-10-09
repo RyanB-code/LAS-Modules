@@ -2,6 +2,32 @@
 
 using namespace ShooterCentral;
 
+
+// MARK: WPN TYPE
+WeaponType::WeaponType(std::string setName) : name {setName}{
+
+}
+WeaponType::~WeaponType(){
+
+}
+std::string WeaponType::getName() const {
+    return name;
+}
+WeaponType::operator std::string() const {
+    return name;
+}
+bool WeaponType::operator==(const WeaponType& other) const{
+    if(this->getName() == other.getName())
+        return true;
+    
+    return false;
+}
+std::ostream& operator<<(std::ostream& stream, const WeaponType& weaponType){
+    stream << weaponType.getName();
+    return stream;
+}
+
+
 // MARK: GUN
 Gun::Gun(std::string setName, WeaponType setWeaponType, std::string setCartridge)
         :   name        { setName },
@@ -75,7 +101,7 @@ std::string GunTracker::getDirectory() const{
 }
 // MARK: CREATE GUNS
 GunPtr GunTracker::createPistol(const std::string& name, const std::string& cartridge){
-    Gun gunBuf { name, WeaponType::PISTOL, cartridge};
+    Gun gunBuf { name, WeaponTypes::PISTOL, cartridge};
 
     if(addGun(gunBuf))
         return guns.at(gunBuf);
@@ -84,7 +110,7 @@ GunPtr GunTracker::createPistol(const std::string& name, const std::string& cart
 
 }
 GunPtr GunTracker::createRifle(const std::string& name, const std::string& cartridge){
-    Gun gunBuf { name, WeaponType::RIFLE, cartridge};
+    Gun gunBuf { name, WeaponTypes::RIFLE, cartridge};
 
     if(addGun(gunBuf))
         return guns.at(gunBuf);
@@ -92,7 +118,7 @@ GunPtr GunTracker::createRifle(const std::string& name, const std::string& cartr
         return nullptr;
 }
 GunPtr GunTracker::createPrecisionRifle (const std::string& name, const std::string& cartridge){
-    Gun gunBuf { name, WeaponType::PRECISION_RIFLE, cartridge};
+    Gun gunBuf { name, WeaponTypes::PRECISION_RIFLE, cartridge};
 
     if(addGun(gunBuf))
         return guns.at(gunBuf);
@@ -177,27 +203,24 @@ bool GunHelper::writeGun(std::string directory, const Gun& gun){
 
     if(!std::filesystem::exists(directory))
 		return false;
-    
-    // Make JSON
-    json j;
-    j["name"]           = gun.getName();
-    j["weaponType"]     = GunHelper::weaponTypeToStr(gun.getWeaponType());
-    j["cartridge"]      = gun.getCartridge();
 
     // Write every ammo type used and amount
     std::vector<TrackedAmmo> ammoUsed;
     gun.getAllAmmoUsed(ammoUsed);
-
+    
 	nlohmann::json trackedAmmoArray = nlohmann::json::array();
 	for (const auto& pair : ammoUsed){
-        json trackedAmmoJson { pair.amount };
-        AmmoHelper::ammoTypeToJson(pair.ammoType, trackedAmmoJson);
-        
+        json trackedAmmoJson { pair.ammoType, pair.amount };       
         trackedAmmoArray.push_back(trackedAmmoJson);
     }
-
-	j["trackedAmmo"] = trackedAmmoArray;
-
+    
+    // Make JSON
+    json j{
+        { "name",           gun.getName()       },
+        { "weaponType",     gun.getWeaponType() },
+        { "cartridge",      gun.getCartridge()  },
+        { "trackedAmmo",    trackedAmmoArray    }
+    };
 
     // Create JSON file name
     std::string fileName;
@@ -237,7 +260,7 @@ Gun GunHelper::readGun(const std::string& path){
     j.at("weaponType").get_to(weaponTypeBuf);
     j.at("cartridge").get_to(cartBuf);
 
-    Gun gunBuf {nameBuf, GunHelper::strToWeaponType(weaponTypeBuf), cartBuf };
+    Gun gunBuf {nameBuf, weaponTypeBuf, cartBuf };
     
     nlohmann::json trackedAmmoList;
 	j.at("trackedAmmo").get_to(trackedAmmoList);
@@ -247,7 +270,7 @@ Gun GunHelper::readGun(const std::string& path){
 		nlohmann::json pair = trackedAmmoListElement.value();
 
         uint64_t amountBuf { 0 };
-		AmmoType ammoTypeBuf {AmmoHelper::jsonToAmmoType(pair.at(0))};
+		AmmoType ammoTypeBuf {pair.at(0).template get<ShooterCentral::AmmoType>()};
 		pair.at(1).get_to(amountBuf);
         
         gunBuf.addToRoundCount(amountBuf, ammoTypeBuf);
@@ -255,40 +278,3 @@ Gun GunHelper::readGun(const std::string& path){
 
     return gunBuf;
 }
-
-std::string GunHelper::weaponTypeToStr(const WeaponType& type){
-    std::string weaponTypeText;
-    switch(type){
-        case WeaponType::PISTOL:
-            weaponTypeText = "PISTOL";
-            break;
-        case WeaponType::RIFLE:
-            weaponTypeText = "RIFLE";
-            break;
-        case WeaponType::PRECISION_RIFLE:
-            weaponTypeText = "PRECISION RIFLE";
-            break;
-        case WeaponType::NOT_APPLICABLE:
-            weaponTypeText = "N/A";
-            break;
-        default:
-            weaponTypeText = "UNHANDLED CASE";
-            break;
-    }
-    return weaponTypeText;
-}
-WeaponType  GunHelper::strToWeaponType(const std::string& string){
-    WeaponType buffer;
-
-    if(string == "PISTOL")
-        buffer = WeaponType::PISTOL;
-    else if(string == "RIFLE")
-        buffer = WeaponType::RIFLE;
-    else if(string == "PRECISION RIFLE")
-        buffer = WeaponType::PRECISION_RIFLE;
-    else
-        buffer = WeaponType::NOT_APPLICABLE;
-    
-    return buffer;
-}
-

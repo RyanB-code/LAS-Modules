@@ -301,7 +301,7 @@ void ShooterCentralWindow::drawArmory() const{
                         ImGui::TableSetColumnIndex(column);
                         switch( column ){
                             case 0:
-                                ImGui::Text("%s", GunHelper::weaponTypeToStr(gun.getWeaponType()).c_str());
+                                ImGui::Text("%s", std::string{gun.getWeaponType()}.c_str());
                                 break;
                             case 1:
                                 ImGui::Text("%s", gun.getCartridge().c_str());

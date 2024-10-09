@@ -10,12 +10,29 @@
 //MARK: GUN
 namespace ShooterCentral{
 
-    enum class WeaponType{
-        PISTOL,
-        RIFLE,
-        PRECISION_RIFLE,
-        NOT_APPLICABLE
+    class WeaponType {
+    public:
+        WeaponType(std::string setName);
+        ~WeaponType();
+
+        std::string getName() const;
+
+        operator std::string() const;
+        bool operator==(const WeaponType& other) const;
+        friend std::ostream& operator<<(std::ostream& stream, const WeaponType& weaponType);
+
+    private:
+        std::string name;
     };
+
+    namespace WeaponTypes{
+        const WeaponType PISTOL             { "PISTOL" };
+        const WeaponType RIFLE              { "RIFLE" };
+        const WeaponType PRECISION_RIFLE    { "PRECISION RIFLE" };
+        const WeaponType WT_NA              { "N/A" };
+    }
+
+
     class Gun final {
     public:
         Gun(std::string setName, WeaponType setWeaponType, std::string setCartridge);
@@ -43,9 +60,6 @@ namespace ShooterCentral{
     namespace GunHelper{
         bool    writeGun    (std::string directory, const Gun& gun);
         Gun     readGun     (const std::string& path);
-
-        std::string weaponTypeToStr (const WeaponType& type);
-        WeaponType  strToWeaponType (const std::string& string);
     }
 
 }
@@ -56,12 +70,19 @@ namespace std{
             std::size_t seed { 0 };
 
             std::hash_combine(seed, gun.getName());
-            std::hash_combine(seed, ShooterCentral::GunHelper::weaponTypeToStr(gun.getWeaponType()));
+            std::hash_combine(seed, gun.getWeaponType());
             std::hash_combine(seed, gun.getCartridge());
 
             return seed;
         }
     };
+    template <>
+    struct hash<ShooterCentral::WeaponType> {
+        size_t operator()(const ShooterCentral::WeaponType& wt) const{
+            return std::hash<std::string>{}(wt.getName());
+        }
+    };
+
 }
 
 namespace ShooterCentral{
