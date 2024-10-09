@@ -2,6 +2,30 @@
 
 using namespace ShooterCentral;
 
+// MARK: EVENT TYPE
+EventType::EventType(std::string setName) : name{setName} {
+
+}
+EventType::~EventType(){
+
+}
+std::string EventType::getName() const {
+    return name;
+}
+EventType::operator std::string() const {
+    return name;
+}
+bool EventType::operator==(const EventType& other) const {
+    if(this->name == other.getName())
+        return true;
+
+    return false;
+}
+std::ostream& operator<<(std::ostream& stream, const EventType& event){
+    stream << event.getName();
+    return stream;
+}
+
 Event::Event(std::string setName, EventLocation setLocation, EventType setEventType, std::string setNotes)
     :   name        { setName },
         location    { setLocation },
