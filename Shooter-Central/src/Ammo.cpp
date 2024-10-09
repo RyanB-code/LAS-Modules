@@ -135,8 +135,13 @@ bool AmmoTracker::writeAllAmmo() const{
 	for(const auto& pair : ammoStockpile) {
         const auto& ammo = *pair.second;
 
-        if(!AmmoHelper::writeTrackedAmmo(saveDirectory, ammo)) 
-            logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + ammo.ammoType.name + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
+        try{
+            if(!AmmoHelper::writeTrackedAmmo(saveDirectory, ammo)) 
+                logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + ammo.ammoType.name + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
+        }
+        catch(json::exception& e){
+            logger->log("Error creating JSON object. Code " + std::string{e.what()} + ". What: " + std::string{e.what()}, LAS::Logging::Tags{"ERROR", "SC"});
+        }
 	}
 
     return true;
@@ -155,11 +160,12 @@ bool AmmoTracker::readAllAmmo(){
 
             // Attempt adding to stockpile
             if(!addAmmoToStockpile(ammoBuf.amount, ammoBuf.ammoType))
-                 logger->log("Ammo object not added from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
+                 logger->log("Ammo object not added from file [" + dirEntry.path().string() + "]. It may already exist", LAS::Logging::Tags{"ROUTINE", "SC"});
 		}
 		catch(std::exception& e){
             if(dirEntry.path().filename().string() != CARTRIDGES_FILENAME)  // Ignore the cartridges file
 			    logger->log("Failed to create Ammo object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
+                logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
 		}
 	}
 
@@ -214,16 +220,13 @@ std::string AmmoTracker::getDirectory() const{
 }
 
 // MARK: AMMO HELPER
-LAS::json AmmoHelper::ammoTypeToJson (const AmmoType& ammo){
+void AmmoHelper::ammoTypeToJson (const AmmoType& ammo, LAS::json& j){
     using LAS::json;
 
-    json j;
     j["name"]           = ammo.name;
     j["manufacturer"]   = ammo.manufacturer;
     j["cartridge"]      = ammo.cartridge;
     j["grain"]          = int{ammo.grainWeight};
-
-    return j;
 }
 AmmoType AmmoHelper::jsonToAmmoType(const LAS::json& j){
     using LAS::json;
@@ -252,10 +255,9 @@ bool AmmoHelper::writeTrackedAmmo(std::string directory, const TrackedAmmo& ammo
     
 
     // Make JSON
-    json j {AmmoHelper::ammoTypeToJson(ammo.ammoType)};
-
-    j["amountOnHand"]   = ammo.amount;
-
+    json j;
+    j["amountOnHand"] = ammo.amount;
+    AmmoHelper::ammoTypeToJson(ammo.ammoType, j);
 
     // Create JSON file name
     std::string fileName;
