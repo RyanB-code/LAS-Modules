@@ -190,7 +190,9 @@ bool GunHelper::writeGun(std::string directory, const Gun& gun){
 
 	nlohmann::json trackedAmmoArray = nlohmann::json::array();
 	for (const auto& pair : ammoUsed){
-        json trackedAmmoJson { AmmoHelper::ammoTypeToJson(pair.ammoType), pair.amount };
+        json trackedAmmoJson { pair.amount };
+        AmmoHelper::ammoTypeToJson(pair.ammoType, trackedAmmoJson);
+        
         trackedAmmoArray.push_back(trackedAmmoJson);
     }
 
