@@ -45,8 +45,9 @@ namespace ShooterCentral{
         std::map<std::string, EventPtr>                         events;
         std::map<std::string, DrillPtr>                         drills;
 
-        AmmoTrackerPtr          ammoTracker;
-        GunTrackerPtr           gunTracker;
+        AmmoTrackerPtr  ammoTracker;
+        GunTrackerPtr   gunTracker;
+        EventTrackerPtr eventTracker;
 
         SCWindowPtr             window;
         LAS::Logging::LoggerPtr logger;
@@ -56,6 +57,7 @@ namespace ShooterCentral{
         bool setupFilesystem    (Filesystem& filesystem);
         bool setupAmmoTracker   (std::string directory);
         bool setupGunTracker    (std::string directory);
+        bool setupEventTracker  (std::string directory);
 
         bool setupWindow       ();
     };

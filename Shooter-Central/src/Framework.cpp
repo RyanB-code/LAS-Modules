@@ -33,6 +33,10 @@ bool Framework::setup(LAS::Logging::LoggerPtr setLoggerPtr, const std::string& d
         logger->log("Failed to setup Gun Tracker", Tags{"FATAL", "SC"});
         return false;
     }
+    if(!setupEventTracker(filesystem.eventsDir)){
+        logger->log("Failed to setup Event Tracker", Tags{"FATAL", "SC"});
+        return false;
+    }
     if(!setupWindow()){
         logger->log("Failed to setup window", Tags{"FATAL", "SC"});
         return false;
@@ -152,16 +156,29 @@ bool Framework::setupGunTracker    (std::string directory){
 
     return true;
 }
+bool Framework::setupEventTracker    (std::string directory){
+    if(!eventTracker)
+        eventTracker = std::make_shared<EventTracker>(logger);
 
+    if(!eventTracker->setDirectory(directory))
+        return false;
+    
+    return true;
+}
 bool Framework::setupWindow(){
     if(!window->setAmmoTracker(ammoTracker)){
         logger->log("Could not add Ammo Tracker to window", LAS::Logging::Tags{"FATAL", "SC"});
         return false;
     }
-     if(!window->setGunTracker(gunTracker)){
+    if(!window->setGunTracker(gunTracker)){
         logger->log("Could not add Gun Tracker to window", LAS::Logging::Tags{"FATAL", "SC"});
+        return false;
+    }
+    if(!window->setEventTracker(eventTracker)){
+        logger->log("Could not add Event Tracker to window", LAS::Logging::Tags{"FATAL", "SC"});
         return false;
     }
 
     return true;
 }
+
