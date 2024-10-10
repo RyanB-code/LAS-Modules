@@ -335,8 +335,9 @@ void ShooterCentralWindow::drawArmory() const{
     }
     ImGui::EndChild();
 }
+// MARK: EVENTS
 void ShooterCentralWindow::drawEvents() const {
-    if(!ImGui::BeginChild("Events", ImVec2{500, 250})){
+    if(!ImGui::BeginChild("Events", ImVec2{800, 250})){
         ImGui::EndChild();
         return;
     }
@@ -358,10 +359,23 @@ void ShooterCentralWindow::drawEvents() const {
 
         Event eventBuf { os.str(), "Paul Bunyan", EventTypes::USPSA_MATCH, "N/A", Datestamp{std::chrono::system_clock::now()}};
 
+        eventBuf.addGun(
+                Gun { os.str(), WeaponTypes::RIFLE, "test cart" }, 
+                TrackedAmmo{ AmmoType{"Test name", "test Man", "test cart", 77}, 250}
+            );
+
         eventTracker->addEvent(eventBuf);
     }
+    ImGui::SameLine();
+    if(ImGui::Button("Write events")){
+        eventTracker->writeAllEvents();
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Read events")){
+        eventTracker->readEvents();
+    }
 
-    if(ImGui::BeginTable("Event Table", 4, 
+    if(ImGui::BeginTable("Event Table", 5, 
                                     ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
                                     ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
                                     ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_HighlightHoveredColumn |
@@ -372,6 +386,7 @@ void ShooterCentralWindow::drawEvents() const {
             ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None, 100);
             ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None, 100);
             ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None, 100);
 
             ImGui::TableHeadersRow();
 
@@ -394,6 +409,9 @@ void ShooterCentralWindow::drawEvents() const {
                                 break;
                             case 3:
                                 ImGui::Text("%s", event.getEventType().getName().c_str());
+                                break;
+                            case 4:
+                                ImGui::Text("%d", int{event.getNumGunsUsed()});
                                 break;
                             default:
                                 ImGui::Text("Broken table");
