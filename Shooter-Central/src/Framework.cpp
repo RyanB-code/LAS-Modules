@@ -162,6 +162,9 @@ bool Framework::setupEventTracker    (std::string directory){
 
     if(!eventTracker->setDirectory(directory))
         return false;
+
+    if(!eventTracker->readEvents())
+        return false;
     
     return true;
 }
