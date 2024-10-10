@@ -35,6 +35,7 @@ namespace ShooterCentral{
 
     class Gun final {
     public:
+        Gun();
         Gun(std::string setName, WeaponType setWeaponType, std::string setCartridge);
         ~Gun();
 
@@ -43,11 +44,11 @@ namespace ShooterCentral{
         WeaponType  getWeaponType   () const;
         std::string getCartridge    () const;
 
-        bool    addToRoundCount (uint64_t amount, const AmmoType& ammoType);
+        bool addToRoundCount (uint64_t amount, const AmmoType& ammoType);
 
-        void    getAllAmmoUsed (std::vector<TrackedAmmo>& ammoUsed) const; // Clears vector before adding elements
+        void getAllAmmoUsed (std::vector<TrackedAmmo>& ammoUsed) const; // Clears vector before adding elements
 
-        bool    operator==(const Gun& other) const;
+        bool operator==(const Gun& other) const;
 
     private:
         std::string name;
@@ -57,11 +58,8 @@ namespace ShooterCentral{
         std::unordered_map<AmmoType, TrackedAmmoPtr> ammoTracker;
     };
 
-    namespace GunHelper{
-        bool    writeGun    (std::string directory, const Gun& gun);
-        Gun     readGun     (const std::string& path);
-    }
-
+    void to_json    (LAS::json& j, const Gun& gun);
+    void from_json  (const LAS::json& j, Gun& gun); 
 }
 namespace std{
     template <>
@@ -117,6 +115,11 @@ namespace ShooterCentral{
 
         bool addGun(Gun& gun);
     };
+
+    namespace GunHelper{
+        bool    writeGun    (std::string directory, const Gun& gun);
+        Gun     readGun     (const std::string& path);
+    }
 
     using GunTrackerPtr = std::shared_ptr<GunTracker>;
 }

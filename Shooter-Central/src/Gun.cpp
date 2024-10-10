@@ -29,6 +29,10 @@ std::ostream& operator<<(std::ostream& stream, const WeaponType& weaponType){
 
 
 // MARK: GUN
+Gun::Gun() : name {"N/A"}, weaponType {WeaponTypes::WT_NA}, cartridge {"N/A"}
+{
+
+}
 Gun::Gun(std::string setName, WeaponType setWeaponType, std::string setCartridge)
         :   name        { setName },
             weaponType  { setWeaponType },
@@ -76,6 +80,53 @@ bool Gun::operator==(const Gun& other) const{
         return true;
     else
         return false;
+}
+
+void ShooterCentral::to_json(LAS::json& j, const Gun& gun){
+    using LAS::json;
+
+    // Write every ammo type used and amount
+    std::vector<TrackedAmmo> ammoUsed;
+    gun.getAllAmmoUsed(ammoUsed);
+    
+	nlohmann::json trackedAmmoArray = nlohmann::json::array();
+	for (const auto& pair : ammoUsed){
+        json trackedAmmoJson { pair.ammoType, pair.amount };       
+        trackedAmmoArray.emplace_back(trackedAmmoJson);
+    }
+    
+    // Make JSON
+    j = LAS::json{
+        { "name",           gun.getName()       },
+        { "weaponType",     gun.getWeaponType() },
+        { "cartridge",      gun.getCartridge()  },
+        { "trackedAmmo",    trackedAmmoArray    }
+    };
+}
+void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
+    std::string nameBuf, weaponTypeBuf, cartBuf; 
+
+    j.at("name").get_to(nameBuf);
+    j.at("weaponType").get_to(weaponTypeBuf);
+    j.at("cartridge").get_to(cartBuf);
+
+    Gun gunBuf {nameBuf, weaponTypeBuf, cartBuf };
+    
+    nlohmann::json trackedAmmoList;
+	j.at("trackedAmmo").get_to(trackedAmmoList);
+	
+    // Add for each element
+	for (auto& trackedAmmoListElement : trackedAmmoList.items()) {
+		nlohmann::json pair = trackedAmmoListElement.value();
+
+        uint64_t amountBuf { 0 };
+		AmmoType ammoTypeBuf {pair.at(0).template get<ShooterCentral::AmmoType>()};
+		pair.at(1).get_to(amountBuf);
+        
+        gunBuf.addToRoundCount(amountBuf, ammoTypeBuf);
+	}
+
+    gun = gunBuf;
 }
 
 // MARK: GUN TRACKER
@@ -178,6 +229,7 @@ bool GunTracker::readGuns(){
 		}
 		catch(std::exception& e){
 			logger->log("Failed to create Gun object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
+            logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
 		}
 	}
     
@@ -188,7 +240,6 @@ bool GunTracker::addGun(Gun& gun){
     if(guns.contains(gun))
         return false;
 
-    
     return guns.try_emplace(gun, std::make_shared<Gun>(gun)).second;
 }
 
@@ -204,23 +255,8 @@ bool GunHelper::writeGun(std::string directory, const Gun& gun){
     if(!std::filesystem::exists(directory))
 		return false;
 
-    // Write every ammo type used and amount
-    std::vector<TrackedAmmo> ammoUsed;
-    gun.getAllAmmoUsed(ammoUsed);
-    
-	nlohmann::json trackedAmmoArray = nlohmann::json::array();
-	for (const auto& pair : ammoUsed){
-        json trackedAmmoJson { pair.ammoType, pair.amount };       
-        trackedAmmoArray.push_back(trackedAmmoJson);
-    }
-    
     // Make JSON
-    json j{
-        { "name",           gun.getName()       },
-        { "weaponType",     gun.getWeaponType() },
-        { "cartridge",      gun.getCartridge()  },
-        { "trackedAmmo",    trackedAmmoArray    }
-    };
+    json j = gun;
 
     // Create JSON file name
     std::string fileName;
@@ -254,27 +290,5 @@ Gun GunHelper::readGun(const std::string& path){
     std::ifstream inputFile{ path, std::ios::in };
     json j = json::parse(inputFile);
 
-    std::string nameBuf, weaponTypeBuf, cartBuf; 
-
-    j.at("name").get_to(nameBuf);
-    j.at("weaponType").get_to(weaponTypeBuf);
-    j.at("cartridge").get_to(cartBuf);
-
-    Gun gunBuf {nameBuf, weaponTypeBuf, cartBuf };
-    
-    nlohmann::json trackedAmmoList;
-	j.at("trackedAmmo").get_to(trackedAmmoList);
-	
-    // Add for each element
-	for (auto& trackedAmmoListElement : trackedAmmoList.items()) {
-		nlohmann::json pair = trackedAmmoListElement.value();
-
-        uint64_t amountBuf { 0 };
-		AmmoType ammoTypeBuf {pair.at(0).template get<ShooterCentral::AmmoType>()};
-		pair.at(1).get_to(amountBuf);
-        
-        gunBuf.addToRoundCount(amountBuf, ammoTypeBuf);
-	}
-
-    return gunBuf;
+    return Gun{j.template get<ShooterCentral::Gun>()};
 }
