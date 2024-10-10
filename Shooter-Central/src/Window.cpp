@@ -16,7 +16,7 @@ void ShooterCentralWindow::draw() {
         return;
     }
 
-    if(!ammoTracker || !gunTracker){
+    if(!ammoTracker || !gunTracker || !eventTracker){
         ImGui::Text("This module has not been setup yet...");
         ImGui::End();
         return;
@@ -31,6 +31,10 @@ void ShooterCentralWindow::draw() {
         }
         if(ImGui::BeginTabItem("Stockpile")){
             drawStockpile();
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Events")){
+            drawEvents();
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
@@ -50,6 +54,13 @@ bool ShooterCentralWindow::setGunTracker(GunTrackerPtr setGunTracker){
         return false;
 
     gunTracker = setGunTracker;
+    return true;
+}
+bool ShooterCentralWindow::setEventTracker(EventTrackerPtr setEventTracker){
+    if(!setEventTracker)
+        return false;
+
+    eventTracker = setEventTracker;
     return true;
 }
 
@@ -322,5 +333,80 @@ void ShooterCentralWindow::drawArmory() const{
             ImGui::EndTable();
         }
     }
+    ImGui::EndChild();
+}
+void ShooterCentralWindow::drawEvents() const {
+    if(!ImGui::BeginChild("Events", ImVec2{500, 250})){
+        ImGui::EndChild();
+        return;
+    }
+
+    static std::vector<Event> eventList;
+    std::vector<Event>::iterator itr;
+
+    eventTracker->getAllEvents(eventList);
+
+    ImGui::SeparatorText("Events");
+
+
+    if(ImGui::Button("New event")){
+        static int num { 0 };
+        ++num;
+
+        std::ostringstream os;
+        os << "Event Name " << num;
+
+        Event eventBuf { os.str(), "Paul Bunyan", EventTypes::USPSA_MATCH, "N/A", Datestamp{std::chrono::system_clock::now()}};
+
+        eventTracker->addEvent(eventBuf);
+    }
+
+    if(ImGui::BeginTable("Event Table", 4, 
+                                    ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                    ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
+                                    ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_HighlightHoveredColumn |
+                                    ImGuiTableFlags_NoHostExtendX
+                            ))
+        {
+            ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None, 100);
+
+            ImGui::TableHeadersRow();
+
+            for(auto itr { eventList.begin() }; itr != eventList.end(); ++itr){
+                    ImGui::TableNextRow();
+                    for (int column{0}; column < 4; ++column)
+                    {
+                        const Event& event {*itr};
+
+                        ImGui::TableSetColumnIndex(column);
+                        switch( column ){
+                            case 0:
+                                ImGui::Text("%s", event.getDatestamp().printDate().c_str());
+                                break;
+                            case 1:
+                                ImGui::Text("%s", event.getName().c_str());
+                                break;
+                            case 2:
+                                ImGui::Text("%s", event.getLocation().c_str());
+                                break;
+                            case 3:
+                                ImGui::Text("%s", event.getEventType().getName().c_str());
+                                break;
+                            default:
+                                ImGui::Text("Broken table");
+                                break;
+                        }
+                    }        
+                }
+
+            ImGui::EndTable();
+        }
+
+
+
+
     ImGui::EndChild();
 }

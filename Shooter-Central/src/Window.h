@@ -2,8 +2,11 @@
 
 #include "Ammo.h"
 #include "Gun.h"
+#include "Event.h"
 
 #include <LAS/Window.h>
+
+#include <iostream>
 
 namespace ShooterCentral{
     class ShooterCentralWindow : public LAS::Windowing::Window {
@@ -13,8 +16,9 @@ namespace ShooterCentral{
 
         void draw() override;
 
-        bool setAmmoTracker (AmmoTrackerPtr setAmmoTracker);
-        bool setGunTracker  (GunTrackerPtr setGunTracker);
+        bool setAmmoTracker     (AmmoTrackerPtr setAmmoTracker);
+        bool setGunTracker      (GunTrackerPtr setGunTracker);
+        bool setEventTracker    (EventTrackerPtr setEventTracker);
 
 
     private:
@@ -22,9 +26,11 @@ namespace ShooterCentral{
 
         void drawStockpile  ()  const;
         void drawArmory     ()  const;
+        void drawEvents     ()  const;
 
         AmmoTrackerPtr  ammoTracker;
         GunTrackerPtr   gunTracker;
+        EventTrackerPtr eventTracker;
 
     };
 
