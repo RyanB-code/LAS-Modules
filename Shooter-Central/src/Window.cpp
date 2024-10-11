@@ -22,30 +22,10 @@ void ShooterCentralWindow::draw() {
         return;
     }
 
-    if(ImGui::BeginTabBar("Shooter Central Tabs",   ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
-                                                    ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
-    )){
-        if(ImGui::BeginTabItem("Home")){
-            ImGui::BeginChild("Home");
-            drawHome(ImGui::GetContentRegionAvail());
-            ImGui::EndChild();
-            ImGui::EndTabItem();
-        }
-        if(ImGui::BeginTabItem("Stockpile")){
-            ImGui::BeginChild("Stockpile");
-            drawStockpile();
-            ImGui::EndChild();
-            ImGui::EndTabItem();
-        }
-        if(ImGui::BeginTabItem("Events")){
-            ImGui::BeginChild("Events");
-            drawEvents();
-            ImGui::EndChild();
-            ImGui::EndTabItem();
-        }
-        ImGui::EndTabBar();
-    }
-
+    if(ImGui::BeginChild("Home"))
+        drawHome(ImGui::GetContentRegionAvail());
+    ImGui::EndChild();
+    
     ImGui::End();
 }
 bool ShooterCentralWindow::setAmmoTracker(AmmoTrackerPtr setAmmoTracker){
@@ -91,291 +71,25 @@ void ShooterCentralWindow::drawHome(ImVec2 windowSize) const{
     }
 
     if(ImGui::BeginChild("Armory Quick View", childWindowSizes, ImGuiChildFlags_Border))
-        drawArmoryQuickView(ImGui::GetContentRegionAvail());
+        drawArmoryQuickView();
     ImGui::EndChild();
 
     if(horizontalLayout)
         ImGui::SameLine();
 
     if(ImGui::BeginChild("Guns Quick View", childWindowSizes, ImGuiChildFlags_Border))
-        ImGui::Text("Child Window Guns");
+        drawStockpileQuickView();
     ImGui::EndChild();
 
     if(horizontalLayout)
         ImGui::SameLine();
 
     if(ImGui::BeginChild("Events Quick View", childWindowSizes, ImGuiChildFlags_Border))
-        ImGui::Text("Child Window Events");
+        drawEventsQuickView();
     ImGui::EndChild();
 }
-
-// MARK: STOCKPILE
-void ShooterCentralWindow::drawStockpile() const{
-    static StringVector ammoNames;
-    static StringVector cartridgeNames;
-    static std::vector<std::pair<std::string, uint64_t>> countByCartridge;
-    static std::vector<TrackedAmmo>    ammo;
-
-    ammoTracker->getAllAmmoNames(ammoNames);
-    ammoTracker->getAllCartridgeNames(cartridgeNames);
-    ammoTracker->getAmmoCountByCartridge(countByCartridge);
-    ammoTracker->getAllAmmo(ammo);
-
-    ImGui::SeparatorText("Stockpile");
-
-    // For testing
-    static int nameCount{0}, amountCount {10};
-    if(ImGui::Button("Make new ammo")){
-        std::ostringstream name;
-        ++nameCount; amountCount += 2;
-        name << "Test Ammo " << nameCount;
-        AmmoType ammoBuf { name.str(), "Test man", "Test cart", 69};
-        ammoTracker->addAmmoToStockpile(amountCount, ammoBuf);
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Write ammo")){
-        ammoTracker->writeAllAmmo();
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Read ammo")){
-        ammoTracker->readAllAmmo();
-    }
-
-    static bool detailedView { false };
-    ImGui::Checkbox("Detailed View", &detailedView);
-
-    if(detailedView){
-        static int  highlilghtedItem        { 0 };
-        static bool showAllAmmo             { false };
-        static int  columnsInDetailedTable  { 5 };
-
-        const char* cartridgeList[NUM_CARTRIDGE_NAMES_SHOWN];
-        cartridgeList[0] = "ALL";       // Default option
-
-        static std::vector<TrackedAmmo>    selectedCatridgeAmmoList;
-        int i { 1 };                                    // Starts at one to offset the all option
-        for(const auto& s : cartridgeNames){
-            if(i < (NUM_CARTRIDGE_NAMES_SHOWN+1)){      // Add one to offset the additional 'all' option
-                cartridgeList[i] = s.c_str();
-                ++i;
-            }
-        }
-
-        ImGui::Combo("Cartridge", &highlilghtedItem, cartridgeList, cartridgeNames.size()+1); // This is the selector table. Add one to account for 'all' option
-        ammoTracker->getAllAmmoByCartridge(selectedCatridgeAmmoList, cartridgeList[highlilghtedItem]);  // Populates list of ammo with selected cartridge
-
-        // Change table based on what is highlighted
-        if(highlilghtedItem == 0){
-            showAllAmmo = true;
-            columnsInDetailedTable = 5;
-        }
-        else{
-            showAllAmmo = false;
-            columnsInDetailedTable = 4;
-        }
-
-        if(ImGui::BeginTable("Detailed Cartridge Breakdown", columnsInDetailedTable, 
-                                                ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
-                                                ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_HighlightHoveredColumn |
-                                                ImGuiTableFlags_NoHostExtendX
-                            ))
-        {
-            if(showAllAmmo)
-                ImGui::TableSetupColumn("Cartridge",    0, 100);
-            ImGui::TableSetupColumn("Name",         0, 100);
-            ImGui::TableSetupColumn("Manufacturer", 0, 100);
-            ImGui::TableSetupColumn("Grain Weight", 0, 100);
-            ImGui::TableSetupColumn("Amount",       0, 100);
-            ImGui::TableHeadersRow();
-
-            if(showAllAmmo){
-                for(auto itr { ammo.begin() }; itr != ammo.end(); ++itr){
-                    ImGui::TableNextRow();
-                    for (int column{0}; column < columnsInDetailedTable; ++column)
-                    {
-                        ImGui::TableSetColumnIndex(column);
-                        switch( column ){
-                            case 0:
-                                ImGui::Text("%s", itr->ammoType.cartridge.c_str());
-                                break;
-                            case 1:
-                                ImGui::Text("%s", itr->ammoType.name.c_str());
-                                break;
-                            case 2:
-                                ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
-                                break;
-                            case 3:
-                                ImGui::Text("%d", int{itr->ammoType.grainWeight});
-                                break;
-                            case 4:
-                                ImGui::Text("%lu", itr->amount);
-                                break;
-                            default:
-                                ImGui::Text("Broken table");
-                                break;
-                        }
-                    }        
-                } // End populating all table
-            }
-            else{
-                for(auto itr { selectedCatridgeAmmoList.begin() }; itr != selectedCatridgeAmmoList.end(); ++itr){
-                    ImGui::TableNextRow();
-                    for (int column{0}; column < columnsInDetailedTable; ++column)
-                    {
-                        ImGui::TableSetColumnIndex(column);
-                        switch( column ){
-                            case 0:
-                                ImGui::Text("%s", itr->ammoType.name.c_str());
-                                break;
-                            case 1:
-                                ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
-                                break;
-                            case 2:
-                                ImGui::Text("%d", int{itr->ammoType.grainWeight});
-                                break;
-                            case 3:
-                                ImGui::Text("%lu", itr->amount);
-                                break;
-                            default:
-                                ImGui::Text("Broken table");
-                                break;
-                        }
-                    }        
-                } // End populating selected cartridge table
-            }
-
-            ImGui::EndTable();
-        } // End table
-
-        ImGui::Separator();
-
-    } // End detailed view
-
-
-    if(cartridgeNames.empty())
-        ImGui::Text("There are no tracked cartridges.");
-    else{
-        if(ImGui::BeginTable("Stockpile", 2, 
-                                                ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
-                                                ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_HighlightHoveredColumn |
-                                                ImGuiTableFlags_NoHostExtendX
-                                                ))
-        {
-            ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None, 100);
-            ImGui::TableSetupColumn("Amount",       ImGuiTableColumnFlags_None, 100);
-            ImGui::TableHeadersRow();
-
-            // Display each item
-            for(auto itr { countByCartridge.begin() }; itr != countByCartridge.end(); ++itr){
-                ImGui::TableNextRow();
-                for (int column{0}; column < 2; ++column)
-                {
-                    ImGui::TableSetColumnIndex(column);
-                    switch( column ){
-                        case 0:
-                            ImGui::Text("%s", itr->first.c_str());
-                            break;
-                        case 1:
-                            ImGui::Text("%lu", itr->second);
-                            break;
-                        default:
-                            ImGui::Text("Broken table");
-                            break;
-                    }
-                }
-            }
-
-            ImGui::EndTable();
-        } // End table
-    }
-}
-// MARK: EVENTS
-void ShooterCentralWindow::drawEvents() const {
-    static std::vector<Event> eventList;
-    std::vector<Event>::iterator itr;
-
-    eventTracker->getAllEvents(eventList);
-
-    ImGui::SeparatorText("Events");
-
-
-    if(ImGui::Button("New event")){
-        static int num { 0 };
-        ++num;
-
-        std::ostringstream os;
-        os << "Event Name " << num;
-
-        Event eventBuf { os.str(), "Paul Bunyan", EventTypes::USPSA_MATCH, "N/A", Datestamp{std::chrono::system_clock::now()}};
-
-        eventBuf.addGun(
-                Gun { os.str(), WeaponTypes::RIFLE, "test cart" }, 
-                TrackedAmmo{ AmmoType{"Test name", "test Man", "test cart", 77}, 250}
-            );
-
-        eventTracker->addEvent(eventBuf);
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Write events")){
-        eventTracker->writeAllEvents();
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Read events")){
-        eventTracker->readEvents();
-    }
-
-    if(ImGui::BeginTable("Event Table", 5, 
-                                    ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                    ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
-                                    ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_HighlightHoveredColumn |
-                                    ImGuiTableFlags_NoHostExtendX
-                            ))
-    {
-        ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None, 100);
-        ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None, 100);
-        ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None, 100);
-        ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None, 100);
-        ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None, 100);
-
-        ImGui::TableHeadersRow();
-
-        for(auto itr { eventList.begin() }; itr != eventList.end(); ++itr){
-                ImGui::TableNextRow();
-                for (int column{0}; column < 4; ++column)
-                {
-                    const Event& event {*itr};
-
-                    ImGui::TableSetColumnIndex(column);
-                    switch( column ){
-                        case 0:
-                            ImGui::Text("%s", event.getDatestamp().printDate().c_str());
-                            break;
-                        case 1:
-                            ImGui::Text("%s", event.getName().c_str());
-                            break;
-                        case 2:
-                            ImGui::Text("%s", event.getLocation().c_str());
-                            break;
-                        case 3:
-                            ImGui::Text("%s", event.getEventType().getName().c_str());
-                            break;
-                        case 4:
-                            ImGui::Text("%d", int{event.getNumGunsUsed()});
-                            break;
-                        default:
-                            ImGui::Text("Broken table");
-                            break;
-                    }
-                }        
-            }
-
-        ImGui::EndTable();
-    }
-}
 // MARK: QUICK VIEW ARMORY
-void ShooterCentralWindow::drawArmoryQuickView(ImVec2 windowSize) const{
+void ShooterCentralWindow::drawArmoryQuickView() const{
     static std::vector<Gun> gunList;
     gunTracker->getAllGuns(gunList);
 
@@ -384,7 +98,7 @@ void ShooterCentralWindow::drawArmoryQuickView(ImVec2 windowSize) const{
 
     int roundsInLifetime;
     for(const auto& gunElm : gunList)
-        roundsInLifetime += gunElm.getRoundCount();
+        roundsInLifetime += int{gunElm.getRoundCount()};
 
 
     // HUD View measurements
@@ -484,21 +198,21 @@ void ShooterCentralWindow::drawArmoryQuickView(ImVec2 windowSize) const{
     }
 
 }
+// MARK: ADD GUN
 void ShooterCentralWindow::drawAddGun() const {
     if(ImGui::BeginChild("Add Gun")){
-        static constexpr int MAX_LIST_NUM { 10 };
         static char nameBuf[32] = "Enter Name";
 
         // Get char array of cartrigde names
         static StringVector cartridgeNamesBuf;
-        char* cartridgeNames[MAX_LIST_NUM];
+        const char* cartridgeNames[MAX_LIST_NUM];
         static int selectedCartridgeIndex { 0 };
         ammoTracker->getAllCartridgeNames(cartridgeNamesBuf);
 
         int catridgeNameIndex { 0 };
         for(auto& s : cartridgeNamesBuf){
             if(catridgeNameIndex < (MAX_LIST_NUM - 1)){
-                cartridgeNames[catridgeNameIndex] = &s[0];
+                cartridgeNames[catridgeNameIndex] = s.c_str();
             }
             ++catridgeNameIndex;
         }
@@ -578,7 +292,294 @@ void ShooterCentralWindow::drawAddGun() const {
     }
     ImGui::EndChild();
 }
+// MARK: QUICK VIEW STOCKPILE
+void ShooterCentralWindow::drawStockpileQuickView() const{
+    static StringVector ammoNames;
+    static StringVector cartridgeNames;
+    static std::vector<std::pair<std::string, uint64_t>> countByCartridge;
+    static std::vector<TrackedAmmo>    ammo;
 
+    ammoTracker->getAllAmmoNames            (ammoNames);
+    ammoTracker->getAllCartridgeNames       (cartridgeNames);
+    ammoTracker->getAmmoCountByCartridge    (countByCartridge);
+    ammoTracker->getAllAmmo                 (ammo);
+
+    static int  highlilghtedItem        { 0 };
+    static bool showAllAmmo             { false };
+    static int  columnsInDetailedTable  { 5 };
+
+    const char* cartridgeList[MAX_LIST_NUM];
+    cartridgeList[0] = "ALL";       // Default option
+
+    static std::vector<TrackedAmmo>    selectedCatridgeAmmoList;
+    int i { 1 };                                    // Starts at one to offset the all option
+    for(const auto& s : cartridgeNames){
+        if(i < (MAX_LIST_NUM+1)){      // Add one to offset the additional 'all' option
+            cartridgeList[i] = s.c_str();
+            ++i;
+        }
+    }
+
+    // HUD View measurements
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
+    if(showAllAmmo){
+        if(tableSize.x < 400)
+            tableSize = ImVec2{400, 200};
+    }
+    else{
+        if(tableSize.x < 500)
+            tableSize = ImVec2{500, 200};
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    WindowHelper::centerText("Stockpile");
+
+    ImGui::Separator();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Cartridge Shown");
+    ImGui::SameLine (150);
+    ImGui::Combo("##Cartridge", &highlilghtedItem, cartridgeList, cartridgeNames.size()+1); // This is the selector table. Add one to account for 'all' option
+
+    ammoTracker->getAllAmmoByCartridge(selectedCatridgeAmmoList, cartridgeList[highlilghtedItem]);  // Populates list of ammo with selected cartridge
+
+
+    // Change table based on what is highlighted
+    if(highlilghtedItem == 0){
+        showAllAmmo = true;
+        columnsInDetailedTable = 5;
+    }
+    else{
+        showAllAmmo = false;
+        columnsInDetailedTable = 4;
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(ImGui::BeginChild("Gun Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
+        if(ImGui::BeginTable("Detailed Cartridge Breakdown", columnsInDetailedTable, 
+                                                ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
+                                                ImGuiTableFlags_HighlightHoveredColumn,
+                                                tableSize
+                            ))
+        {
+            if(showAllAmmo)
+                ImGui::TableSetupColumn("Cartridge",    0);
+            ImGui::TableSetupColumn("Name",         0);
+            ImGui::TableSetupColumn("Manufacturer", 0);
+            ImGui::TableSetupColumn("Grain Weight", 0);
+            ImGui::TableSetupColumn("Amount",       0);
+            ImGui::TableHeadersRow();
+
+            if(showAllAmmo){
+                for(auto itr { ammo.begin() }; itr != ammo.end(); ++itr){
+                    ImGui::TableNextRow();
+                    for (int column{0}; column < columnsInDetailedTable; ++column)
+                    {
+                        ImGui::TableSetColumnIndex(column);
+                        switch( column ){
+                            case 0:
+                                ImGui::Text("%s", itr->ammoType.cartridge.c_str());
+                                break;
+                            case 1:
+                                ImGui::Text("%s", itr->ammoType.name.c_str());
+                                break;
+                            case 2:
+                                ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
+                                break;
+                            case 3:
+                                ImGui::Text("%d", int{itr->ammoType.grainWeight});
+                                break;
+                            case 4:
+                                ImGui::Text("%lu", itr->amount);
+                                break;
+                            default:
+                                ImGui::Text("Broken table");
+                                break;
+                        }
+                    }        
+                } // End populating all table
+            }
+            else{
+                for(auto itr { selectedCatridgeAmmoList.begin() }; itr != selectedCatridgeAmmoList.end(); ++itr){
+                    ImGui::TableNextRow();
+                    for (int column{0}; column < columnsInDetailedTable; ++column)
+                    {
+                        ImGui::TableSetColumnIndex(column);
+                        switch( column ){
+                            case 0:
+                                ImGui::Text("%s", itr->ammoType.name.c_str());
+                                break;
+                            case 1:
+                                ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
+                                break;
+                            case 2:
+                                ImGui::Text("%d", int{itr->ammoType.grainWeight});
+                                break;
+                            case 3:
+                                ImGui::Text("%lu", itr->amount);
+                                break;
+                            default:
+                                ImGui::Text("Broken table");
+                                break;
+                        }
+                    }        
+                } // End populating selected cartridge table
+            }
+
+            ImGui::EndTable();
+        } // End table
+    }
+    ImGui::EndChild(); // End table vhild window
+
+    /* Show ammo by cartrige only
+    
+    if(cartridgeNames.empty())
+        ImGui::Text("There are no tracked cartridges.");
+    else{
+        if(ImGui::BeginTable("Stockpile", 2, 
+                                                ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
+                                                ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_HighlightHoveredColumn |
+                                                ImGuiTableFlags_NoHostExtendX
+                                                ))
+        {
+            ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None, 100);
+            ImGui::TableSetupColumn("Amount",       ImGuiTableColumnFlags_None, 100);
+            ImGui::TableHeadersRow();
+
+            // Display each item
+            for(auto itr { countByCartridge.begin() }; itr != countByCartridge.end(); ++itr){
+                ImGui::TableNextRow();
+                for (int column{0}; column < 2; ++column)
+                {
+                    ImGui::TableSetColumnIndex(column);
+                    switch( column ){
+                        case 0:
+                            ImGui::Text("%s", itr->first.c_str());
+                            break;
+                        case 1:
+                            ImGui::Text("%lu", itr->second);
+                            break;
+                        default:
+                            ImGui::Text("Broken table");
+                            break;
+                    }
+                }
+            }
+
+            ImGui::EndTable();
+        } // End table
+    }
+    */
+
+}
+// MARK: QUICK VIEW EVENTS
+void ShooterCentralWindow::drawEventsQuickView() const {
+    static std::vector<Event> eventList;
+    std::vector<Event>::iterator itr;
+
+    eventTracker->getAllEvents(eventList);
+
+    // HUD View measurements
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
+    if(tableSize.x < 400){
+        tableSize = ImVec2{400, 200};
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    WindowHelper::centerText("Events");
+
+    ImGui::Separator();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+
+    if(ImGui::Button("New event")){
+        static int num { 0 };
+        ++num;
+
+        std::ostringstream os;
+        os << "Event Name " << num;
+
+        Event eventBuf { os.str(), "Paul Bunyan", EventTypes::USPSA_MATCH, "N/A", Datestamp{std::chrono::system_clock::now()}};
+
+        eventBuf.addGun(
+                Gun { os.str(), WeaponTypes::RIFLE, "test cart" }, 
+                TrackedAmmo{ AmmoType{"Test name", "test Man", "test cart", 77}, 250}
+            );
+
+        eventTracker->addEvent(eventBuf);
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Write events")){
+        eventTracker->writeAllEvents();
+    }
+    ImGui::SameLine();
+    if(ImGui::Button("Read events")){
+        eventTracker->readEvents();
+    }
+
+    if(ImGui::BeginChild("Gun Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
+        if(ImGui::BeginTable("Event Table", 5, 
+                                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                        ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
+                                        ImGuiTableFlags_HighlightHoveredColumn,
+                                        tableSize
+                                ))
+        {
+            ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None);
+
+            ImGui::TableHeadersRow();
+
+            for(auto itr { eventList.begin() }; itr != eventList.end(); ++itr){
+                    ImGui::TableNextRow();
+                    for (int column{0}; column < 4; ++column)
+                    {
+                        const Event& event {*itr};
+
+                        ImGui::TableSetColumnIndex(column);
+                        switch( column ){
+                            case 0:
+                                ImGui::Text("%s", event.getDatestamp().printDate().c_str());
+                                break;
+                            case 1:
+                                ImGui::Text("%s", event.getName().c_str());
+                                break;
+                            case 2:
+                                ImGui::Text("%s", event.getLocation().c_str());
+                                break;
+                            case 3:
+                                ImGui::Text("%s", event.getEventType().getName().c_str());
+                                break;
+                            case 4:
+                                ImGui::Text("%d", int{event.getNumGunsUsed()});
+                                break;
+                            default:
+                                ImGui::Text("Broken table");
+                                break;
+                        }
+                    }        
+                }
+
+            ImGui::EndTable();
+        }
+    }
+    ImGui::EndChild();
+}
 // MARK: WindowHelper
 void WindowHelper::centerText(std::string text){
     auto windowWidth = ImGui::GetWindowSize().x;
