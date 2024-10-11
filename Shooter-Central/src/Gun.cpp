@@ -152,6 +152,15 @@ GunPtr GunTracker::createPrecisionRifle (const std::string& name, const std::str
     else
         return nullptr;
 }
+GunPtr  GunTracker::createGun(const std::string& name, const std::string& weaponType, const std::string& cartridge){
+    Gun gunBuf { name, weaponType, cartridge};
+
+    if(addGun(gunBuf))
+        return guns.at(gunBuf);
+    else
+        return nullptr;
+}
+
 bool GunTracker::removeGun(const Gun& gun){
     if(!guns.contains(gun))
         return true;
@@ -160,6 +169,14 @@ bool GunTracker::removeGun(const Gun& gun){
     return !guns.contains(gun); // Return the inverse of contain()
 }
 // MARK: GET INFO
+void    GunTracker::getRoundsShotPerCartridge(std::unordered_map<std::string, uint64_t>& list) const{
+    if(!list.empty())
+        list.erase(list.begin(), list.end());
+
+    for(const auto& [key, gun] : guns){
+        list[gun->getCartridge()] = gun->getRoundCount();
+    }
+}
 uint64_t GunTracker::getGunTotal() const{
     return guns.size();
 }
@@ -211,10 +228,28 @@ bool GunTracker::readGuns(){
     
 	return true;
 }
+void GunTracker::getAllWeaponTypeNames   (StringVector& names) const{
+    if(!names.empty())
+        names.erase(names.begin(), names.end());
+
+    for(const auto& [key, wt] : weaponTypes){
+        names.emplace_back(wt);
+    }
+}
+bool GunTracker::addWeaponType           (const std::string& type){
+    if(weaponTypes.contains(type))
+        return false;
+
+    weaponTypes.try_emplace(type, type);
+    return weaponTypes.contains(type);
+}
 // MARK: PRIVATE FUNCTIONS
 bool GunTracker::addGun(Gun& gun){
     if(guns.contains(gun))
         return false;
+
+    // Add to known weapon types
+    addWeaponType(gun.getWeaponType());
 
     return guns.try_emplace(gun, std::make_shared<Gun>(gun)).second;
 }
