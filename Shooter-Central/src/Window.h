@@ -24,9 +24,12 @@ namespace ShooterCentral{
     private:
         static constexpr int NUM_CARTRIDGE_NAMES_SHOWN { 10 };
 
+        void drawHome       (ImVec2 windowSize)  const;
         void drawStockpile  ()  const;
-        void drawArmory     ()  const;
         void drawEvents     ()  const;
+
+        void drawArmoryQuickView(ImVec2 windowSize) const;
+        void drawAddGun     () const;
 
         AmmoTrackerPtr  ammoTracker;
         GunTrackerPtr   gunTracker;
@@ -35,4 +38,10 @@ namespace ShooterCentral{
     };
 
     using SCWindowPtr = std::shared_ptr<ShooterCentralWindow>;
+
+    namespace WindowHelper{
+        void centerText(std::string text);
+        bool centerButton(std::string text, ImVec2 buttonSize);
+    }
 }
+
