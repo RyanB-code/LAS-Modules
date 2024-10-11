@@ -9,39 +9,23 @@
 
 //MARK: GUN
 namespace ShooterCentral{
-
-    class WeaponType {
-    public:
-        WeaponType(std::string setName);
-        ~WeaponType();
-
-        std::string getName() const;
-
-        operator std::string() const;
-        bool operator==(const WeaponType& other) const;
-        friend std::ostream& operator<<(std::ostream& stream, const WeaponType& weaponType);
-
-    private:
-        std::string name;
-    };
-
     namespace WeaponTypes{
-        const WeaponType PISTOL             { "PISTOL" };
-        const WeaponType RIFLE              { "RIFLE" };
-        const WeaponType PRECISION_RIFLE    { "PRECISION RIFLE" };
-        const WeaponType WT_NA              { "N/A" };
+        const std::string PISTOL             { "PISTOL" };
+        const std::string RIFLE              { "RIFLE" };
+        const std::string PRECISION_RIFLE    { "PRECISION RIFLE" };
+        const std::string WT_NA              { "N/A" };
     }
 
 
     class Gun final {
     public:
         Gun();
-        Gun(std::string setName, WeaponType setWeaponType, std::string setCartridge);
+        Gun(std::string setName, std::string setWeaponType, std::string setCartridge);
         ~Gun();
 
         std::string getName         () const;
         uint64_t    getRoundCount   () const;
-        WeaponType  getWeaponType   () const;
+        std::string getWeaponType   () const;
         std::string getCartridge    () const;
 
         bool addToRoundCount (uint64_t amount, const AmmoType& ammoType);
@@ -52,7 +36,7 @@ namespace ShooterCentral{
 
     private:
         std::string name;
-        WeaponType  weaponType;
+        std::string weaponType;
         std::string cartridge;
 
         std::unordered_map<AmmoType, TrackedAmmoPtr> ammoTracker;
@@ -74,13 +58,6 @@ namespace std{
             return seed;
         }
     };
-    template <>
-    struct hash<ShooterCentral::WeaponType> {
-        size_t operator()(const ShooterCentral::WeaponType& wt) const{
-            return std::hash<std::string>{}(wt.getName());
-        }
-    };
-
 }
 
 namespace ShooterCentral{

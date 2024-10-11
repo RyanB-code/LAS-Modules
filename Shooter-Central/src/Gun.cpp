@@ -3,37 +3,12 @@
 using namespace ShooterCentral;
 
 
-// MARK: WPN TYPE
-WeaponType::WeaponType(std::string setName) : name {setName}{
-
-}
-WeaponType::~WeaponType(){
-
-}
-std::string WeaponType::getName() const {
-    return name;
-}
-WeaponType::operator std::string() const {
-    return name;
-}
-bool WeaponType::operator==(const WeaponType& other) const{
-    if(this->getName() == other.getName())
-        return true;
-    
-    return false;
-}
-std::ostream& operator<<(std::ostream& stream, const WeaponType& weaponType){
-    stream << weaponType.getName();
-    return stream;
-}
-
-
 // MARK: GUN
 Gun::Gun() : name {"N/A"}, weaponType {WeaponTypes::WT_NA}, cartridge {"N/A"}
 {
 
 }
-Gun::Gun(std::string setName, WeaponType setWeaponType, std::string setCartridge)
+Gun::Gun(std::string setName, std::string setWeaponType, std::string setCartridge)
         :   name        { setName },
             weaponType  { setWeaponType },
             cartridge   { setCartridge }
@@ -54,7 +29,7 @@ uint64_t Gun::getRoundCount() const{
 
     return rounds;
 }
-WeaponType Gun::getWeaponType() const{
+std::string Gun::getWeaponType() const{
     return weaponType;
 }
 std::string Gun::getCartridge () const{
@@ -127,6 +102,7 @@ void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
 	}
 
     gun = gunBuf;
+
 }
 
 // MARK: GUN TRACKER
