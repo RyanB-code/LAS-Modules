@@ -12,7 +12,7 @@ namespace ShooterCentral{
         std::string     targetSetupDescription;
     };
     struct LoadConfiguration{
-        WeaponType      weaponType;
+        std::string     weaponType;
         uint8_t         roundsNeeded;
         uint8_t         magazinesNeeded;
         std::string     loadDescription;
