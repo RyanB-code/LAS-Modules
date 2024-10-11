@@ -22,13 +22,14 @@ namespace ShooterCentral{
 
 
     private:
-        static constexpr int NUM_CARTRIDGE_NAMES_SHOWN { 10 };
+        static constexpr int MAX_LIST_NUM { 10 };
 
         void drawHome       (ImVec2 windowSize)  const;
-        void drawStockpile  ()  const;
-        void drawEvents     ()  const;
 
-        void drawArmoryQuickView(ImVec2 windowSize) const;
+        void drawArmoryQuickView    () const;
+        void drawStockpileQuickView () const;
+        void drawEventsQuickView    () const;
+
         void drawAddGun     () const;
 
         AmmoTrackerPtr  ammoTracker;
