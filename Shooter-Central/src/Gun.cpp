@@ -4,7 +4,7 @@ using namespace ShooterCentral;
 
 
 // MARK: GUN
-Gun::Gun() : name {"N/A"}, weaponType {WeaponTypes::WT_NA}, cartridge {"N/A"}
+Gun::Gun() : name {"N/A"}, weaponType {"N/A"}, cartridge {"N/A"}
 {
 
 }
@@ -125,32 +125,6 @@ bool GunTracker::setDirectory(std::string path) {
 }
 std::string GunTracker::getDirectory() const{
     return saveDirectory;
-}
-// MARK: CREATE GUNS
-GunPtr GunTracker::createPistol(const std::string& name, const std::string& cartridge){
-    Gun gunBuf { name, WeaponTypes::PISTOL, cartridge};
-
-    if(addGun(gunBuf))
-        return guns.at(gunBuf);
-    else
-        return nullptr;
-
-}
-GunPtr GunTracker::createRifle(const std::string& name, const std::string& cartridge){
-    Gun gunBuf { name, WeaponTypes::RIFLE, cartridge};
-
-    if(addGun(gunBuf))
-        return guns.at(gunBuf);
-    else
-        return nullptr;
-}
-GunPtr GunTracker::createPrecisionRifle (const std::string& name, const std::string& cartridge){
-    Gun gunBuf { name, WeaponTypes::PRECISION_RIFLE, cartridge};
-
-    if(addGun(gunBuf))
-        return guns.at(gunBuf);
-    else
-        return nullptr;
 }
 GunPtr  GunTracker::createGun(const std::string& name, const std::string& weaponType, const std::string& cartridge){
     Gun gunBuf { name, weaponType, cartridge};
