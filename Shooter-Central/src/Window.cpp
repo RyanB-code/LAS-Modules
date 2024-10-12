@@ -339,36 +339,42 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
     ImGui::Spacing();
     ImGui::Spacing();
 
-
+    static bool invalidName { false }, invalidWeaponType { false }, invalidCartridge { false };
     if(WindowHelper::centerButton("Add New Gun", ImVec2{200,50})){
         // Ensure it is not the default option
-        bool gunNotAccepted { false };
-        if((selectedWTIndex > 0) && (selectedCartridgeIndex > 0)){
-            std::string name { nameBuf }, wtBuf { weaponTypeList[selectedWTIndex]}, cartBuf {cartrdgeList[selectedCartridgeIndex]};
+        std::string name { nameBuf };
+        if(selectedWTIndex <= 0)
+            invalidWeaponType = true;
+        if(selectedCartridgeIndex <= 0)
+            invalidCartridge = true;
+        if(name == "Enter Name")
+            invalidName = true;
 
-            if(name != "Enter Name"){
-                gunTracker->createGun(name, wtBuf, cartBuf);
+        if(!invalidName && !invalidWeaponType &&! invalidWeaponType){
+            std::string wtBuf { weaponTypeList[selectedWTIndex]}, cartBuf {cartrdgeList[selectedCartridgeIndex]};
 
-                // Reset buffers
-                strcpy(nameBuf, "Enter Name");
-                selectedCartridgeIndex = 0;
-                selectedWTIndex = 0;
+            gunTracker->createGun(name, wtBuf, cartBuf);
 
-                unsavedChanges = true; // Set flag
-            }
-            else
-                gunNotAccepted = true;
+            // Reset buffers
+            strcpy(nameBuf, "Enter Name");
+            selectedCartridgeIndex = 0;
+            selectedWTIndex = 0;
+
+            unsavedChanges = true; // Set flag
         }
         else
-            gunNotAccepted = true;
-
-        if(gunNotAccepted)
             ImGui::OpenPopup("Gun Not Created");
     }
 
     if(ImGui::BeginPopupModal("Gun Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
         WindowHelper::centerText("This gun could not be created.");
-        WindowHelper::centerText("Invalid name, Weapon Type, and/or Cartridge choice.");
+
+        if(invalidName)
+            ImGui::BulletText("Invalid name");
+        if(invalidWeaponType)
+            ImGui::BulletText("Invalid weapon type");
+        if(invalidCartridge)
+            ImGui::BulletText("Invalid cartridge");
 
         ImGui::Spacing();
         ImGui::Spacing();
@@ -382,7 +388,6 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
 }
 // MARK: ADD WT
 void ShooterCentralWindow::drawAddWeaponType(bool& unsavedChanges) const{
-
     static char wtBuf[MAX_TEXT_INPUT_CHARS] = "New Weapon Type";
 
     if(!ImGui::BeginChild("Add Gun")){
@@ -428,11 +433,12 @@ void ShooterCentralWindow::drawAddWeaponType(bool& unsavedChanges) const{
         ImGui::EndPopup();
     }
 
-
     ImGui::EndChild();
 }
 // MARK: QUICK VIEW STOCKPILE
 void ShooterCentralWindow::drawStockpileQuickView() const{
+    static bool unsavedChanges  { false };
+    static bool detailedView    { true };
     static StringVector                 ammoNames;
     static StringVector                 cartridgeNames;
     static std::vector<TrackedAmmo>     ammo;
@@ -481,6 +487,65 @@ void ShooterCentralWindow::drawStockpileQuickView() const{
     ImGui::Spacing();
     ImGui::Spacing();
 
+    if(ImGui::BeginChild("Stockpile Options", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+        ImGui::Indent(20);
+        ImGui::Checkbox("Show Detailed View", &detailedView);
+        ImGui::Unindent(20);
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    // Does not divide x by 2 since the region avail (since using SameLine() ) is shortened
+    if(ImGui::BeginChild("Stockpile Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
+        static bool ammoNotSaved { false }, cartridgesNotSaved { false }, manufacturersNotSaved { false };
+        if(WindowHelper::centerButton("Save All", ImVec2{200, 50})){
+            if(!ammoTracker->writeAllAmmo())
+                ammoNotSaved = true;
+            if(!ammoTracker->writeAllCartridges())
+                cartridgesNotSaved = true;
+            if(!ammoTracker->writeAllManufacturers())
+                manufacturersNotSaved = true;
+
+            // Reset unsaved cahnges flag
+            if(!ammoNotSaved || !cartridgesNotSaved)
+                unsavedChanges = false;
+        }
+        
+        if(ammoNotSaved || cartridgesNotSaved)
+            ImGui::OpenPopup("Error Saving");
+
+        // Popup showing error
+        if(ImGui::BeginPopupModal("Error Saving", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+            WindowHelper::centerText("There was an error attempting to save");
+
+            if(ammoNotSaved)
+                ImGui::BulletText("All ammo could not be saved");
+            if(cartridgesNotSaved)
+                ImGui::BulletText("Cartridges could not be saved");
+            if(manufacturersNotSaved)
+                ImGui::BulletText("Manufacturers could not be saved");
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            
+            if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
+                ammoNotSaved = false;
+                cartridgesNotSaved = false;
+                manufacturersNotSaved = false;
+
+                // Since error saving, set flag
+                unsavedChanges = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        if(unsavedChanges)
+            WindowHelper::centerText("(There are unsaved changes)");
+    }
+    ImGui::EndChild();
+
     ImGui::Text("Cartridge Shown");
     ImGui::SameLine (150);
     ImGui::Combo("##Cartridge", &highlilghtedItem, cartridgeList, cartridgeNames.size()+1); // This is the selector table. Add one to account for 'all' option
@@ -501,125 +566,423 @@ void ShooterCentralWindow::drawStockpileQuickView() const{
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if(ImGui::BeginChild("Gun Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
-        if(ImGui::BeginTable("Detailed Cartridge Breakdown", columnsInDetailedTable, 
-                                                ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
-                                                ImGuiTableFlags_HighlightHoveredColumn,
-                                                tableSize
-                            ))
-        {
-            if(showAllAmmo)
-                ImGui::TableSetupColumn("Cartridge",    0);
-            ImGui::TableSetupColumn("Name",         0);
-            ImGui::TableSetupColumn("Manufacturer", 0);
-            ImGui::TableSetupColumn("Grain Weight", 0);
-            ImGui::TableSetupColumn("Amount",       0);
-            ImGui::TableHeadersRow();
+    if(ImGui::BeginChild("Ammo Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
+        if(detailedView){
+            if(ImGui::BeginTable("Detailed Cartridge Breakdown", columnsInDetailedTable, 
+                                                    ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                                    ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
+                                                    ImGuiTableFlags_HighlightHoveredColumn,
+                                                    tableSize
+                                ))
+            {
+                if(showAllAmmo)
+                    ImGui::TableSetupColumn("Cartridge",    0);
+                ImGui::TableSetupColumn("Name",         0);
+                ImGui::TableSetupColumn("Manufacturer", 0);
+                ImGui::TableSetupColumn("Grain Weight", 0);
+                ImGui::TableSetupColumn("Amount",       0);
+                ImGui::TableHeadersRow();
 
-            if(showAllAmmo){
-                for(auto itr { ammo.begin() }; itr != ammo.end(); ++itr){
-                    ImGui::TableNextRow();
-                    for (int column{0}; column < columnsInDetailedTable; ++column)
-                    {
-                        ImGui::TableSetColumnIndex(column);
-                        switch( column ){
-                            case 0:
-                                ImGui::Text("%s", itr->ammoType.cartridge.c_str());
-                                break;
-                            case 1:
-                                ImGui::Text("%s", itr->ammoType.name.c_str());
-                                break;
-                            case 2:
-                                ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
-                                break;
-                            case 3:
-                                ImGui::Text("%d", int{itr->ammoType.grainWeight});
-                                break;
-                            case 4:
-                                ImGui::Text("%lu", itr->amount);
-                                break;
-                            default:
-                                ImGui::Text("Broken table");
-                                break;
-                        }
-                    }        
-                } // End populating all table
-            }
+                if(showAllAmmo){
+                    for(auto itr { ammo.begin() }; itr != ammo.end(); ++itr){
+                        ImGui::TableNextRow();
+                        for (int column{0}; column < columnsInDetailedTable; ++column)
+                        {
+                            ImGui::TableSetColumnIndex(column);
+                            switch( column ){
+                                case 0:
+                                    ImGui::Text("%s", itr->ammoType.cartridge.c_str());
+                                    break;
+                                case 1:
+                                    ImGui::Text("%s", itr->ammoType.name.c_str());
+                                    break;
+                                case 2:
+                                    ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
+                                    break;
+                                case 3:
+                                    ImGui::Text("%d", int{itr->ammoType.grainWeight});
+                                    break;
+                                case 4:
+                                    ImGui::Text("%lu", itr->amount);
+                                    break;
+                                default:
+                                    ImGui::Text("Broken table");
+                                    break;
+                            }
+                        }        
+                    } // End populating all table
+                }
+                else{
+                    for(auto itr { selectedCatridgeAmmoList.begin() }; itr != selectedCatridgeAmmoList.end(); ++itr){
+                        ImGui::TableNextRow();
+                        for (int column{0}; column < columnsInDetailedTable; ++column)
+                        {
+                            ImGui::TableSetColumnIndex(column);
+                            switch( column ){
+                                case 0:
+                                    ImGui::Text("%s", itr->ammoType.name.c_str());
+                                    break;
+                                case 1:
+                                    ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
+                                    break;
+                                case 2:
+                                    ImGui::Text("%d", int{itr->ammoType.grainWeight});
+                                    break;
+                                case 3:
+                                    ImGui::Text("%lu", itr->amount);
+                                    break;
+                                default:
+                                    ImGui::Text("Broken table");
+                                    break;
+                            }
+                        }        
+                    } // End populating selected cartridge table
+                }
+
+                ImGui::EndTable();
+            } // End table
+        }
+        else{
+            // Not detailed view
+            if(cartridgeNames.empty())
+                ImGui::Text("There are no tracked cartridges.");
             else{
-                for(auto itr { selectedCatridgeAmmoList.begin() }; itr != selectedCatridgeAmmoList.end(); ++itr){
-                    ImGui::TableNextRow();
-                    for (int column{0}; column < columnsInDetailedTable; ++column)
-                    {
-                        ImGui::TableSetColumnIndex(column);
-                        switch( column ){
-                            case 0:
-                                ImGui::Text("%s", itr->ammoType.name.c_str());
-                                break;
-                            case 1:
-                                ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
-                                break;
-                            case 2:
-                                ImGui::Text("%d", int{itr->ammoType.grainWeight});
-                                break;
-                            case 3:
-                                ImGui::Text("%lu", itr->amount);
-                                break;
-                            default:
-                                ImGui::Text("Broken table");
-                                break;
-                        }
-                    }        
-                } // End populating selected cartridge table
-            }
+                if(ImGui::BeginTable("Stockpile", 2, 
+                                                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                                        ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
+                                                        ImGuiTableFlags_HighlightHoveredColumn,
+                                                        tableSize
+                                                    ))
+                {
+                    ImGui::TableSetupColumn("Cartridge",    0);
+                    ImGui::TableSetupColumn("Amount",       0);
+                    ImGui::TableHeadersRow();
 
-            ImGui::EndTable();
-        } // End table
+                    // Display each item
+                    for(auto itr { countByCartridge.begin() }; itr != countByCartridge.end(); ++itr){
+                        ImGui::TableNextRow();
+                        for (int column{0}; column < 2; ++column)
+                        {
+                            ImGui::TableSetColumnIndex(column);
+                            switch( column ){
+                                case 0:
+                                    ImGui::Text("%s", itr->first.c_str());
+                                    break;
+                                case 1:
+                                    ImGui::Text("%lu", itr->second);
+                                    break;
+                                default:
+                                    ImGui::Text("Broken table");
+                                    break;
+                            }
+                        }
+                    }
+                    ImGui::EndTable();
+                } // End table
+            }
+        }
     }
     ImGui::EndChild(); // End table vhild window
 
-    /* Show ammo by cartrige only
-    
-    if(cartridgeNames.empty())
-        ImGui::Text("There are no tracked cartridges.");
-    else{
-        if(ImGui::BeginTable("Stockpile", 2, 
-                                                ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
-                                                ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_HighlightHoveredColumn |
-                                                ImGuiTableFlags_NoHostExtendX
-                                                ))
-        {
-            ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None, 100);
-            ImGui::TableSetupColumn("Amount",       ImGuiTableColumnFlags_None, 100);
-            ImGui::TableHeadersRow();
+    ImGui::Spacing();
+    ImGui::Spacing();
 
-            // Display each item
-            for(auto itr { countByCartridge.begin() }; itr != countByCartridge.end(); ++itr){
-                ImGui::TableNextRow();
-                for (int column{0}; column < 2; ++column)
-                {
-                    ImGui::TableSetColumnIndex(column);
-                    switch( column ){
-                        case 0:
-                            ImGui::Text("%s", itr->first.c_str());
-                            break;
-                        case 1:
-                            ImGui::Text("%lu", itr->second);
-                            break;
-                        default:
-                            ImGui::Text("Broken table");
-                            break;
-                    }
-                }
-            }
+    WindowHelper::centerText("Stockpile Actions");
+    ImGui::Separator();
 
-            ImGui::EndTable();
-        } // End table
+    if(ImGui::BeginTabBar("Stockpile Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
+                                            ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
+    )){
+        if(ImGui::BeginTabItem("Add to Existing Ammo")){
+            ImGui::Text("Not finsished");
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Add New Ammo Type")){
+            drawAddNewAmmoType(unsavedChanges);
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Add New Cartridge")){
+            drawAddNewCartridge(unsavedChanges);
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Add New Manufacturer")){
+            drawAddNewManufacturer(unsavedChanges);
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
     }
-    */
-
 }
+// MARK: ADD NEW CARTRIDGE
+void ShooterCentralWindow::drawAddNewCartridge (bool& unsavedChanges) const{
+    static char cartridgeBuf[MAX_TEXT_INPUT_CHARS] = "New Cartridge";
+
+    if(!ImGui::BeginChild("Add New Cartridge")){
+        ImGui::EndChild();
+        return;
+    }
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new cartridge to choose from when creating a new Ammo Type.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Cartridge");
+    ImGui::SameLine(100);
+    ImGui::InputText("##", cartridgeBuf, MAX_TEXT_INPUT_CHARS, 0);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(WindowHelper::centerButton("Add New Cartridge", ImVec2{200,50})){
+        std::string cartridgeName { cartridgeBuf };
+        bool nameRejected { false };
+        for(const auto& c : cartridgeName){
+            if(!isalnum(c) && c != ' '){
+                nameRejected = true;
+                break;
+            }
+        }
+
+        if(cartridgeName != "New Cartridge" && !nameRejected){
+            ammoTracker->addCartridge(cartridgeBuf);
+            strcpy(cartridgeBuf, "New Cartridge");   // Reset buffers
+            unsavedChanges = true;              // Set flag
+        }
+        else
+            ImGui::OpenPopup("Cartridge Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Cartridge Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        WindowHelper::centerText("The cartridge could not be created.");
+        WindowHelper::centerText("Invalid cartridge name.");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+}
+// MARK: ADD NEW AMMO TYPE
+void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
+    if(!ImGui::BeginChild("Add Ammo Type")){
+        ImGui::EndChild();
+        return;
+    }
+    static char nameBuf[MAX_TEXT_INPUT_CHARS] = "Enter Name";
+    static int grainWeightBuf{0};
+
+    // Get char array of cartrigde names
+    static StringVector cartridgeNamesBuf;
+    static StringVector manufacturerNamesBuf;
+
+    ammoTracker->getAllCartridgeNames(cartridgeNamesBuf);
+    ammoTracker->getAllManufacturerNames(manufacturerNamesBuf);
+
+
+    // Create ImGui array for cartridge names
+    const char* cartrdgeList[MAX_LIST_NUM];
+    cartrdgeList[0] = "CHOOSE CARTRIDGE";
+    int i1 { 1 };
+    for(auto& s : cartridgeNamesBuf){
+        if(i1 < (MAX_LIST_NUM + 1)){
+            cartrdgeList[i1] = s.c_str();
+        }
+        ++i1;
+    }
+
+    // Create ImGui array for manufacturer names
+    const char* manufacturerList[MAX_LIST_NUM];
+    manufacturerList[0] = "CHOOSE MANUFACTURER";
+    int i2 { 1 };
+    for(auto& s : manufacturerNamesBuf){
+        if(i2 < (MAX_LIST_NUM + 1)){
+            manufacturerList[i2] = s.c_str();
+        }
+        ++i2;
+    }
+
+    static int selectedManufacturerIndex { 0 };
+    static int selectedCartridgeIndex { 0 };
+
+    const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
+    const char* manComboPreview     { manufacturerList  [selectedManufacturerIndex] };
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new ammo type to tracked items.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    ImGui::BulletText("To add a new manufacturer, see the \"Add New Manufacturer\" tab.");
+    ImGui::BulletText("To add a new cartridge, see the \"Add New Cartridge\" tab.");
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Name");
+    ImGui::SameLine(100);
+    ImGui::InputText("##", nameBuf, MAX_TEXT_INPUT_CHARS);
+
+    ImGui::Text("Manufacturer");
+    ImGui::SameLine(100);
+    if (ImGui::BeginCombo("##Manufacturer Combo", manComboPreview, ImGuiComboFlags_HeightSmall))
+    {
+        for (size_t chooseManufacturer { 0 }; chooseManufacturer < manufacturerNamesBuf.size()+1; ++chooseManufacturer) // Add one to account for default option
+        {
+            const bool isSelected = (selectedManufacturerIndex == chooseManufacturer);
+            if (ImGui::Selectable(manufacturerList[chooseManufacturer], isSelected))
+                selectedManufacturerIndex = chooseManufacturer;
+
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Text("Cartridge");
+    ImGui::SameLine(100);
+    if (ImGui::BeginCombo("##Cartridge Combo", cartComboPreview, ImGuiComboFlags_HeightSmall))
+    {
+        for (size_t chooseCartridge { 0 }; chooseCartridge < cartridgeNamesBuf.size()+1; ++chooseCartridge) // Add one to account for default option
+        {
+            const bool isSelected = (selectedCartridgeIndex == chooseCartridge);
+            if (ImGui::Selectable(cartrdgeList[chooseCartridge], isSelected))
+                selectedCartridgeIndex = chooseCartridge;
+
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Text("Grain Weight");
+    ImGui::SameLine(100);
+    ImGui::InputInt("##Input Grain Weight", &grainWeightBuf, 1, 0, 0);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    static bool invalidName { false }, invalidManufacturer { false }, invalidCartridge { false }, invalidGrainWeight { false };
+    if(WindowHelper::centerButton("Add New Ammo Type", ImVec2{200,50})){
+        // Verify data        
+        if(selectedManufacturerIndex <= 0) 
+            invalidManufacturer = true;
+        
+        if(selectedCartridgeIndex <= 0) 
+            invalidCartridge = true;
+
+        if(grainWeightBuf <= 0 || grainWeightBuf > 255) 
+            invalidGrainWeight = true;
+
+        std::string name { nameBuf };
+        if(name == "Enter Name")
+            invalidName = true;
+        
+        if(!invalidName && !invalidManufacturer && !invalidCartridge && !invalidGrainWeight){
+            std::string manBuf { manufacturerList[selectedManufacturerIndex]}, cartBuf {cartrdgeList[selectedCartridgeIndex]};
+
+            ammoTracker->addAmmoToStockpile(0, AmmoType{ name, manBuf, cartBuf, uint8_t{grainWeightBuf}});
+
+            // Reset buffers
+            strcpy(nameBuf, "Enter Name");
+
+            selectedCartridgeIndex      = 0;
+            selectedManufacturerIndex   = 0;
+
+            unsavedChanges = true; // Set flag
+
+        }
+        if(invalidName || invalidManufacturer || invalidCartridge || invalidGrainWeight)
+            ImGui::OpenPopup("Ammo Type Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Ammo Type Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        WindowHelper::centerText("This ammo type could not be created.");
+
+        if(invalidName)
+            ImGui::BulletText("Invalid name");
+        if(invalidManufacturer)
+            ImGui::BulletText("Invalid manufacturer");
+        if(invalidCartridge)
+            ImGui::BulletText("Invalid cartridge");
+        if(invalidGrainWeight)
+            ImGui::BulletText("Invalid grain weight");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
+            invalidName = false;
+            invalidManufacturer = false;
+            invalidCartridge = false;
+            invalidGrainWeight = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+}
+// MARK: ADD NEW MANUFACTURER
+void ShooterCentralWindow::drawAddNewManufacturer (bool& unsavedChanges) const{
+    static char manBuf[MAX_TEXT_INPUT_CHARS] = "New Manufacturer";
+
+    if(!ImGui::BeginChild("Add New Manufacturer")){
+        ImGui::EndChild();
+        return;
+    }
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new manufacturer to choose from when creating a new Ammo Type.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Manufacturer");
+    ImGui::SameLine(100);
+    ImGui::InputText("##", manBuf, MAX_TEXT_INPUT_CHARS, 0);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(WindowHelper::centerButton("Add New Manufacturer", ImVec2{200,50})){
+        std::string manName { manBuf };
+        bool nameRejected { false };
+        for(const auto& c : manName){
+            if(!isalnum(c) && c != ' '){
+                nameRejected = true;
+                break;
+            }
+        }
+
+        if(manName != "New Manufacturer" && !nameRejected){
+            ammoTracker->addManufacturer(manName);
+            strcpy(manBuf, "New Manufacturer");   // Reset buffers
+            unsavedChanges = true;              // Set flag
+        }
+        else
+            ImGui::OpenPopup("Manufacturer Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Manufacturer Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        WindowHelper::centerText("The manufacturer could not be created.");
+        WindowHelper::centerText("Invalid manufacturer name.");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+}
+
 // MARK: QUICK VIEW EVENTS
 void ShooterCentralWindow::drawEventsQuickView() const {
     static std::vector<Event> eventList;
