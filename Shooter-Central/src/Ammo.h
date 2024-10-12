@@ -80,14 +80,20 @@ namespace ShooterCentral{
         void    getAllCartridgeNames    (StringVector& names) const;                                                // Clears vector before adding elements
         void    getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const;               // Clears vector before adding elements
         void    getAllAmmoByCartridge   (std::vector<TrackedAmmo>& list, const std::string& cartridgeName)   const; // Clears vector before adding elements, gives copies of ammo objects, adds if cartridge name is equal
+        void    getAllManufacturerNames (StringVector& list) const;                                                // Clears vector before adding elements
+
 
         bool    addCartridge            (const std::string& cartridge);
+        bool    addManufacturer         (const std::string& manufacturer);
 
         bool    writeAllAmmo            () const;
         bool    readAllAmmo             ();
 
         bool    writeAllCartridges      () const;
         bool    readCartridges          ();
+    
+        bool    writeAllManufacturers   () const;
+        bool    readManufacturers       ();
 
         bool        setDirectory        (std::string directory);
         std::string getDirectory        () const;
@@ -95,11 +101,15 @@ namespace ShooterCentral{
     private:
         std::unordered_map<AmmoType, TrackedAmmoPtr>    ammoStockpile;
         std::map<std::string, std::string>              cartridges;
+        std::map<std::string, std::string>              manufacturers;
+
 
         std::string             saveDirectory;
         LAS::Logging::LoggerPtr logger;
 
-        static constexpr std::string CARTRIDGES_FILENAME {"Cartridges.json"};
+        static constexpr char* CARTRIDGES_FILENAME    {"Cartridges.json"};
+        static constexpr char* MANUFACTURERS_FILENAME {"Manufacturers.json"};
+
     };
 
     using AmmoTrackerPtr = std::shared_ptr<AmmoTracker>;
@@ -108,8 +118,11 @@ namespace ShooterCentral{
         bool        writeTrackedAmmo    (std::string directory, const TrackedAmmo& ammo);
         TrackedAmmo readTrackedAmmo     (const std::string& path);
 
-        bool    writeAllCartridges      (std::string path, const std::vector<std::string>& cartridges);
+        bool    writeAllCartridges      (std::string path, const StringVector& cartridges);
         bool    readCartridges          (std::string path, StringVector& cartridgeNames);               // Clears vector before adding elements
+
+        bool    writeAllManufacturers   (std::string path, const StringVector& manufacturers);
+        bool    readManufacturers       (std::string path, StringVector& manufacturers);               // Clears vector before adding elements
     }
 
 }

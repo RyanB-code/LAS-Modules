@@ -105,16 +105,6 @@ void AmmoTracker::getAllAmmo (std::vector<TrackedAmmo>& list)   const{
         list.push_back(*ammo.second);
     }
 }
-
-void AmmoTracker::getAllCartridgeNames(StringVector& names) const{
-    if(!names.empty())
-        names.erase(names.begin(), names.end());
-
-
-    for(const auto& pair : cartridges){
-        names.push_back(pair.second);
-    }
-}
 void AmmoTracker::getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const{
     if(!count.empty())
         count.erase(count.begin(), count.end());
@@ -143,12 +133,37 @@ void AmmoTracker::getAllAmmoByCartridge(std::vector<TrackedAmmo>& list, const st
             list.push_back(*pair.second);
     }
 }
+void AmmoTracker::getAllCartridgeNames(StringVector& names) const{
+    if(!names.empty())
+        names.erase(names.begin(), names.end());
+
+
+    for(const auto& pair : cartridges){
+        names.push_back(pair.second);
+    }
+}
+void AmmoTracker::getAllManufacturerNames(StringVector& list) const{
+    if(!list.empty())
+        list.erase(list.begin(), list.end());
+
+    for(const auto& pair : manufacturers){
+        list.push_back(pair.second);
+    }
+}
+// MARK: ADD CART/MAN
 bool AmmoTracker::addCartridge (const std::string& cartridge){
     if(cartridges.contains(cartridge))
         return false;
 
     cartridges.try_emplace(cartridge, cartridge);
     return cartridges.contains(cartridge);
+}
+bool AmmoTracker::addManufacturer (const std::string& manufacturer){
+    if(manufacturers.contains(manufacturer))
+        return false;
+
+    manufacturers.try_emplace(manufacturer, manufacturer);
+    return manufacturers.contains(manufacturer);
 }
 
 // MARK: R/W AMMO
@@ -192,7 +207,7 @@ bool AmmoTracker::readAllAmmo(){
                 logger->log("Ammo object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
 		}
 		catch(std::exception& e){
-            if(dirEntry.path().filename().string() != CARTRIDGES_FILENAME){  // Ignore the cartridges file
+            if(dirEntry.path().filename().string() != CARTRIDGES_FILENAME && dirEntry.path().filename().string() != MANUFACTURERS_FILENAME){  // Ignore the cartridges file
 			    logger->log("Failed to create Ammo object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
                 logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
             }
@@ -240,6 +255,45 @@ bool AmmoTracker::readCartridges(){
 
     return true;
 }
+// MARK: R/W MANUFACTURERS
+bool AmmoTracker::writeAllManufacturers() const{
+    if(!std::filesystem::exists(saveDirectory))
+        return false;
+
+    std::string fullPath { saveDirectory };
+    fullPath += MANUFACTURERS_FILENAME;
+
+    StringVector rawManufacturers;
+
+    for(auto& c : manufacturers){
+        rawManufacturers.emplace_back(c.second);
+    }
+
+    return AmmoHelper::writeAllManufacturers(fullPath, rawManufacturers);
+}
+bool AmmoTracker::readManufacturers(){
+    if(!std::filesystem::exists(saveDirectory))
+        return false;
+
+    std::string fullPath { saveDirectory };
+    fullPath += MANUFACTURERS_FILENAME;
+
+    StringVector rawManufacturers;
+    try{
+        AmmoHelper::readManufacturers(fullPath, rawManufacturers);
+    }
+    catch(std::exception& e){
+        logger->log("Error reading manufacturers", LAS::Logging::Tags{"ERROR", "SC"});
+        logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+    }
+
+    for(const auto& s : rawManufacturers){
+        if(!addManufacturer(s))
+            logger->log("Manufacturer named [" + s + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+    }
+
+    return true;
+}
 
 bool AmmoTracker::setDirectory(std::string path) {
     path = LAS::TextManip::ensureSlash(path);
@@ -266,7 +320,6 @@ bool AmmoHelper::writeTrackedAmmo(std::string directory, const TrackedAmmo& ammo
 
     if(!std::filesystem::exists(directory))
 		return false;
-    
 
     // Make JSON
     json j = ammo;
@@ -306,7 +359,7 @@ TrackedAmmo AmmoHelper::readTrackedAmmo(const std::string& path){
     return TrackedAmmo{j.template get<ShooterCentral::TrackedAmmo>()};
 }
 // MARK: R/W CARTRIDGES
-bool AmmoHelper::writeAllCartridges(std::string path, const std::vector<std::string>& cartridges){
+bool AmmoHelper::writeAllCartridges(std::string path, const StringVector& cartridges){
     using LAS::json;
 
     if(cartridges.empty())
@@ -316,7 +369,7 @@ bool AmmoHelper::writeAllCartridges(std::string path, const std::vector<std::str
     json entries = nlohmann::json::array();
 
 	for (const auto& cartridge : cartridges) 
-        entries.push_back(cartridge);
+        entries.emplace_back(cartridge);
     
     j["cartridges"] = entries;
 
@@ -349,6 +402,54 @@ bool AmmoHelper::readCartridges (std::string path, StringVector& cartridgeNames)
 		obj.get_to(nameBuf);
 
         cartridgeNames.push_back(nameBuf);
+	}
+
+    return true;
+}
+// MARK: R/W MANUFACTURERS
+bool AmmoHelper::writeAllManufacturers(std::string path, const StringVector& manufacturers){
+    using LAS::json;
+
+    if(manufacturers.empty())
+        return true;
+
+    json j;
+    json entries = nlohmann::json::array();
+
+	for (const auto& manufacturer : manufacturers) 
+        entries.emplace_back(manufacturer);
+    
+    j["manufacturers"] = entries;
+
+    // Write to file
+    std::ofstream file{path};
+    file << std::setw(1) << std::setfill('\t') << j;
+    file.close();
+
+    return true;
+}
+bool AmmoHelper::readManufacturers (std::string path, StringVector& manufacturers){
+    using LAS::json;
+
+    if(!std::filesystem::exists(path))
+        return false;
+
+    if(!manufacturers.empty())
+        manufacturers.erase(manufacturers.begin(), manufacturers.end());
+
+    std::ifstream inputFile{ path, std::ios::in };
+    json j = json::parse(inputFile);
+
+    json manufacturersJson;
+	j.at("manufacturers").get_to(manufacturersJson);
+
+	for (auto& elment : manufacturersJson.items()) {
+		json obj = elment.value();
+        std::string nameBuf;
+
+		obj.get_to(nameBuf);
+
+        manufacturers.emplace_back(nameBuf);
 	}
 
     return true;
