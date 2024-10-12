@@ -19,10 +19,10 @@ namespace ShooterCentral{
         bool setAmmoTracker     (AmmoTrackerPtr setAmmoTracker);
         bool setGunTracker      (GunTrackerPtr setGunTracker);
         bool setEventTracker    (EventTrackerPtr setEventTracker);
-
-
     private:
-        static constexpr int MAX_LIST_NUM { 10 };
+
+        static constexpr int MAX_LIST_NUM           { 10 };
+        static constexpr int MAX_TEXT_INPUT_CHARS   { 32 };
 
         void drawHome       (ImVec2 windowSize)  const;
 
@@ -30,7 +30,9 @@ namespace ShooterCentral{
         void drawStockpileQuickView () const;
         void drawEventsQuickView    () const;
 
-        void drawAddGun     () const;
+        // Supplementary functions
+        void drawAddGun         (bool& unsavedChanges) const;
+        void drawAddWeaponType  (bool& unsavedChanges) const;
 
         AmmoTrackerPtr  ammoTracker;
         GunTrackerPtr   gunTracker;
