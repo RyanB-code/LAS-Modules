@@ -43,7 +43,7 @@ bool Framework::setup(LAS::Logging::LoggerPtr setLoggerPtr, const std::string& d
     }
 
    
-    logger->log("Setup sucessful", Tags{"Routine", "SC"});
+    logger->log("Setup sucessful", Tags{"ROUTINE", "SC"});
     return true;
 }
 bool Framework::addDrill(DrillPtr drill){
@@ -152,6 +152,9 @@ bool Framework::setupGunTracker    (std::string directory){
         return false;
     
     if(!gunTracker->readGuns())
+        return false;
+    
+    if(!gunTracker->readWeaponTypes())
         return false;
 
     // Add gun cartridges to ammo tracker
