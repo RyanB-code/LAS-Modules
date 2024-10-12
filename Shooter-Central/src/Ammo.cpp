@@ -153,8 +153,6 @@ bool AmmoTracker::addCartridge (const std::string& cartridge){
 
 // MARK: R/W AMMO
 bool AmmoTracker::writeAllAmmo() const{
-    using LAS::json;
-
     if(ammoStockpile.empty())
         return true;
 
@@ -163,7 +161,6 @@ bool AmmoTracker::writeAllAmmo() const{
         return false;
     }
 
-
 	for(const auto& pair : ammoStockpile) {
         const auto& ammo = *pair.second;
 
@@ -171,7 +168,7 @@ bool AmmoTracker::writeAllAmmo() const{
             if(!AmmoHelper::writeTrackedAmmo(saveDirectory, ammo)) 
                 logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + ammo.ammoType.name + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
         }
-        catch(json::exception& e){
+        catch(std::exception& e){
             logger->log("Error creating JSON object. Code " + std::string{e.what()} + ". What: " + std::string{e.what()}, LAS::Logging::Tags{"ERROR", "SC"});
         }
 	}
@@ -195,9 +192,10 @@ bool AmmoTracker::readAllAmmo(){
                 logger->log("Ammo object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
 		}
 		catch(std::exception& e){
-            if(dirEntry.path().filename().string() != CARTRIDGES_FILENAME)  // Ignore the cartridges file
+            if(dirEntry.path().filename().string() != CARTRIDGES_FILENAME){  // Ignore the cartridges file
 			    logger->log("Failed to create Ammo object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
                 logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+            }
 		}
 	}
 
@@ -227,7 +225,13 @@ bool AmmoTracker::readCartridges(){
     fullPath += CARTRIDGES_FILENAME;
 
     StringVector cartridgeNames;
-    AmmoHelper::readCartridges(fullPath, cartridgeNames);
+    try{
+        AmmoHelper::readCartridges(fullPath, cartridgeNames);
+    }
+    catch(std::exception& e){
+        logger->log("Error reading cartridges", LAS::Logging::Tags{"ERROR", "SC"});
+        logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+    }
 
     for(const auto& s : cartridgeNames){
         if(!addCartridge(s))
