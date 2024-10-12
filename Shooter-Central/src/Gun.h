@@ -9,14 +9,6 @@
 
 //MARK: GUN
 namespace ShooterCentral{
-    namespace WeaponTypes{
-        const std::string PISTOL             { "PISTOL" };
-        const std::string RIFLE              { "RIFLE" };
-        const std::string PRECISION_RIFLE    { "PRECISION RIFLE" };
-        const std::string WT_NA              { "N/A" };
-    }
-
-
     class Gun final {
     public:
         Gun();
@@ -72,11 +64,8 @@ namespace ShooterCentral{
         bool        setDirectory    (std::string directory);
         std::string getDirectory    () const;
 
-        GunPtr  createPistol            (const std::string& name, const std::string& cartridge);   
-        GunPtr  createRifle             (const std::string& name, const std::string& cartridge);
-        GunPtr  createPrecisionRifle    (const std::string& name, const std::string& cartridge);
-        GunPtr  createGun               (const std::string& name, const std::string& weaponType, const std::string& cartridge);
-        bool    removeGun               (const Gun& gun);
+        GunPtr  createGun (const std::string& name, const std::string& weaponType, const std::string& cartridge);
+        bool    removeGun (const Gun& gun);
 
         void    getRoundsShotPerCartridge   (std::unordered_map<std::string, uint64_t>& list) const;
 
