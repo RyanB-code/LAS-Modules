@@ -138,6 +138,9 @@ bool Framework::setupAmmoTracker(std::string directory){
     
     if(!ammoTracker->readCartridges())
         return false;
+    
+    if(!ammoTracker->readManufacturers())
+        return false;
 
     if(!ammoTracker->readAllAmmo())
         return false;
