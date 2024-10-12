@@ -186,11 +186,9 @@ bool GunTracker::writeAllGuns() const{
         return false;
     }
 
-	for(const auto& pair : guns) {
-        const auto& gun = *pair.second;
-
-        if(!GunHelper::writeGun(saveDirectory, gun)) 
-            logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + gun.getName() + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
+	for(const auto& [key, gun] : guns) {
+        if(!GunHelper::writeGun(saveDirectory, *gun)) 
+            logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + gun->getName() + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
 	}
 
     return true;
