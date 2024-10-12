@@ -161,10 +161,23 @@ void GunTracker::getAllGuns(std::vector<Gun>& list) const{
     for(const auto& [key, gun] : guns)
         list.push_back(*gun);
 }
+void GunTracker::getAllWeaponTypeNames   (StringVector& names) const{
+    if(!names.empty())
+        names.erase(names.begin(), names.end());
+
+    for(const auto& [key, wt] : weaponTypes){
+        names.emplace_back(wt);
+    }
+}
+bool GunTracker::addWeaponType           (const std::string& type){
+    if(weaponTypes.contains(type))
+        return false;
+
+    weaponTypes.try_emplace(type, type);
+    return weaponTypes.contains(type);
+}
 // MARK: R/W Guns
 bool GunTracker::writeAllGuns() const{
-    using LAS::json;
-
     if(guns.empty())
         return true;
 
@@ -195,28 +208,55 @@ bool GunTracker::readGuns(){
                 logger->log("Gun object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
 		}
 		catch(std::exception& e){
-			logger->log("Failed to create Gun object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
-            logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+            if(dirEntry.path().filename().string() != WEAPON_TYPES_FILENAME){  // Ignore the weaponTypes file
+                logger->log("Failed to create Gun object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
+                logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+            }
 		}
 	}
     
 	return true;
 }
-void GunTracker::getAllWeaponTypeNames   (StringVector& names) const{
-    if(!names.empty())
-        names.erase(names.begin(), names.end());
-
-    for(const auto& [key, wt] : weaponTypes){
-        names.emplace_back(wt);
-    }
-}
-bool GunTracker::addWeaponType           (const std::string& type){
-    if(weaponTypes.contains(type))
+// MARK: R/W Weapon Types
+bool GunTracker::writeAllWeaponTypes () const {    
+    if(!std::filesystem::exists(saveDirectory))
         return false;
 
-    weaponTypes.try_emplace(type, type);
-    return weaponTypes.contains(type);
+    std::string fullPath { saveDirectory };
+    fullPath += WEAPON_TYPES_FILENAME;
+
+    StringVector rawWeaponTypes;
+
+    for(auto& c : weaponTypes){
+        rawWeaponTypes.emplace_back(c.second);
+    }
+
+    return GunHelper::writeAllWeaponTypes(fullPath, rawWeaponTypes);
 }
+bool GunTracker::readWeaponTypes  () {
+    if(!std::filesystem::exists(saveDirectory))
+        return false;
+
+    std::string fullPath { saveDirectory };
+    fullPath += WEAPON_TYPES_FILENAME;
+
+    StringVector rawWweaponTypes;
+    try{
+        GunHelper::readWeaponTypes(fullPath, rawWweaponTypes);
+    }
+    catch(std::exception& e){
+        logger->log("Error reading Weapon Types", LAS::Logging::Tags{"ERROR", "SC"});
+        logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+    }
+
+    for(const auto& s : rawWweaponTypes){
+        if(!addWeaponType(s))
+            logger->log("Weapon Type named [" + s + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+    }
+
+    return true;
+}
+
 // MARK: PRIVATE FUNCTIONS
 bool GunTracker::addGun(Gun& gun){
     if(guns.contains(gun))
@@ -228,7 +268,11 @@ bool GunTracker::addGun(Gun& gun){
     return guns.try_emplace(gun, std::make_shared<Gun>(gun)).second;
 }
 
+
 // MARK: GUN HELPER
+
+
+// MARK: R/W GUN
 bool GunHelper::writeGun(std::string directory, const Gun& gun){
     using LAS::json;
 
@@ -276,4 +320,52 @@ Gun GunHelper::readGun(const std::string& path){
     json j = json::parse(inputFile);
 
     return Gun{j.template get<ShooterCentral::Gun>()};
+}
+// MARK: R/W CARTRIDGES
+bool GunHelper::writeAllWeaponTypes(std::string path, const std::vector<std::string>& list){
+    using LAS::json;
+
+    if(list.empty())
+        return true;
+
+    json j;
+    json entries = nlohmann::json::array();
+
+	for (const auto& weaponType : list) 
+        entries.emplace_back(weaponType);
+    
+    j["weaponTypes"] = entries;
+
+    // Write to file
+    std::ofstream file{path};
+    file << std::setw(1) << std::setfill('\t') << j;
+    file.close();
+
+    return true;
+}
+bool GunHelper::readWeaponTypes (std::string path, StringVector& list){
+    using LAS::json;
+
+    if(!std::filesystem::exists(path))
+        return false;
+
+    if(!list.empty())
+        list.erase(list.begin(), list.end());
+
+    std::ifstream inputFile{ path, std::ios::in };
+    json j = json::parse(inputFile);
+
+    json cartridges;
+	j.at("weaponTypes").get_to(cartridges);
+
+	for (auto& elment : cartridges.items()) {
+		json obj = elment.value();
+        std::string nameBuf;
+
+		obj.get_to(nameBuf);
+
+        list.emplace_back(nameBuf);
+	}
+
+    return true;
 }
