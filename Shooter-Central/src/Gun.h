@@ -75,16 +75,20 @@ namespace ShooterCentral{
         void    getAllWeaponTypeNames   (StringVector& names) const;   // Clears vector before adding elements
         bool    addWeaponType           (const std::string& type);
 
-
         bool writeAllGuns   () const;
         bool readGuns       ();
+
+        bool writeAllWeaponTypes () const;
+        bool readWeaponTypes  ();
 
     private:
         LAS::Logging::LoggerPtr             logger;
         std::unordered_map<Gun, GunPtr>     guns;
-        std::map<std::string, std::string> weaponTypes;
+        std::map<std::string, std::string>  weaponTypes;
 
         std::string saveDirectory;
+
+        static constexpr std::string WEAPON_TYPES_FILENAME {"weaponType.json"};
 
         bool addGun(Gun& gun);
     };
@@ -92,6 +96,9 @@ namespace ShooterCentral{
     namespace GunHelper{
         bool    writeGun    (std::string directory, const Gun& gun);
         Gun     readGun     (const std::string& path);
+
+        bool    writeAllWeaponTypes      (std::string path, const std::vector<std::string>& list);
+        bool    readWeaponTypes          (std::string path, StringVector& list);                    // Clears vector before adding elements
     }
 
     using GunTrackerPtr = std::shared_ptr<GunTracker>;
