@@ -39,6 +39,9 @@ namespace ShooterCentral{
         void drawAddNewManufacturer     (bool& unsavedChanges) const;
         void drawAddToExistingAmmoType  (bool& unsavedChanges) const;
 
+        void drawAddEventType   (bool& unsavedChanges) const;
+        void drawAddLocation    (bool& unsavedChanges) const;
+
 
         AmmoTrackerPtr  ammoTracker;
         GunTrackerPtr   gunTracker;

@@ -415,9 +415,18 @@ void ShooterCentralWindow::drawAddWeaponType(bool& unsavedChanges) const{
     ImGui::Spacing();
 
     if(WindowHelper::centerButton("Add New Weapon Type", ImVec2{200,50})){
+        bool nameRejected { false };
         std::string wt { wtBuf };
 
-        if(wt != "New Weapon Type"){
+        for(auto& c : wt){
+            if(!isalnum(c) && c != ' '){
+                nameRejected = true;
+                break;
+            }
+            c = toupper(c);
+        }
+
+        if(wt != "New Weapon Type" && !nameRejected){
             gunTracker->addWeaponType(wt);
             strcpy(wtBuf, "New Weapon Type");   // Reset buffers
             unsavedChanges = true;              // Set flag
@@ -504,7 +513,14 @@ void ShooterCentralWindow::drawStockpileQuickView() const{
     // Does not divide x by 2 since the region avail (since using SameLine() ) is shortened
     if(ImGui::BeginChild("Stockpile Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         static bool ammoNotSaved { false }, cartridgesNotSaved { false }, manufacturersNotSaved { false };
+
         if(WindowHelper::centerButton("Save All", ImVec2{200, 50})){
+            // Ensure flags are valid
+            ammoNotSaved            = false;
+            cartridgesNotSaved      = false;
+            manufacturersNotSaved   = false;
+
+
             if(!ammoTracker->writeAllAmmo())
                 ammoNotSaved = true;
             if(!ammoTracker->writeAllCartridges())
@@ -512,16 +528,16 @@ void ShooterCentralWindow::drawStockpileQuickView() const{
             if(!ammoTracker->writeAllManufacturers())
                 manufacturersNotSaved = true;
 
-            // Reset unsaved cahnges flag
-            if(!ammoNotSaved || !cartridgesNotSaved)
+            // Reset unsaved changes flag if all were successful
+            if(!ammoNotSaved && !cartridgesNotSaved && !manufacturersNotSaved)
                 unsavedChanges = false;
         }
         
-        if(ammoNotSaved || cartridgesNotSaved)
-            ImGui::OpenPopup("Error Saving");
+        if(ammoNotSaved || cartridgesNotSaved || manufacturersNotSaved)
+            ImGui::OpenPopup("Stockpile Saving Error");
 
         // Popup showing error
-        if(ImGui::BeginPopupModal("Error Saving", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        if(ImGui::BeginPopupModal("Stockpile Saving Error", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
             WindowHelper::centerText("There was an error attempting to save");
 
             if(ammoNotSaved)
@@ -535,10 +551,6 @@ void ShooterCentralWindow::drawStockpileQuickView() const{
             ImGui::Spacing();
             
             if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
-                ammoNotSaved = false;
-                cartridgesNotSaved = false;
-                manufacturersNotSaved = false;
-
                 // Since error saving, set flag
                 unsavedChanges = true;
                 ImGui::CloseCurrentPopup();
@@ -1135,6 +1147,7 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
 
 // MARK: QUICK VIEW EVENTS
 void ShooterCentralWindow::drawEventsQuickView() const {
+    static bool unsavedChanges { false };
     static std::vector<Event> eventList;
     std::vector<Event>::iterator itr;
 
@@ -1156,30 +1169,68 @@ void ShooterCentralWindow::drawEventsQuickView() const {
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if(ImGui::Button("New event")){
-        static int num { 0 };
-        ++num;
-
-        std::ostringstream os;
-        os << "Event Name " << num;
-
-        Event eventBuf { os.str(), "Paul Bunyan", EventTypes::USPSA_MATCH, "N/A", Datestamp{std::chrono::system_clock::now()}};
-
-        eventBuf.addGun(
-                Gun { os.str(), "RIFLE", "test cart" }, 
-                TrackedAmmo{ AmmoType{"Test name", "test Man", "test cart", 77}, 250}
-            );
-
-        eventTracker->addEvent(eventBuf);
+    if(ImGui::BeginChild("Events Details", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+        ImGui::Indent(20);
+        ImGui::Text("Total Events:      %ld", eventTracker->getTotalEvents());
+        ImGui::Unindent(20);
     }
+    ImGui::EndChild();
+
     ImGui::SameLine();
-    if(ImGui::Button("Write events")){
-        eventTracker->writeAllEvents();
+
+    // Does not divide x by 2 since the region avail (since using SameLine() ) is shortened
+    if(ImGui::BeginChild("Event Tracker Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
+        static bool eventsNotSaved { false }, eventTypesNotSaved { false }, locationsNotSaved { false };
+
+        if(WindowHelper::centerButton("Save All", ImVec2{200, 50})){
+
+            // Ensure flags are valid
+            eventsNotSaved = false;
+            eventTypesNotSaved = false;
+            locationsNotSaved = false;
+
+            if(!eventTracker->writeAllEvents())
+                eventsNotSaved = true;
+            if(!eventTracker->writeAllEventTypes())
+                eventTypesNotSaved = true;
+            if(!eventTracker->writeAllLocations())
+                locationsNotSaved = true;
+
+            // Reset unsaved cahnges flag
+            if(!eventsNotSaved && !eventTypesNotSaved && !locationsNotSaved)
+                unsavedChanges = false;
+        }
+        
+        if(eventsNotSaved || eventTypesNotSaved || locationsNotSaved)
+            ImGui::OpenPopup("Event Tracker Saving Error");
+
+        // Popup showing error
+        if(ImGui::BeginPopupModal("Event Tracker Saving Error", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+            WindowHelper::centerText("There was an error attempting to save");
+
+            if(eventsNotSaved)
+                ImGui::BulletText("All events could not be saved");
+            if(eventTypesNotSaved)
+                ImGui::BulletText("Event Types could not be saved");
+            if(locationsNotSaved)
+                ImGui::BulletText("Locations could not be saved");
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            
+            if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
+                // Since error saving, set flag
+                unsavedChanges = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+
+        if(unsavedChanges)
+            WindowHelper::centerText("(There are unsaved changes)");
     }
-    ImGui::SameLine();
-    if(ImGui::Button("Read events")){
-        eventTracker->readEvents();
-    }
+    ImGui::EndChild();
+
 
     if(ImGui::BeginChild("Gun Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
         if(ImGui::BeginTable("Event Table", 5, 
@@ -1215,7 +1266,7 @@ void ShooterCentralWindow::drawEventsQuickView() const {
                                 ImGui::Text("%s", event.getLocation().c_str());
                                 break;
                             case 3:
-                                ImGui::Text("%s", event.getEventType().getName().c_str());
+                                ImGui::Text("%s", event.getEventType().c_str());
                                 break;
                             case 4:
                                 ImGui::Text("%d", int{event.getNumGunsUsed()});
@@ -1230,8 +1281,151 @@ void ShooterCentralWindow::drawEventsQuickView() const {
             ImGui::EndTable();
         }
     }
+    ImGui::EndChild(); // End table window
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    WindowHelper::centerText("Event Tracker Actions");
+    ImGui::Separator();
+
+    if(ImGui::BeginTabBar("Event Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
+                                            ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
+    )){
+        if(ImGui::BeginTabItem("Detailed Event Viewer")){
+            ImGui::Text("Tab Stuff");
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Add New Event")){
+            ImGui::Text("Tab Stuff 2");
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Add New Event Type")){
+            drawAddEventType(unsavedChanges);
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Add New Location")){
+            drawAddLocation(unsavedChanges);
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+}
+// MARK: ADD Event Type
+void ShooterCentralWindow::drawAddEventType (bool& unsavedChanges) const{
+    static char eventTypeBuf[MAX_TEXT_INPUT_CHARS] = "New Event Type";
+
+    if(!ImGui::BeginChild("Add New Event Type")){
+        ImGui::EndChild();
+        return;
+    }
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Event Type to choose from when creating an Event.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Event Type");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input Event Type", eventTypeBuf, MAX_TEXT_INPUT_CHARS, ImGuiInputTextFlags_CharsUppercase);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(WindowHelper::centerButton("Add Event Type", ImVec2{200,50})){
+        bool nameRejected { false };
+        std::string eventTypeStrBuf { eventTypeBuf };
+
+        for(auto& c : eventTypeStrBuf){
+            if(!isalnum(c) && c != ' '){
+                nameRejected = true;
+                break;
+            }
+            c = toupper(c);
+        }
+
+        if(eventTypeStrBuf != "New Event Type" && !nameRejected){
+            eventTracker->addEventType(eventTypeStrBuf);
+            strcpy(eventTypeBuf, "New Event Type");     // Reset buffers
+            unsavedChanges = true;                      // Set flag
+        }   
+        else
+            ImGui::OpenPopup("Event Type Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Event Type Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        WindowHelper::centerText("The Event Type could not be created.");
+        WindowHelper::centerText("Invalid name.");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
     ImGui::EndChild();
 }
+// MARK: ADD LOCATION
+void ShooterCentralWindow::drawAddLocation (bool& unsavedChanges) const{
+    static char locationBuf[MAX_TEXT_INPUT_CHARS] = "New Location";
+
+    if(!ImGui::BeginChild("Add New Location")){
+        ImGui::EndChild();
+        return;
+    }
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new location to choose from when creating an Event.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Location");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input Location", locationBuf, MAX_TEXT_INPUT_CHARS, 0);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(WindowHelper::centerButton("Add Location", ImVec2{200,50})){
+        bool nameRejected { false };
+        std::string locationStrBuf { locationBuf };
+        for(const auto& c : locationStrBuf){
+            if(!isalnum(c) && c != ' '){
+                nameRejected = true;
+                break;
+            }
+        }
+
+        if(locationStrBuf != "New Location" && !nameRejected){
+            eventTracker->addLocation(locationStrBuf);
+            strcpy(locationBuf, "New Location");     // Reset buffers
+            unsavedChanges = true;                   // Set flag
+        }   
+        else
+            ImGui::OpenPopup("Location Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Location Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        WindowHelper::centerText("The location could not be created.");
+        WindowHelper::centerText("Invalid name.");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+}
+
 // MARK: WindowHelper
 void WindowHelper::centerText(std::string text){
     auto windowWidth = ImGui::GetWindowSize().x;
