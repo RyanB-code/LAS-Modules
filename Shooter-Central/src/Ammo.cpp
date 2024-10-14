@@ -95,7 +95,7 @@ void AmmoTracker::getAllAmmoNames(StringVector& names) const{
 
 
     for(const auto& ammo : ammoStockpile){
-        names.push_back(ammo.second->ammoType.name);
+        names.emplace_back(ammo.second->ammoType.name);
     }
 }
 void AmmoTracker::getAllAmmo (std::vector<TrackedAmmo>& list)   const{
@@ -103,7 +103,7 @@ void AmmoTracker::getAllAmmo (std::vector<TrackedAmmo>& list)   const{
         list.erase(list.begin(), list.end());
 
     for(const auto& ammo : ammoStockpile){
-        list.push_back(*ammo.second);
+        list.emplace_back(*ammo.second);
     }
 }
 void AmmoTracker::getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const{
@@ -122,7 +122,7 @@ void AmmoTracker::getAmmoCountByCartridge (std::vector<std::pair<std::string, ui
         for(const auto& ammo : sameCartridgeList)
             amountBuf += ammo.amount;
 
-        count.push_back(std::pair{name, amountBuf});           // Add to list
+        count.emplace_back(std::pair{name, amountBuf});           // Add to list
     }
 }
 void AmmoTracker::getAllAmmoByCartridge(std::vector<TrackedAmmo>& list, const std::string& cartridgeName)   const{
@@ -131,7 +131,7 @@ void AmmoTracker::getAllAmmoByCartridge(std::vector<TrackedAmmo>& list, const st
 
     for(const auto& pair : ammoStockpile){
         if(pair.second->ammoType.cartridge == cartridgeName)
-            list.push_back(*pair.second);
+            list.emplace_back(*pair.second);
     }
 }
 void AmmoTracker::getAllCartridgeNames(StringVector& names) const{
@@ -140,7 +140,7 @@ void AmmoTracker::getAllCartridgeNames(StringVector& names) const{
 
 
     for(const auto& pair : cartridges){
-        names.push_back(pair.second);
+        names.emplace_back(pair.second);
     }
 }
 void AmmoTracker::getAllManufacturerNames(StringVector& list) const{
@@ -148,7 +148,7 @@ void AmmoTracker::getAllManufacturerNames(StringVector& list) const{
         list.erase(list.begin(), list.end());
 
     for(const auto& pair : manufacturers){
-        list.push_back(pair.second);
+        list.emplace_back(pair.second);
     }
 }
 // MARK: ADD CART/MAN
@@ -228,7 +228,7 @@ bool AmmoTracker::writeAllCartridges() const{
     std::vector<std::string> rawCartridges;
 
     for(auto& c : cartridges){
-        rawCartridges.push_back(c.second);
+        rawCartridges.emplace_back(c.second);
     }
 
     return AmmoHelper::writeAllCartridges(fullPath, rawCartridges);
@@ -402,7 +402,7 @@ bool AmmoHelper::readCartridges (std::string path, StringVector& cartridgeNames)
 
 		obj.get_to(nameBuf);
 
-        cartridgeNames.push_back(nameBuf);
+        cartridgeNames.emplace_back(nameBuf);
 	}
 
     return true;
