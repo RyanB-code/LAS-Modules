@@ -2,28 +2,32 @@
 
 #include "Gun.h"
 #include "Ammo.h"
-#include "Time.h"
 
 #include <stdint.h>
 #include <string>
 #include <memory>
 #include <unordered_map>
 #include <array>
+#include <chrono>
+
+using ymd       = std::chrono::year_month_day;
+using timepoint = std::chrono::system_clock::time_point;
 
 namespace ShooterCentral{
-
-    // MARK: MATCH INFO
     class Event final {
     public:
         Event();
-        Event(std::string setName, std::string setLocation, std::string setEventType, std::string setNotes, Datestamp setDate);
+        Event(std::string setName, std::string setLocation, std::string setEventType, std::string setNotes, ymd setDate);
         ~Event();
 
-        std::string         getName()           const;
-        std::string         getNotes()          const;
-        std::string         getEventType()      const;
-        std::string         getLocation()       const;
-        const Datestamp&    getDatestamp()      const;
+        std::string getName()       const;
+        std::string getNotes()      const;
+        std::string getEventType()  const;
+        std::string getLocation()   const;
+        const ymd&  getDate()       const;
+        timepoint   getTimepoint()  const;
+        
+        std::string printDate()     const;
 
         bool    addGun          (Gun gun, TrackedAmmo ammoUsed);
         void    getAllGunsUsed  (std::vector<std::pair<Gun, TrackedAmmo>>& list) const;
@@ -31,12 +35,15 @@ namespace ShooterCentral{
 
         bool operator==(const Event& other) const;
     private:
-        std::string                                 name;
-        std::string                                 location;
-        std::string                                 eventType;
-        std::array<std::pair<Gun, TrackedAmmo>, 5>  gunsUsed;
-        std::string                                 notes;
-        Datestamp                                   date;
+        static constexpr int MAX_GUNS_PER_EVENT  { 5 };
+
+        std::string name;
+        std::string location;
+        std::string eventType;
+        std::string notes;
+        ymd         date;
+
+        std::array<std::pair<Gun, TrackedAmmo>, MAX_GUNS_PER_EVENT>  gunsUsed;
     };
     using EventPtr = std::shared_ptr<Event>;
 
@@ -52,7 +59,7 @@ namespace std{
 
             std::hash_combine(seed, event.getName());
             std::hash_combine(seed, event.getLocation());
-            std::hash_combine(seed, event.getDatestamp().printDate());
+            std::hash_combine(seed, event.printDate());
 
             return seed;
         }
@@ -114,7 +121,7 @@ namespace ShooterCentral{
         bool    writeAllLocations   (std::string path, const StringVector& locations);
         bool    readLocations       (std::string path, StringVector& locations);               // Clears vector before adding elements
 
-        std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
+        timepoint stringToTimepoint(const std::string& timeString);
     }
 
 }

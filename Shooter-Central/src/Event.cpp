@@ -4,10 +4,10 @@ using namespace ShooterCentral;
 
 
 // MARK: EVENT
-Event::Event() : name { "N/A"}, location {"N/A"}, eventType{"N/A"}, notes{"N/A"}, date {Datestamp{std::chrono::system_clock::now()}}{
+Event::Event() : name { "N/A"}, location {"N/A"}, eventType{"N/A"}, notes{"N/A"}, date {std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())}{
 
 }
-Event::Event(std::string setName, std::string setLocation, std::string setEventType, std::string setNotes, Datestamp setDate)
+Event::Event(std::string setName, std::string setLocation, std::string setEventType, std::string setNotes, ymd setDate)
     :   name        { setName },
         location    { setLocation },
         eventType   { setEventType },
@@ -31,11 +31,19 @@ std::string Event::getEventType() const{
 std::string Event::getLocation() const{
     return location;
 }
-const Datestamp& Event::getDatestamp() const{
+const ymd& Event::getDate() const{
     return date;
 }
+std::string Event::printDate() const{
+    return std::format("{:%Od %b %Y}", date);
+}
+timepoint Event::getTimepoint()  const{
+    return std::chrono::system_clock::time_point{std::chrono::sys_days{date}};
+}
+
+
 bool Event::addGun(Gun gun, TrackedAmmo ammoUsed){
-    uint8_t gunsInList { 0 };
+    auto gunsInList { 0 };
     for(const auto& [gunElm, ammoElm] : gunsUsed){
         if(gunElm.getName() != "N/A")
             ++gunsInList;
@@ -70,7 +78,7 @@ uint8_t Event::getNumGunsUsed() const{
 }
 
 bool Event::operator==(const Event& other) const{
-    if(this->name == other.getName() && this->location == other.getLocation() && this->date.printDate() == other.getDatestamp().printDate())
+    if(this->name == other.getName() && this->location == other.getLocation() && this->printDate() == other.printDate())
         return true;
 
     return false;
@@ -92,7 +100,7 @@ void ShooterCentral::to_json(LAS::json& j, const Event& event){
     }
 
     std::ostringstream timeBuf;
-    timeBuf << event.getDatestamp().getRawTime();
+    timeBuf << event.getTimepoint();
     
     // Make JSON
     j = json{
@@ -113,9 +121,9 @@ void ShooterCentral::from_json(const LAS::json& j, Event& event){
     j.at("notes").get_to(notesBuf);
     j.at("date").get_to(dateStringBuf);
 
-    Datestamp dateTimeBuf { EventHelper::stringToTimepoint(dateStringBuf)};
+    ymd dateBuf { std::chrono::floor<std::chrono::days>(EventHelper::stringToTimepoint(dateStringBuf)) };
 
-    Event eventBuf { nameBuf, locBuf, eventTypeBuf, notesBuf, dateTimeBuf};
+    Event eventBuf { nameBuf, locBuf, eventTypeBuf, notesBuf, dateBuf};
     
     nlohmann::json gunList;
 	j.at("gunsUsed").get_to(gunList);
@@ -209,8 +217,10 @@ bool EventTracker::readEvents(){
                 logger->log("Event object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
 		}
 		catch(std::exception& e){
-            logger->log("Failed to create Event object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
-            logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+            if(dirEntry.path().filename().string() != EVENT_TYPES_FILENAME && dirEntry.path().filename().string() != LOCATIONS_FILENAME){  // Ignore the known files
+                logger->log("Failed to create Event object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
+                logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+            }
 		}
 	}
     
