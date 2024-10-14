@@ -80,8 +80,7 @@ namespace ShooterCentral{
         void    getAllCartridgeNames    (StringVector& names) const;                                                // Clears vector before adding elements
         void    getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const;               // Clears vector before adding elements
         void    getAllAmmoByCartridge   (std::vector<TrackedAmmo>& list, const std::string& cartridgeName)   const; // Clears vector before adding elements, gives copies of ammo objects, adds if cartridge name is equal
-        void    getAllManufacturerNames (StringVector& list) const;                                                // Clears vector before adding elements
-
+        void    getAllManufacturerNames (StringVector& list) const;                                                 // Clears vector before adding elements
 
         bool    addCartridge            (const std::string& cartridge);
         bool    addManufacturer         (const std::string& manufacturer);
