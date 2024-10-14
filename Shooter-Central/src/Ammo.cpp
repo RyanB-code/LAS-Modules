@@ -62,6 +62,7 @@ bool AmmoTracker::addAmmoToStockpile (uint64_t amount, const AmmoType& ammoType)
 
     if(ammoStockpile.contains(ammoType)){
         addCartridge(ammoType.cartridge);           // Add to cartridges, does not matter return
+        addManufacturer(ammoType.manufacturer);
         return true;
     }
     else
