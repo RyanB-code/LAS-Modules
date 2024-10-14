@@ -88,7 +88,7 @@ namespace ShooterCentral{
 
         std::string saveDirectory;
 
-        static constexpr char* WEAPON_TYPES_FILENAME {"weaponTypes.json"};
+        static constexpr std::string_view WEAPON_TYPES_FILENAME {"WeaponTypes.json"};
 
         bool addGun(Gun& gun);
     };
