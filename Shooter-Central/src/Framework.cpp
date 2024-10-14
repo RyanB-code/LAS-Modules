@@ -145,6 +145,12 @@ bool Framework::setupEventTracker    (std::string directory){
     if(!eventTracker->readEvents())
         return false;
     
+    if(!eventTracker->readEventTypes())
+        return false;
+
+    if(!eventTracker->readLocations())
+        return false;
+    
     return true;
 }
 bool Framework::setupWindow(){
