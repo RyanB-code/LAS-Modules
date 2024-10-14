@@ -46,42 +46,6 @@ bool Framework::setup(LAS::Logging::LoggerPtr setLoggerPtr, const std::string& d
     logger->log("Setup sucessful", Tags{"ROUTINE", "SC"});
     return true;
 }
-bool Framework::addDrill(DrillPtr drill){
-     if(!drill)
-        return false;
-
-    std::string name { drill->name};
-
-    if(drills.contains(name))
-        return false;
-
-    return drills.try_emplace(name, drill).second;
-}
-bool Framework::removeDrill(const std::string& key){
-    if(!drills.contains(key))
-        return true;
-
-    drills.erase(key);
-    return !drills.contains(key); // Return the inverse of contain()
-}
-bool Framework::addEvent(EventPtr event){
-     if(!event)
-        return false;
-
-    std::string name { event->getName()};
-
-    if(events.contains(name))
-        return false;
-    
-    return events.try_emplace(name, event).second;
-}
-bool Framework::removeEvent(const std::string& key){
-    if(!events.contains(key))
-        return true;
-
-    events.erase(key);
-    return !events.contains(key); // Return the inverse of contain()
-}
 SCWindowPtr Framework::getWindow() const {
     return window;
 }
