@@ -97,7 +97,7 @@ void ShooterCentralWindow::drawArmoryQuickView() const{
     gunTracker->getAllGuns(gunList);
     gunTracker->getRoundsShotPerCartridge(roundsPerCartridge);
 
-    uint64_t roundsInLifetime;
+    uint64_t roundsInLifetime { 0 };
     for(const auto& gunElm : gunList)
         roundsInLifetime += gunElm.getRoundCount();
 
@@ -884,6 +884,11 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
 
     static bool invalidName { false }, invalidManufacturer { false }, invalidCartridge { false }, invalidGrainWeight { false };
     if(WindowHelper::centerButton("Add New Ammo Type", ImVec2{200,50})){
+        // Ensure buffers are valid
+         invalidName            = false;
+        invalidManufacturer     = false;
+        invalidCartridge        = false;
+        invalidGrainWeight      = false;
         // Verify data        
         if(selectedManufacturerIndex <= 0) 
             invalidManufacturer = true;
@@ -931,13 +936,8 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
-            invalidName = false;
-            invalidManufacturer = false;
-            invalidCartridge = false;
-            invalidGrainWeight = false;
+        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
             ImGui::CloseCurrentPopup();
-        }
         ImGui::EndPopup();
     }
 
@@ -1257,7 +1257,7 @@ void ShooterCentralWindow::drawEventsQuickView() const {
                         ImGui::TableSetColumnIndex(column);
                         switch( column ){
                             case 0:
-                                ImGui::Text("%s", event.getDatestamp().printDate().c_str());
+                                ImGui::Text("%s", event.printDate().c_str());
                                 break;
                             case 1:
                                 ImGui::Text("%s", event.getName().c_str());
@@ -1297,7 +1297,7 @@ void ShooterCentralWindow::drawEventsQuickView() const {
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event")){
-            ImGui::Text("Tab Stuff 2");
+            drawAddEvent(unsavedChanges);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event Type")){
@@ -1311,6 +1311,197 @@ void ShooterCentralWindow::drawEventsQuickView() const {
         ImGui::EndTabBar();
     }
 }
+// MARK: ADD EVENT
+void ShooterCentralWindow::drawAddEvent(bool& unsavedChanges) const{
+    if(!ImGui::BeginChild("Add Event")){
+        ImGui::EndChild();
+        return;
+    }
+    static char nameBuf[MAX_TEXT_INPUT_CHARS]   = "Enter Event Name";
+    static char notesBuf[MAX_TEXT_INPUT_CHARS]  = "";
+    static int  dayBuf  { 0 };
+    static int  monthBuf{ 0 };
+    static int  yearBuf { 2024 };
+
+    // Get char array of cartrigde names
+    static StringVector evenTypesVector {};
+    static StringVector locationsVector {};
+
+    eventTracker->getAllEventTypes(evenTypesVector);
+    eventTracker->getAllLocations(locationsVector);
+
+
+    // Create array for event types
+    const char* eventTypesArray[MAX_LIST_NUM];
+    eventTypesArray[0] = "CHOOSE EVENT TYPE";
+    int i1 { 1 };
+    for(auto& s : evenTypesVector){
+        if(i1 < (MAX_LIST_NUM + 1)){
+            eventTypesArray[i1] = s.c_str();
+        }
+        ++i1;
+    }
+
+    // Create array for locaitons
+    const char* locationsArray[MAX_LIST_NUM];
+    locationsArray[0] = "CHOOSE LOCATION";
+    int i2 { 1 };
+    for(auto& s : locationsVector){
+        if(i2 < (MAX_LIST_NUM + 1)){
+            locationsArray[i2] = s.c_str();
+        }
+        ++i2;
+    }
+
+    static size_t selectedLocationIndex     { 0 };
+    static size_t selectedEventTypeIndex    { 0 };
+
+    const char* eventTypePreview    { eventTypesArray   [selectedEventTypeIndex] };
+    const char* locationPreview     { locationsArray    [selectedLocationIndex] };
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Event to tracked events.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    ImGui::BulletText("To add a new Event Type, see the \"Add New Event Type\" tab.");
+    ImGui::BulletText("To add a new location, see the \"Add New Location\" tab.");
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Name");
+    ImGui::SameLine(100);
+    ImGui::InputText("##", nameBuf, MAX_TEXT_INPUT_CHARS);
+
+    ImGui::Text("Location");
+    ImGui::SameLine(100);
+    if (ImGui::BeginCombo("##Location Combo", locationPreview, ImGuiComboFlags_HeightSmall))
+    {
+        for (size_t chooseLocation { 0 }; chooseLocation < locationsVector.size()+1; ++chooseLocation) // Add one to account for default option
+        {
+            const bool isSelected = (selectedLocationIndex == chooseLocation);
+            if (ImGui::Selectable(locationsArray[chooseLocation], isSelected))
+                selectedLocationIndex = chooseLocation;
+
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Text("Event Type");
+    ImGui::SameLine(100);
+    if (ImGui::BeginCombo("##Event Type Combo", eventTypePreview, ImGuiComboFlags_HeightSmall))
+    {
+        for (size_t chooseEventType { 0 }; chooseEventType < evenTypesVector.size()+1; ++chooseEventType) // Add one to account for default option
+        {
+            const bool isSelected = (selectedEventTypeIndex == chooseEventType);
+            if (ImGui::Selectable(eventTypesArray[chooseEventType], isSelected))
+                selectedEventTypeIndex = chooseEventType;
+
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Text("Notes");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input Notes", notesBuf, MAX_TEXT_INPUT_CHARS);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(May be left blank)");
+
+    ImGui::Text("Date");
+    ImGui::SameLine(100);
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Input Day", &dayBuf);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Input Month", &monthBuf);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Input Year", &yearBuf);
+
+    // Grayed out details, approximate centers of text box did the trick
+    ImGui::SetCursorPosX(125);
+    ImGui::TextDisabled("(Day)");
+    ImGui::SameLine(0, 70);
+    ImGui::TextDisabled("(Month)");
+    ImGui::SameLine(0, 70);
+    ImGui::TextDisabled("(Year)");
+
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    static bool invalidName { false }, invalidLocation { false }, invalidEventType { false }, invalidDate{ false };
+    if(WindowHelper::centerButton("Add Event", ImVec2{200,50})){
+        // Reset flags 
+        invalidName         = false;
+        invalidLocation     = false;
+        invalidEventType    = false;
+        invalidDate         = false;
+
+        // Verify buffers
+        using namespace std::chrono;
+        std::string nameStr { nameBuf }, notesStr { notesBuf };
+        year_month_day dateBuf { year{yearBuf}, month{monthBuf}, day{dayBuf}};
+
+        if(selectedLocationIndex <= 0) 
+            invalidLocation = true;
+        if(selectedEventTypeIndex <= 0) 
+            invalidEventType = true;
+        if(nameStr == "Enter Event Name")
+            invalidName = true;
+        if(!dateBuf.ok())
+            invalidDate = true;
+
+        
+        if(!invalidName && !invalidLocation && !invalidEventType && !invalidDate){
+            std::string eventTypeStr { eventTypesArray[selectedEventTypeIndex]}, locationStr {locationsArray[selectedLocationIndex]};
+
+            Event eventBuf { nameStr, locationStr, eventTypeStr, notesStr, dateBuf};
+            eventTracker->addEvent(eventBuf);
+
+            // Reset buffers
+            strcpy(nameBuf,     "Enter Event Name");
+            strcpy(notesBuf,    "");
+
+            selectedLocationIndex   = 0;
+            selectedEventTypeIndex  = 0;
+            dayBuf      = 0;
+            monthBuf    = 0;
+            yearBuf     = 2024;
+
+            unsavedChanges = true; // Set flag
+
+        }
+        if(invalidName || invalidLocation || invalidEventType || invalidDate)
+            ImGui::OpenPopup("Event Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Event Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        WindowHelper::centerText("This Event could not be created.");
+
+        if(invalidName)
+            ImGui::BulletText("Invalid name");
+        if(invalidLocation)
+            ImGui::BulletText("Invalid location");
+        if(invalidEventType)
+            ImGui::BulletText("Invalid Event Type");
+        if(invalidDate)
+            ImGui::BulletText("Invalid date");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+}
+
 // MARK: ADD Event Type
 void ShooterCentralWindow::drawAddEventType (bool& unsavedChanges) const{
     static char eventTypeBuf[MAX_TEXT_INPUT_CHARS] = "New Event Type";

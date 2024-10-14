@@ -30,17 +30,22 @@ namespace ShooterCentral{
         void drawStockpileQuickView () const;
         void drawEventsQuickView    () const;
 
-        // Supplementary functions
+        // Supplementary functions 
+
+        // Armory
         void drawAddGun         (bool& unsavedChanges) const;
         void drawAddWeaponType  (bool& unsavedChanges) const;
 
+        // Stockpile
         void drawAddNewCartridge        (bool& unsavedChanges) const;
         void drawAddNewAmmoType         (bool& unsavedChanges) const;
         void drawAddNewManufacturer     (bool& unsavedChanges) const;
         void drawAddToExistingAmmoType  (bool& unsavedChanges) const;
 
+        // Event Tracker
         void drawAddEventType   (bool& unsavedChanges) const;
         void drawAddLocation    (bool& unsavedChanges) const;
+        void drawAddEvent       (bool& unsavedChanges) const;
 
 
         AmmoTrackerPtr  ammoTracker;
