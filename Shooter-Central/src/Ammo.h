@@ -107,8 +107,8 @@ namespace ShooterCentral{
         std::string             saveDirectory;
         LAS::Logging::LoggerPtr logger;
 
-        static constexpr char* CARTRIDGES_FILENAME    {"Cartridges.json"};
-        static constexpr char* MANUFACTURERS_FILENAME {"Manufacturers.json"};
+        static constexpr std::string_view CARTRIDGES_FILENAME    {"Cartridges.json"};
+        static constexpr std::string_view MANUFACTURERS_FILENAME {"Manufacturers.json"};
 
     };
 
