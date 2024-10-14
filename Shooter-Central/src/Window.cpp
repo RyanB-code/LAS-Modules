@@ -97,9 +97,9 @@ void ShooterCentralWindow::drawArmoryQuickView() const{
     gunTracker->getAllGuns(gunList);
     gunTracker->getRoundsShotPerCartridge(roundsPerCartridge);
 
-    int roundsInLifetime;
+    uint64_t roundsInLifetime;
     for(const auto& gunElm : gunList)
-        roundsInLifetime += int{gunElm.getRoundCount()};
+        roundsInLifetime += gunElm.getRoundCount();
 
 
     // HUD View measurements
@@ -123,7 +123,7 @@ void ShooterCentralWindow::drawArmoryQuickView() const{
     if(ImGui::BeginChild("Armory Quick Details", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
         ImGui::Text("Guns In Armory:       %ld", gunList.size()); 
-        ImGui::Text("Lifetime Round Count:  %d", roundsInLifetime);
+        ImGui::Text("Lifetime Round Count: %ld", roundsInLifetime);
         ImGui::Unindent(20);
     }
     ImGui::EndChild();
@@ -285,8 +285,8 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
         ++i2;
     }
 
-    static int selectedWTIndex { 0 };
-    static int selectedCartridgeIndex { 0 };
+    static size_t selectedWTIndex { 0 };
+    static size_t selectedCartridgeIndex { 0 };
 
     const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
     const char* wtComboPreview      { weaponTypeList    [selectedWTIndex] };
@@ -341,6 +341,11 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
 
     static bool invalidName { false }, invalidWeaponType { false }, invalidCartridge { false };
     if(WindowHelper::centerButton("Add New Gun", ImVec2{200,50})){
+        // Ensure flags are valid
+        invalidName         = false;
+        invalidWeaponType   = false;
+        invalidCartridge    = false;
+
         // Ensure it is not the default option
         std::string name { nameBuf };
         if(selectedWTIndex <= 0)
@@ -694,7 +699,7 @@ void ShooterCentralWindow::drawStockpileQuickView() const{
                                             ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
     )){
         if(ImGui::BeginTabItem("Add to Existing Ammo")){
-            ImGui::Text("Not finsished");
+            drawAddToExistingAmmoType(unsavedChanges);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Ammo Type")){
@@ -807,8 +812,8 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
         ++i2;
     }
 
-    static int selectedManufacturerIndex { 0 };
-    static int selectedCartridgeIndex { 0 };
+    static size_t selectedManufacturerIndex { 0 };
+    static size_t selectedCartridgeIndex { 0 };
 
     const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
     const char* manComboPreview     { manufacturerList  [selectedManufacturerIndex] };
@@ -926,7 +931,7 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
 
     ImGui::EndChild();
 }
-// MARK: ADD NEW MANUFACTURER
+// MARK: ADD MANUFACTURER
 void ShooterCentralWindow::drawAddNewManufacturer (bool& unsavedChanges) const{
     static char manBuf[MAX_TEXT_INPUT_CHARS] = "New Manufacturer";
 
@@ -981,6 +986,151 @@ void ShooterCentralWindow::drawAddNewManufacturer (bool& unsavedChanges) const{
     }
 
     ImGui::EndChild();
+}
+// MARK: ADD TO AMMO TYPE
+void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) const{
+    if(!ImGui::BeginChild("Add To Existing Ammo Type")){
+        ImGui::EndChild();
+        return;
+    }
+
+    static std::vector<TrackedAmmo> ammoListBuf;
+    ammoTracker->getAllAmmo(ammoListBuf);
+
+    const char* ammoList[MAX_LIST_NUM];
+    ammoList[0] = "CHOOSE AMMO TYPE";
+    int i { 1 };
+    for(auto& trackedAmmo : ammoListBuf){
+        if(i < (MAX_LIST_NUM + 1)){
+            ammoList[i] = trackedAmmo.ammoType.name.c_str();
+        }
+        ++i;
+    }
+
+    static int amountToAdd              { 0 };
+    static size_t selectedAmmoNameIndex    { 0 };
+    const char* ammoNameComboPreview    { ammoList[selectedAmmoNameIndex] };
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add the amount to an existing Ammo Type in the stockpile.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // Calculate center button add now (since cannot do inside child since middle will be skewed)
+    float fullWindowWidth { ImGui::GetWindowSize().x };
+    
+    TrackedAmmo emptyAmmo {};
+    TrackedAmmo& selectedAmmo { emptyAmmo };
+
+    if(selectedAmmoNameIndex > 0)
+        selectedAmmo = ammoListBuf.at(selectedAmmoNameIndex -1 );
+    else
+        selectedAmmo = emptyAmmo;
+
+
+    if(ImGui::BeginChild("Enter Info", ImVec2{ImGui::GetContentRegionAvail().x-300, ImGui::GetContentRegionAvail().y})){
+        ImGui::Text("Ammo Name");
+        ImGui::SameLine(100);
+        if (ImGui::BeginCombo("##Ammo Name Combo", ammoNameComboPreview, ImGuiComboFlags_HeightSmall))
+        {
+            for (size_t chooseName { 0 }; chooseName < ammoListBuf.size()+1; ++chooseName) // Add one to account for default option
+            {
+                const bool isSelected = (selectedAmmoNameIndex == chooseName);
+                if (ImGui::Selectable(ammoList[chooseName], isSelected))
+                    selectedAmmoNameIndex = chooseName;
+
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::Text("Amount");
+        ImGui::SameLine(100);
+        ImGui::InputInt("##Input Amount", &amountToAdd, 1, 50);
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::SetCursorPosX((fullWindowWidth - 200) * 0.5f); // 200 is Add button width
+        
+        static bool amountRejected { false }, ammoRejected { false };
+        if(ImGui::Button("Add", ImVec2{200,50})){
+            // Ensure buffers are valid before manipulating
+            amountRejected = false;
+            ammoRejected = false;
+
+            if(amountToAdd <= 0)
+                amountRejected = true;
+
+            if(selectedAmmoNameIndex <= 0)
+                ammoRejected = true;
+
+            if(!ammoRejected && !amountRejected){
+                ammoTracker->addAmmoToStockpile(amountToAdd, selectedAmmo.ammoType);
+                selectedAmmoNameIndex = 0;
+                amountToAdd = 0;
+                unsavedChanges = true;              // Set flag
+            }
+            else
+                ImGui::OpenPopup("Amount Not Added");
+        }
+
+        if(ImGui::BeginPopupModal("Amount Not Added", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+            WindowHelper::centerText("The amount could not be added.");
+
+            if(amountRejected)
+                ImGui::BulletText("Invalid amount");
+            if(ammoRejected)
+                ImGui::BulletText("Invalid Ammo Type");
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            
+            if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+                ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
+    }
+    ImGui::EndChild();
+    ImGui::SameLine();
+
+
+    if(ImGui::BeginChild("Selected Ammo Detailed Information", ImGui::GetContentRegionAvail())){
+
+        WindowHelper::centerText("Detailed Ammo Information");
+        ImGui::Separator();
+        if(selectedAmmoNameIndex > 0){
+            ImGui::Text("Name: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%s", selectedAmmo.ammoType.name.c_str());
+
+            ImGui::Text("Manufacturer: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%s", selectedAmmo.ammoType.manufacturer.c_str());
+
+            ImGui::Text("Cartridge: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%s", selectedAmmo.ammoType.cartridge.c_str());
+
+            ImGui::Text("Grain Weight: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%d", int{selectedAmmo.ammoType.grainWeight});
+
+            ImGui::Text("Amount On Hand: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%ld", selectedAmmo.amount);
+        }
+        else
+            WindowHelper::centerText("Select Ammo Type");
+
+    
+    }
+    ImGui::EndChild();
+
+    ImGui::EndChild();
+
 }
 
 // MARK: QUICK VIEW EVENTS
