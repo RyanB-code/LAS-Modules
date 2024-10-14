@@ -34,9 +34,10 @@ namespace ShooterCentral{
         void drawAddGun         (bool& unsavedChanges) const;
         void drawAddWeaponType  (bool& unsavedChanges) const;
 
-        void drawAddNewCartridge    (bool& unsavedChanges) const;
-        void drawAddNewAmmoType     (bool& unsavedChanges) const;
-        void drawAddNewManufacturer (bool& unsavedChanges) const;
+        void drawAddNewCartridge        (bool& unsavedChanges) const;
+        void drawAddNewAmmoType         (bool& unsavedChanges) const;
+        void drawAddNewManufacturer     (bool& unsavedChanges) const;
+        void drawAddToExistingAmmoType  (bool& unsavedChanges) const;
 
 
         AmmoTrackerPtr  ammoTracker;
