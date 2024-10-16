@@ -6,7 +6,7 @@
 
 #include <LAS/Window.h>
 
-#include <iostream>
+#include <iostream>     // FOR TESTING
 
 namespace ShooterCentral{
     class ShooterCentralWindow : public LAS::Windowing::Window {
@@ -43,9 +43,11 @@ namespace ShooterCentral{
         void drawAddToExistingAmmoType  (bool& unsavedChanges) const;
 
         // Event Tracker
-        void drawAddEventType   (bool& unsavedChanges) const;
-        void drawAddLocation    (bool& unsavedChanges) const;
-        void drawAddEvent       (bool& unsavedChanges) const;
+        void drawAddEventType       (bool& unsavedChanges) const;
+        void drawAddLocation        (bool& unsavedChanges) const;
+        void drawAddEvent           (bool& unsavedChanges) const;
+        void drawEventActions       (bool& unsavedChanges) const;
+        void drawEventGunTable      (std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) const;
 
 
         AmmoTrackerPtr  ammoTracker;
