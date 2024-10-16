@@ -4,7 +4,13 @@ using namespace ShooterCentral;
 
 
 // MARK: EVENT
-Event::Event() : name { "N/A"}, location {"N/A"}, eventType{"N/A"}, notes{"N/A"}, date {std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())}{
+Event::Event() 
+    :   name { "N/A"}, \
+        location {"N/A"},  
+        eventType{"N/A"},  
+        notes{"N/A"}, 
+        date {std::chrono::sys_days{std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{0}, std::chrono::day{0}}}}
+{
 
 }
 Event::Event(std::string setName, std::string setLocation, std::string setEventType, std::string setNotes, ymd setDate)
@@ -78,7 +84,7 @@ uint8_t Event::getNumGunsUsed() const{
 }
 
 bool Event::operator==(const Event& other) const{
-    if(this->name == other.getName() && this->location == other.getLocation() && this->printDate() == other.printDate())
+    if(this->getName() == other.getName() && this->getLocation() == other.getLocation() && this->printDate() == other.printDate())
         return true;
 
     return false;
@@ -183,7 +189,7 @@ void EventTracker::getAllEvents(std::vector<Event>& list) const {
         list.erase(list.begin(), list.end());
 
     for(const auto& [key, event] : events)
-        list.push_back(*event);
+        list.emplace_back(*event);
 }
 // MARK: R/W EVENTS
 bool EventTracker::writeAllEvents () const{
