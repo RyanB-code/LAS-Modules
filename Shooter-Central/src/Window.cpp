@@ -1142,8 +1142,8 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
 // MARK: QUICK VIEW EVENTS
 void ShooterCentralWindow::drawEventsQuickView() const {
     static bool unsavedChanges { false };
-    static std::vector<Event> eventList;
-    std::vector<Event>::iterator itr;
+    static std::vector<EventPtr> eventList;
+    std::vector<EventPtr>::iterator itr;
 
     eventTracker->getAllEvents(eventList);
 
@@ -1224,6 +1224,7 @@ void ShooterCentralWindow::drawEventsQuickView() const {
     }
     ImGui::EndChild();
 
+    static EventPtr selectedEvent { nullptr }; 
 
     if(ImGui::BeginChild("Event Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
         if(ImGui::BeginTable("Event Table", 5, 
@@ -1245,12 +1246,23 @@ void ShooterCentralWindow::drawEventsQuickView() const {
                     ImGui::TableNextRow();
                     for (int column{0}; column < 4; ++column)
                     {
-                        const Event& event {*itr};
+                        const Event& event {**itr};
+                        bool isEventSelected { false };
 
+                        if(selectedEvent){
+                            if(event == *selectedEvent){
+                                isEventSelected = true;
+                            }
+                        }
+                    
                         ImGui::TableSetColumnIndex(column);
                         switch( column ){
                             case 0:
-                                ImGui::Text("%s", event.printDate().c_str());
+                                ImGui::Selectable(event.printDate().c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                                if(isEventSelected)
+                                    selectedEvent = *itr;
+
                                 break;
                             case 1:
                                 ImGui::Text("%s", event.getName().c_str());
@@ -1285,8 +1297,8 @@ void ShooterCentralWindow::drawEventsQuickView() const {
     if(ImGui::BeginTabBar("Event Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
                                             ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
     )){
-        if(ImGui::BeginTabItem("View/Edit Event")){
-            drawEventActions(unsavedChanges);
+        if(ImGui::BeginTabItem("View Event")){
+            drawViewEvent(selectedEvent);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event")){
@@ -1304,114 +1316,63 @@ void ShooterCentralWindow::drawEventsQuickView() const {
         ImGui::EndTabBar();
     }
 }
-// MARK: VIEW, EDIT, REMOVE EVENT
-void ShooterCentralWindow::drawEventActions(bool& unsavedChanges) const{
-    if(!ImGui::BeginChild("Event Actions")){
+// MARK: VIEW EVENT
+void ShooterCentralWindow::drawViewEvent(EventPtr selectedEvent) const{
+    if(!ImGui::BeginChild("View Event")){
         ImGui::EndChild();
         return;
     }
     static bool showAmmoUsed { false };
-    static std::vector<Event> eventsVector;
-    eventTracker->getAllEvents(eventsVector);
 
-    // Create array for event names
-    const char* eventNamesArray[MAX_LIST_NUM];
-    eventNamesArray[0] = "Select An Event";
-    int i { 1 };
-    for(auto& e : eventsVector){
-        if(i < (MAX_LIST_NUM + 1)){
-            eventNamesArray[i] =  e.getName().c_str();
-        }
-        ++i;
-    }
+    if(ImGui::BeginChild("Event Options", ImVec2{ImGui::GetContentRegionAvail().x/2, 50})){
+        ImGui::Spacing();
+        ImGui::Spacing();
+        ImGui::Spacing();
+        ImGui::Spacing();
+        WindowHelper::centerText("Show Ammo Used");
+        ImGui::SameLine();
+        ImGui::Checkbox("##Show Ammo Used Checkbox", &showAmmoUsed);
 
-    static size_t   selectedEventIndex  { 0 };
-    const char*     eventNamePreview    { eventNamesArray[selectedEventIndex] };
-
-    static Event  emptyEvent    { };
-    static Event& selectedEvent { emptyEvent };
-
-    if(selectedEventIndex > 0)
-        selectedEvent = eventsVector.at(selectedEventIndex - 1 );
-    else
-        selectedEvent = emptyEvent;
-
-    if(ImGui::BeginChild("Event Directions", ImVec2{ImGui::GetContentRegionAvail().x/2, 50})){
-        ImGui::Text("Directions");
-        ImGui::BulletText("Select an Event to perform any action");
-        ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
     }
     ImGui::EndChild();
     ImGui::SameLine();
 
-    // Does not divide x by 2 since the region avail (since using SameLine() ) is shortened
-    if(ImGui::BeginChild("Event Options Tab", ImVec2{ImGui::GetContentRegionAvail().x, 50})){
-        WindowHelper::centerText("Show Ammo Used");
-        ImGui::SameLine(0, 20);
-        ImGui::Checkbox("##Show Ammo Used", &showAmmoUsed);
+    // Detailed Event Information
+    if(ImGui::BeginChild("Selected Event Detailed Information", ImVec2{ImGui::GetContentRegionAvail().x, 140})){
+        WindowHelper::centerText("Event Information");
+        ImGui::Separator();
+        if(selectedEvent){
+            ImGui::Text("Name: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%s", selectedEvent->getName().c_str());
+
+            ImGui::Text("Location: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%s", selectedEvent->getLocation().c_str());
+
+            ImGui::Text("Event Type: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%s", selectedEvent->getEventType().c_str());
+
+            ImGui::Text("Notes: ");
+            ImGui::SameLine(150);
+            ImGui::Text("%s", selectedEvent->getNotes().c_str());
+        }
+        else
+            WindowHelper::centerText("Select Event");
     }
     ImGui::EndChild();
 
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if(ImGui::BeginChild("Select Event for Actions", ImVec2{ImGui::GetContentRegionAvail().x, 35})){
-        ImGui::Text("Event");
-        ImGui::SameLine(100);
-        if (ImGui::BeginCombo("##Event Name Combo Choice", eventNamePreview, ImGuiComboFlags_HeightSmall)){
-            for (size_t chooseEvent { 0 }; chooseEvent < eventsVector.size()+1; ++chooseEvent){ // Add one to account for default option
-                const bool isSelected = (selectedEventIndex == chooseEvent);
-                if (ImGui::Selectable(eventNamesArray[chooseEvent], isSelected))
-                    selectedEventIndex = chooseEvent;
-
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
+    // Table To Show Event Information
+    if(ImGui::BeginChild("Selected Event Detailed Gun Information", ImVec2{ ImGui::GetContentRegionAvail().x, 140})){
+        if(selectedEvent){
+            static std::vector<std::pair<Gun, TrackedAmmo>> eventGunsUsed;
+            selectedEvent->getAllGunsUsed(eventGunsUsed);
+            drawEventGunTable(eventGunsUsed, showAmmoUsed);
         }
     }
     ImGui::EndChild();
 
-    if(selectedEventIndex > 0){
-        float widthOfDetailedInfo { ImGui::GetContentRegionAvail().x - (ImGui::GetContentRegionAvail().x - 300) };
-
-        if(ImGui::BeginChild("Selected Event Detailed Information", ImVec2{widthOfDetailedInfo, 140})){
-            WindowHelper::centerText("Event Information");
-            ImGui::Separator();
-            if(selectedEventIndex > 0){
-                ImGui::Text("Name: ");
-                ImGui::SameLine(150);
-                ImGui::Text("%s", selectedEvent.getName().c_str());
-
-                ImGui::Text("Location: ");
-                ImGui::SameLine(150);
-                ImGui::Text("%s", selectedEvent.getLocation().c_str());
-
-                ImGui::Text("Event Type: ");
-                ImGui::SameLine(150);
-                ImGui::Text("%s", selectedEvent.getEventType().c_str());
-
-                ImGui::Text("Notes: ");
-                ImGui::SameLine(150);
-                ImGui::Text("%s", selectedEvent.getNotes().c_str());
-            }
-            else
-                WindowHelper::centerText("Select Event");
-        }
-        ImGui::EndChild();
-
-        // SAmeline for edit, remove buttons
-
-
-        // ADD HERE
-
-        if(ImGui::BeginChild("Selected Event Detailed Gun Information", ImVec2{ ImGui::GetContentRegionAvail().x, 140})){
-                static std::vector<std::pair<Gun, TrackedAmmo>> eventGunsUsed;
-                selectedEvent.getAllGunsUsed(eventGunsUsed);
-                drawEventGunTable(eventGunsUsed, showAmmoUsed);
-        }
-        ImGui::EndChild();
-    }
 
     ImGui::EndChild();  // Ends tab child window
 }
@@ -1510,11 +1471,16 @@ void ShooterCentralWindow::drawAddEvent(bool& unsavedChanges) const{
     static int  yearBuf { 2024 };
 
     // Get char array of cartrigde names
-    static StringVector evenTypesVector {};
-    static StringVector locationsVector {};
+    static StringVector                 evenTypesVector {};
+    static StringVector                 locationsVector {};
+    static std::vector<Gun>             gunList;
+    static std::vector<TrackedAmmo>     ammoList;
 
     eventTracker->getAllEventTypes(evenTypesVector);
     eventTracker->getAllLocations(locationsVector);
+    gunTracker->getAllGuns(gunList);
+    ammoTracker->getAllAmmo(ammoList);
+
 
 
     // Create array for event types
@@ -1547,6 +1513,7 @@ void ShooterCentralWindow::drawAddEvent(bool& unsavedChanges) const{
 
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Event to tracked events.");
+    ImGui::BulletText("Select a Gun and Ammo from the table to add to the event");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
     ImGui::BulletText("To add a new Event Type, see the \"Add New Event Type\" tab.");
     ImGui::BulletText("To add a new location, see the \"Add New Location\" tab.");
