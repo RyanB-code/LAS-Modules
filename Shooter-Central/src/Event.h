@@ -34,6 +34,8 @@ namespace ShooterCentral{
         uint8_t getNumGunsUsed  () const;
 
         bool operator==(const Event& other) const;
+        bool operator!=(const Event& other) const;
+
     private:
         static constexpr int MAX_GUNS_PER_EVENT  { 5 };
 
@@ -78,8 +80,9 @@ namespace ShooterCentral{
 
         uint64_t    getTotalEvents  () const;
 
-        bool addEvent       (Event& event);
-        void getAllEvents   (std::vector<Event>& list)    const;  // Clears vector before adding elements
+        bool addEvent           (Event& event);
+        void getAllEvents       (std::vector<EventPtr>& list)       const;  // Clears vector before adding elements
+        void getAllEventNames   (StringVector& list)                const;  // Clears vector before adding elements
 
         bool writeAllEvents () const;
         bool readEvents     ();
