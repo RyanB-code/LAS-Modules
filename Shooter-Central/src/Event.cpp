@@ -89,6 +89,12 @@ bool Event::operator==(const Event& other) const{
 
     return false;
 }
+bool Event::operator!=(const Event& other) const{
+    if(this->getName() != other.getName() || this->getLocation() != other.getLocation() || this->printDate() == other.printDate())
+        return true;
+
+    return false;
+}
 // MARK: TO/FROM JSON
 void ShooterCentral::to_json(LAS::json& j, const Event& event){
     using LAS::json;
@@ -172,7 +178,6 @@ bool EventTracker::addEvent (Event& event){
     if(events.contains(event))
         return false;
 
-
     events.try_emplace(event, std::make_shared<Event>(event));
 
     if(events.contains(event)){
@@ -184,12 +189,19 @@ bool EventTracker::addEvent (Event& event){
         return false;
 }
 
-void EventTracker::getAllEvents(std::vector<Event>& list) const {
+void EventTracker::getAllEvents(std::vector<EventPtr>& list) const {
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
     for(const auto& [key, event] : events)
-        list.emplace_back(*event);
+        list.emplace_back(event);
+}
+void EventTracker::getAllEventNames(StringVector& list) const {
+    if(!list.empty())
+        list.erase(list.begin(), list.end());
+
+    for(const auto& [key, event] : events)
+        list.emplace_back(event->getName());
 }
 // MARK: R/W EVENTS
 bool EventTracker::writeAllEvents () const{
@@ -241,6 +253,7 @@ void EventTracker::getAllEventTypes(StringVector& list) const{
         list.emplace_back(value);
     }
 }
+
 // MARK: ADD EVENT TYPE
 bool EventTracker::addEventType (const std::string& type){
     if(eventTypes.contains(type))
