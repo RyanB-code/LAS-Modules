@@ -756,7 +756,7 @@ void ShooterCentralWindow::drawAddNewCartridge (bool& unsavedChanges) const{
         std::string cartridgeName { cartridgeBuf };
         bool nameRejected { false };
         for(const auto& c : cartridgeName){
-            if(!isalnum(c) && c != ' '){
+            if(!isalnum(c) && c != ' ' && c != '.'){
                 nameRejected = true;
                 break;
             }

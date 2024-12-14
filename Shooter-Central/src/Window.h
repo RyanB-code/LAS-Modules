@@ -46,7 +46,7 @@ namespace ShooterCentral{
         void drawAddEventType       (bool& unsavedChanges) const;
         void drawAddLocation        (bool& unsavedChanges) const;
         void drawAddEvent           (bool& unsavedChanges) const;
-        void drawEventActions       (bool& unsavedChanges) const;
+        void drawViewEvent          (EventPtr selectedEvent) const;
         void drawEventGunTable      (std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) const;
 
 
