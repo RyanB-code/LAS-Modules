@@ -1786,4 +1786,147 @@ bool WindowHelper::centerButton(std::string text, ImVec2 buttonSize){
     ImGui::SetCursorPosX((windowWidth - buttonSize.x) * 0.5f);
     return ImGui::Button(text.c_str(), buttonSize);
 }
+void WindowHelper::drawSelectGunTable(const std::vector<GunPtr>& gunList, GunPtr& selectedGun){
+
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-4, 200};
+    if(tableSize.x < 400){
+        tableSize = ImVec2{400, 200};
+    }
+
+    int row { 0 };
+
+    if(ImGui::BeginChild("Gun Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
+        if(ImGui::BeginTable("Gun Table", 3, 
+                                    ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                    ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize
+                            ))
+        {
+            ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None);
+            ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
+
+            ImGui::TableHeadersRow();            
+
+            for(auto itr { gunList.begin() }; itr != gunList.end(); ++itr){
+                const Gun& gun {**itr};           
+                bool isGunSelected { false };
+                
+                if(selectedGun){
+                    if(gun == *selectedGun){
+                        isGunSelected = true;
+                    }
+                }
+
+                ImGui::TableNextRow();
+                for (int column{0}; column < 3; ++column)
+                {
+                    ImGui::TableSetColumnIndex(column);
+
+                    std::string imGuiID { gun.getWeaponType()};
+                    imGuiID += "##";
+                    imGuiID += std::to_string(row);
+
+                    switch( column ){
+                        case 0:
+                            ImGui::Selectable(imGuiID.c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                            if(isGunSelected)
+                                selectedGun = *itr;
+
+                            break;
+                        case 1:
+                            ImGui::Text("%s", gun.getCartridge().c_str());
+                            break;
+                        case 2:
+                            ImGui::Text("%s", gun.getName().c_str());
+                            break;
+                        default:
+                            ImGui::Text("Broken table");
+                            break;
+                    }
+                }
+                ++row;
+            }
+            ImGui::EndTable();
+        }
+    }
+    ImGui::EndChild(); // End table window
+    ImGui::Spacing();
+}
+
+void WindowHelper::drawSelectAmmoTable(const std::vector<TrackedAmmoPtr>& ammoList, TrackedAmmo& selectedAmmo){
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-4, 200};
+    if(tableSize.x < 400){
+        tableSize = ImVec2{400, 200};
+    }
+
+    int row { 0 };
+    if(ImGui::BeginChild("Ammo Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
+
+        // Select Ammo Table
+        if(ImGui::BeginTable("Ammo Table", 4, 
+                                    ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                    ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize
+                            ))
+        {
+            ImGui::TableSetupColumn("Cartridge",    0);
+            ImGui::TableSetupColumn("Name",         0);
+            ImGui::TableSetupColumn("Manufacturer", 0);
+            ImGui::TableSetupColumn("Grain Weight", 0);
+            ImGui::TableHeadersRow();            
+
+             for(auto itr { ammoList.begin() }; itr != ammoList.end(); ++itr){
+                const AmmoType& ammoType {itr->get()->ammoType};           
+                bool isAmmoSelected { false };
+                
+                if(ammoType == selectedAmmo.ammoType)
+                    isAmmoSelected = true;
+
+                ImGui::TableNextRow();
+                for (int column{0}; column < 4; ++column)
+                {
+                    ImGui::TableSetColumnIndex(column);
+
+                    std::string imGuiID { ammoType.cartridge};
+                    imGuiID += "##";
+                    imGuiID += std::to_string(row);
+
+                    switch( column ){
+                        case 0:
+                            ImGui::Selectable(imGuiID.c_str(), &isAmmoSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                            if(isAmmoSelected)
+                                selectedAmmo.ammoType = ammoType;
+
+                            break;
+                        case 1:
+                            ImGui::Text("%s", ammoType.name.c_str());
+                            break;
+                        case 2:
+                            ImGui::Text("%s", ammoType.manufacturer.c_str());
+                            break;
+                        case 3:
+                            ImGui::Text("%d", int{ammoType.grainWeight});
+                            break;
+                        default:
+                            ImGui::Text("Broken table");
+                            break;
+                    }
+                }
+                ++row;
+            }
+            ImGui::EndTable();
+        }
+    }
+    ImGui::EndChild(); // End table window
+    ImGui::Spacing();
+
+    // Select amount of ammo used
+    ImGui::Text("Amount Used");
+    ImGui::SameLine();
+    ImGui::InputInt("##Amount of Ammo Used", &selectedAmmo.amount);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+}
 
