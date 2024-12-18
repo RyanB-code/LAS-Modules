@@ -59,8 +59,10 @@ namespace ShooterCentral{
     using SCWindowPtr = std::shared_ptr<ShooterCentralWindow>;
 
     namespace WindowHelper{
-        void centerText(std::string text);
-        bool centerButton(std::string text, ImVec2 buttonSize);
+        void    centerText              (std::string text);
+        bool    centerButton            (std::string text, ImVec2 buttonSize);
+        void    drawSelectGunTable      (const std::vector<GunPtr>& gunList, GunPtr& selectedGun);
+        void    drawSelectAmmoTable     (const std::vector<TrackedAmmoPtr>& ammoList, TrackedAmmo& selectedAmmo);
     }
 }
 
