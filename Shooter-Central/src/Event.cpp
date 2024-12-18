@@ -55,7 +55,7 @@ bool Event::addGun(Gun gun, TrackedAmmo ammoUsed){
             ++gunsInList;
     }
 
-    if(gunsInList >= gunsUsed.max_size())
+    if(size_t(gunsInList) >= gunsUsed.max_size())
         return false;
 
     // Add gun
