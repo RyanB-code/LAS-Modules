@@ -16,10 +16,10 @@
 namespace ShooterCentral{
 
     struct AmmoType {
-        std::string     name;
-        std::string     manufacturer;
-        std::string     cartridge;     
-        uint8_t         grainWeight;
+        std::string     name            { };
+        std::string     manufacturer    { };
+        std::string     cartridge       { };     
+        uint8_t         grainWeight     { 0 };
 
         bool operator==(const AmmoType& other) const;
     };
@@ -30,8 +30,8 @@ namespace ShooterCentral{
     using AmmoTypePtr   = std::shared_ptr<AmmoType>;
 
     struct TrackedAmmo {
-        AmmoType    ammoType;
-        uint64_t    amount;
+        AmmoType    ammoType    { };
+        int         amount      { 0 };
     };
 
     void to_json    (LAS::json& j, const TrackedAmmo& ammo);
@@ -74,8 +74,8 @@ namespace ShooterCentral{
         bool    removeAmmoFromStockpile     (uint64_t amount,   const AmmoType& ammoType);
         void    removeAllAmmoFromStockpile  ();
 
-        void    getAllAmmoNames         (StringVector& names)               const;          // Clears vector before adding elements
-        void    getAllAmmo              (std::vector<TrackedAmmo>& list)    const;          // Clears vector before adding elements, only gives you copies of Ammo objects
+        void    getAllAmmoNames         (StringVector& names)                   const;              // Clears vector before adding elements
+        void    getAllAmmo              (std::vector<TrackedAmmoPtr>& list)     const;          // Clears vector before adding elements, only gives you copies of Ammo objects
 
         void    getAllCartridgeNames    (StringVector& names) const;                                                // Clears vector before adding elements
         void    getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const;               // Clears vector before adding elements

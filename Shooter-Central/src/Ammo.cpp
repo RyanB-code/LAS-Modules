@@ -98,12 +98,12 @@ void AmmoTracker::getAllAmmoNames(StringVector& names) const{
         names.emplace_back(ammo.second->ammoType.name);
     }
 }
-void AmmoTracker::getAllAmmo (std::vector<TrackedAmmo>& list)   const{
+void AmmoTracker::getAllAmmo (std::vector<TrackedAmmoPtr>& list)   const{
      if(!list.empty())
         list.erase(list.begin(), list.end());
 
     for(const auto& [key, ammo] : ammoStockpile){
-        list.emplace_back(*ammo);
+        list.emplace_back(ammo);
     }
 }
 void AmmoTracker::getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const{
