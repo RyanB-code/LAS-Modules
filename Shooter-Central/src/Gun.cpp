@@ -154,7 +154,7 @@ void    GunTracker::getRoundsShotPerCartridge(std::unordered_map<std::string, ui
 uint64_t GunTracker::getGunTotal() const{
     return guns.size();
 }
-void GunTracker::getAllGuns(std::vector<GunPtr>& list) const{
+void GunTracker::getAllGuns(std::vector<ConstGunPtr>& list) const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
 

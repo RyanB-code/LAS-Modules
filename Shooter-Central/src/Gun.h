@@ -54,7 +54,8 @@ namespace std{
 
 namespace ShooterCentral{
 
-    using GunPtr = std::shared_ptr<Gun>;
+    using GunPtr        = std::shared_ptr<Gun>;
+    using ConstGunPtr   = std::shared_ptr<const Gun>;
 
     class GunTracker{
     public:
@@ -69,8 +70,8 @@ namespace ShooterCentral{
 
         void    getRoundsShotPerCartridge   (std::unordered_map<std::string, uint64_t>& list) const;
 
-        uint64_t    getGunTotal ()                          const;
-        void        getAllGuns  (std::vector<GunPtr>& list)    const;      // Clears vector before adding elements 
+        uint64_t    getGunTotal () const;
+        void        getAllGuns  (std::vector<ConstGunPtr>& list) const;      // Clears vector before adding elements 
 
         void    getAllWeaponTypeNames   (StringVector& names) const;   // Clears vector before adding elements
         bool    addWeaponType           (const std::string& type);

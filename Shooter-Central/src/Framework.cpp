@@ -125,7 +125,7 @@ bool Framework::setupGunTracker    (std::string directory){
         return false;
 
     // Add gun cartridges to ammo tracker
-    std::vector<GunPtr> gunList;
+    std::vector<ConstGunPtr> gunList;
     gunTracker->getAllGuns(gunList);
 
     StringVector cartridges;
