@@ -35,7 +35,7 @@ std::string Gun::getWeaponType() const{
 std::string Gun::getCartridge () const{
     return cartridge;
 }
-bool Gun::addToRoundCount(uint64_t amount, const AmmoType& ammoType){
+bool Gun::addToRoundCount(int amount, const AmmoType& ammoType){
     if(!ammoTracker.contains(ammoType))
         return ammoTracker.try_emplace(ammoType, std::make_shared<TrackedAmmo>(TrackedAmmo{ammoType, amount})).second;
     

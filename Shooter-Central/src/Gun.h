@@ -20,7 +20,7 @@ namespace ShooterCentral{
         std::string getWeaponType   () const;
         std::string getCartridge    () const;
 
-        bool addToRoundCount (uint64_t amount, const AmmoType& ammoType);
+        bool addToRoundCount (int amount, const AmmoType& ammoType);
 
         void getAllAmmoUsed (std::vector<TrackedAmmo>& ammoUsed) const; // Clears vector before adding elements
 
