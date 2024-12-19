@@ -20,15 +20,23 @@ namespace ShooterCentral{
         bool setGunTracker      (GunTrackerPtr setGunTracker);
         bool setEventTracker    (EventTrackerPtr setEventTracker);
     private:
+        AmmoTrackerPtr  ammoTracker;
+        GunTrackerPtr   gunTracker;
+        EventTrackerPtr eventTracker;
 
-        static constexpr int MAX_LIST_NUM           { 10 };
-        static constexpr int MAX_TEXT_INPUT_CHARS   { 32 };
+        static constexpr int MAX_LIST_NUM               { 10 };
+        static constexpr int MAX_TEXT_INPUT_CHARS       { 32 };
+        static constexpr int MAX_TEXT_INPUT_CHARS_NOTES { 256 };
 
-        void drawHome       (ImVec2 windowSize)  const;
+        bool showArmory { true }, showStockpile { true }, showEvents{ true };
 
-        void drawArmoryQuickView    () const;
-        void drawStockpileQuickView () const;
-        void drawEventsQuickView    () const;
+        bool unsavedChanges_Armory { false }, unsavedChanges_Stockpile { false }, unsavedChanges_Events { false };
+
+        void drawHome       (ImVec2 windowSize);
+
+        void drawArmoryUI   (const std::vector<ConstGunPtr>& gunList, const std::unordered_map<std::string, uint64_t>& roundsPerCartridge);
+        void drawStockpile () const;
+        void drawEvents    () const;
 
         // Supplementary functions 
 
@@ -49,20 +57,20 @@ namespace ShooterCentral{
         void drawViewEvent          (EventPtr selectedEvent) const;
         void drawEventGunTable      (std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) const;
 
-
-        AmmoTrackerPtr  ammoTracker;
-        GunTrackerPtr   gunTracker;
-        EventTrackerPtr eventTracker;
-
     };
 
     using SCWindowPtr = std::shared_ptr<ShooterCentralWindow>;
 
     namespace WindowHelper{
         void    centerText              (std::string text);
+        void    centerTextDisabled      (std::string text);
+
         bool    centerButton            (std::string text, ImVec2 buttonSize);
-        void    drawSelectGunTable      (const std::vector<GunPtr>& gunList, GunPtr& selectedGun);
+        void    drawSelectGunTable      (const std::vector<ConstGunPtr>& gunList, Gun& selectedGun);
         void    drawSelectAmmoTable     (const std::vector<TrackedAmmoPtr>& ammoList, TrackedAmmo& selectedAmmo);
+
+        // Drawing UI
+
     }
 }
 
