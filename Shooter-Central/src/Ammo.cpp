@@ -51,33 +51,33 @@ void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
 }
 
 // MARK: STOCKPILE
-bool AmmoTracker::addAmmoToStockpile (uint64_t amount, const AmmoType& ammoType){
-    if(ammoStockpile.contains(ammoType)){
-        ammoStockpile.at(ammoType)->amount += amount;
+bool AmmoTracker::addAmmoToStockpile (const TrackedAmmo& trackedAmmo){
+    if(ammoStockpile.contains(trackedAmmo.ammoType)){
+        ammoStockpile.at(trackedAmmo.ammoType)->amount += trackedAmmo.amount;
         return true;
     }
     
-    TrackedAmmoPtr ammoBuf { std::make_shared<TrackedAmmo>(TrackedAmmo{ammoType, amount}) };
-    ammoStockpile.try_emplace(ammoType, ammoBuf);
+    TrackedAmmoPtr ammoBuf { std::make_shared<TrackedAmmo>(trackedAmmo) };
+    ammoStockpile.try_emplace(trackedAmmo.ammoType, ammoBuf);
 
-    if(ammoStockpile.contains(ammoType)){
-        addCartridge(ammoType.cartridge);           // Add to cartridges, does not matter return
-        addManufacturer(ammoType.manufacturer);
+    if(ammoStockpile.contains(trackedAmmo.ammoType)){
+        addCartridge(trackedAmmo.ammoType.cartridge);           // Add to cartridges, does not matter return
+        addManufacturer(trackedAmmo.ammoType.manufacturer);
         return true;
     }
     else
         return false;
 }
-bool AmmoTracker::removeAmmoFromStockpile (uint64_t amountUsed, const AmmoType& ammoType){
-    if(!ammoStockpile.contains(ammoType))
+bool AmmoTracker::removeAmmoFromStockpile (const TrackedAmmo& trackedAmmo){
+    if(!ammoStockpile.contains(trackedAmmo.ammoType))
         return true;
     
-    auto& ammo { ammoStockpile.at(ammoType) };
+    auto& ammo { ammoStockpile.at(trackedAmmo.ammoType) };
 
-    if(ammo->amount - amountUsed >= 100000)
+    if(ammo->amount - trackedAmmo.amount >= 100000)
         return false;
     else
-        ammo->amount -= amountUsed;
+        ammo->amount -= trackedAmmo.amount;
 
     return true;
 }
@@ -98,7 +98,7 @@ void AmmoTracker::getAllAmmoNames(StringVector& names) const{
         names.emplace_back(ammo.second->ammoType.name);
     }
 }
-void AmmoTracker::getAllAmmo (std::vector<TrackedAmmoPtr>& list)   const{
+void AmmoTracker::getAllAmmo (std::vector<ConstTrackedAmmoPtr>& list)   const{
      if(!list.empty())
         list.erase(list.begin(), list.end());
 
@@ -204,7 +204,7 @@ bool AmmoTracker::readAllAmmo(){
 			TrackedAmmo ammoBuf {AmmoHelper::readTrackedAmmo(dirEntry.path().string())};
 
             // Attempt adding to stockpile
-            if(!addAmmoToStockpile(ammoBuf.amount, ammoBuf.ammoType))
+            if(!addAmmoToStockpile(ammoBuf))
                 logger->log("Ammo object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
 		}
 		catch(std::exception& e){

@@ -37,7 +37,9 @@ namespace ShooterCentral{
     void to_json    (LAS::json& j, const TrackedAmmo& ammo);
     void from_json  (const LAS::json& j, TrackedAmmo& ammo);
 
-    using TrackedAmmoPtr = std::shared_ptr<TrackedAmmo>;
+    using TrackedAmmoPtr        = std::shared_ptr<TrackedAmmo>;
+    using ConstTrackedAmmoPtr   = std::shared_ptr<const TrackedAmmo>;
+
 }
 
 namespace std{
@@ -70,12 +72,12 @@ namespace ShooterCentral{
         AmmoTracker(LAS::Logging::LoggerPtr setLogger);
         ~AmmoTracker();
 
-        bool    addAmmoToStockpile          (uint64_t amount,   const AmmoType& ammoType);
-        bool    removeAmmoFromStockpile     (uint64_t amount,   const AmmoType& ammoType);
+        bool    addAmmoToStockpile          (const TrackedAmmo& trackedAmmo);
+        bool    removeAmmoFromStockpile     (const TrackedAmmo& trackedAmmo);
         void    removeAllAmmoFromStockpile  ();
 
-        void    getAllAmmoNames         (StringVector& names)                   const;              // Clears vector before adding elements
-        void    getAllAmmo              (std::vector<TrackedAmmoPtr>& list)     const;          // Clears vector before adding elements, only gives you copies of Ammo objects
+        void    getAllAmmoNames         (StringVector& names)                       const;          // Clears vector before adding elements
+        void    getAllAmmo              (std::vector<ConstTrackedAmmoPtr>& list)    const;          // Clears vector before adding elements
 
         void    getAllCartridgeNames    (StringVector& names) const;                                                // Clears vector before adding elements
         void    getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const;               // Clears vector before adding elements
