@@ -2,6 +2,56 @@
 
 using namespace ShooterCentral;
 
+
+// MARK: Manufacturer
+Manufacturer::Manufacturer(std::string setName) : name { setName } {
+
+}
+Manufacturer::~Manufacturer(){
+
+}
+std::string Manufacturer::getName() const {
+    return name;
+}
+Manufacturer::operator std::string() const {
+    return name;
+}
+bool Manufacturer::operator==(const Manufacturer& other) const{
+    if(this->name == other.getName())
+        return true;
+    else
+        return false;
+}
+
+std::ostream& operator<<(std::ostream& os, const Manufacturer& manufactuerer){
+    os << manufactuerer.getName();
+    return os;
+}
+
+// MARK: Cartridge
+Cartridge::Cartridge(std::string setName) : name { setName } {
+
+}
+Cartridge::~Cartridge(){
+
+}
+std::string Cartridge::getName() const {
+    return name;
+}
+Cartridge::operator std::string() const {
+    return name;
+}
+bool Cartridge::operator==(const Cartridge& other) const{
+    if(this->name == other.getName())
+        return true;
+    else
+        return false;
+}
+std::ostream& operator<<(std::ostream& os, const Cartridge& cartridge){
+    os << cartridge.getName();
+    return os;
+}
+
 // MARK: AMMO TYPE
 bool AmmoType::operator==(const AmmoType& other) const {
     if(this->name == other.name && this->manufacturer == other.manufacturer && this->cartridge == other.cartridge && this->grainWeight == other.grainWeight)
@@ -28,10 +78,16 @@ void ShooterCentral::to_json (LAS::json& j, const AmmoType& ammoType){
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, AmmoType& ammoType){
+    std::string manufacturerBuf { }, cartridgeBuf { };
+
     j.at("name").get_to(ammoType.name);
-    j.at("manufacturer").get_to(ammoType.manufacturer);
-    j.at("cartridge").get_to(ammoType.cartridge);
+    j.at("manufacturer").get_to(manufacturerBuf);
+    j.at("cartridge").get_to(cartridgeBuf);
     j.at("grain").get_to(ammoType.grainWeight);
+
+    ammoType.manufacturer   = Manufacturer{manufacturerBuf};
+    ammoType.cartridge      = Cartridge{cartridgeBuf};
+
 }
 void ShooterCentral::to_json (LAS::json& j, const TrackedAmmo& ammo){
     j = LAS::json {
@@ -43,11 +99,17 @@ void ShooterCentral::to_json (LAS::json& j, const TrackedAmmo& ammo){
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
+    std::string manufacturerBuf { }, cartridgeBuf { };
+
     j.at("name").get_to(ammo.ammoType.name);
-    j.at("manufacturer").get_to(ammo.ammoType.manufacturer);
-    j.at("cartridge").get_to(ammo.ammoType.cartridge);
+    j.at("manufacturer").get_to(manufacturerBuf);
+    j.at("cartridge").get_to(cartridgeBuf);
     j.at("grain").get_to(ammo.ammoType.grainWeight);
     j.at("amountOnHand").get_to(ammo.amount);
+
+    ammo.ammoType.manufacturer   = Manufacturer{manufacturerBuf};
+    ammo.ammoType.cartridge      = Cartridge{cartridgeBuf};
+
 }
 
 // MARK: STOCKPILE
@@ -106,11 +168,11 @@ void AmmoTracker::getAllAmmo (std::vector<ConstTrackedAmmoPtr>& list)   const{
         list.emplace_back(ammo);
     }
 }
-void AmmoTracker::getAmmoCountByCartridge (std::vector<std::pair<std::string, uint64_t>>& count) const{
-    if(!count.empty())
-        count.erase(count.begin(), count.end());
+void AmmoTracker::getAmmoCountByCartridge (AmountPerCartridgeList& list) const{
+    if(!list.empty())
+        list.erase(list.begin(), list.end());
 
-    StringVector namesList;
+    CartridgeList namesList;
     getAllCartridgeNames(namesList); // Get all the names of cartridges
 
     // For every cartridge, add the amounts together
@@ -122,33 +184,33 @@ void AmmoTracker::getAmmoCountByCartridge (std::vector<std::pair<std::string, ui
         for(const auto& ammo : sameCartridgeList)
             amountBuf += ammo.amount;
 
-        count.emplace_back(std::pair{name, amountBuf});           // Add to list
+        list.emplace_back(std::pair{name, amountBuf});  // Add to list
     }
 }
-void AmmoTracker::getAllAmmoByCartridge(std::vector<TrackedAmmo>& list, const std::string& cartridgeName)   const{
+void AmmoTracker::getAllAmmoByCartridge(std::vector<TrackedAmmo>& list, const Cartridge& cartridge)   const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
-    for(const auto& pair : ammoStockpile){
-        if(pair.second->ammoType.cartridge == cartridgeName)
-            list.emplace_back(*pair.second);
+    for(const auto& [ammoType, trackedAmmoPtr] : ammoStockpile){
+        if(trackedAmmoPtr->ammoType.cartridge == cartridge)
+            list.emplace_back(*trackedAmmoPtr);
     }
 }
-void AmmoTracker::getAllCartridgeNames(StringVector& names) const{
-    if(!names.empty())
-        names.erase(names.begin(), names.end());
-
-
-    for(const auto& pair : cartridges){
-        names.emplace_back(pair.second);
-    }
-}
-void AmmoTracker::getAllManufacturerNames(StringVector& list) const{
+void AmmoTracker::getAllCartridgeNames(CartridgeList& list) const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
-    for(const auto& pair : manufacturers){
-        list.emplace_back(pair.second);
+
+    for(const auto& [key, cartridge] : cartridges){
+        list.emplace_back(cartridge);
+    }
+}
+void AmmoTracker::getAllManufacturerNames(ManufacturerList& list) const{
+    if(!list.empty())
+        list.erase(list.begin(), list.end());
+
+    for(const auto& [key, manufacturer] : manufacturers){
+        list.emplace_back(manufacturer);
     }
 }
 // MARK: ADD CART/MAN
