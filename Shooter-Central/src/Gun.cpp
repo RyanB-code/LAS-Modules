@@ -2,13 +2,37 @@
 
 using namespace ShooterCentral;
 
+// MARK: Location
+WeaponType::WeaponType(std::string setName) : name { setName } {
 
-// MARK: GUN
+}
+WeaponType::~WeaponType(){
+
+}
+std::string WeaponType::getName() const {
+    return name;
+}
+WeaponType::operator std::string() const {
+    return name;
+}
+bool WeaponType::operator==(const WeaponType& other) const{
+    if(this->name == other.getName())
+        return true;
+    else
+        return false;
+}
+
+std::ostream& operator<<(std::ostream& os, const WeaponType& weaponType){
+    os << weaponType.getName();
+    return os;
+}
+
+// MARK: Gun
 Gun::Gun() : name {"N/A"}, weaponType {"N/A"}, cartridge {"N/A"}
 {
 
 }
-Gun::Gun(std::string setName, std::string setWeaponType, std::string setCartridge)
+Gun::Gun(std::string setName, WeaponType setWeaponType, Cartridge setCartridge)
         :   name        { setName },
             weaponType  { setWeaponType },
             cartridge   { setCartridge }
@@ -29,10 +53,10 @@ uint64_t Gun::getRoundCount() const{
 
     return rounds;
 }
-std::string Gun::getWeaponType() const{
+WeaponType Gun::getWeaponType() const{
     return weaponType;
 }
-std::string Gun::getCartridge () const{
+Cartridge Gun::getCartridge () const{
     return cartridge;
 }
 bool Gun::addToRoundCount(int amount, const AmmoType& ammoType){
@@ -46,8 +70,8 @@ void Gun::getAllAmmoUsed(std::vector<TrackedAmmo>& ammoUsed) const{
     if(!ammoUsed.empty())
         ammoUsed.erase(ammoUsed.begin(), ammoUsed.end());
 
-    for(const auto& pair : ammoTracker){
-        ammoUsed.push_back(*pair.second);
+    for(const auto& [ammoType, trackedAmmoPtr] : ammoTracker){
+        ammoUsed.push_back(*trackedAmmoPtr);
     }
 }
 bool Gun::operator==(const Gun& other) const{
@@ -85,7 +109,7 @@ void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
     j.at("weaponType").get_to(weaponTypeBuf);
     j.at("cartridge").get_to(cartBuf);
 
-    Gun gunBuf {nameBuf, weaponTypeBuf, cartBuf };
+    Gun gunBuf {nameBuf, WeaponType{weaponTypeBuf}, Cartridge{cartBuf} };
     
     nlohmann::json trackedAmmoList;
 	j.at("trackedAmmo").get_to(trackedAmmoList);
@@ -105,7 +129,7 @@ void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
 
 }
 
-// MARK: GUN TRACKER
+// MARK: Gun Tracker
 GunTracker::GunTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger }
 {
 
@@ -126,7 +150,7 @@ bool GunTracker::setDirectory(std::string path) {
 std::string GunTracker::getDirectory() const{
     return saveDirectory;
 }
-GunPtr  GunTracker::createGun(const std::string& name, const std::string& weaponType, const std::string& cartridge){
+GunPtr  GunTracker::createGun(const std::string& name, const WeaponType& weaponType, const Cartridge& cartridge){
     Gun gunBuf { name, weaponType, cartridge};
 
     if(addGun(gunBuf))
@@ -142,7 +166,7 @@ bool GunTracker::removeGun(const Gun& gun){
     guns.erase(gun);
     return !guns.contains(gun); // Return the inverse of contain()
 }
-// MARK: GET INFO
+// MARK: Get Info
 void    GunTracker::getRoundsShotPerCartridge(std::unordered_map<std::string, uint64_t>& list) const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
@@ -151,7 +175,7 @@ void    GunTracker::getRoundsShotPerCartridge(std::unordered_map<std::string, ui
         list[gun->getCartridge()] = gun->getRoundCount();
     }
 }
-uint64_t GunTracker::getGunTotal() const{
+int GunTracker::getGunTotal() const{
     return guns.size();
 }
 void GunTracker::getAllGuns(std::vector<ConstGunPtr>& list) const{
@@ -161,7 +185,7 @@ void GunTracker::getAllGuns(std::vector<ConstGunPtr>& list) const{
     for(const auto& [key, gun] : guns)
         list.push_back(gun);
 }
-void GunTracker::getAllWeaponTypeNames   (StringVector& names) const{
+void GunTracker::getAllWeaponTypeNames   (WeaponTypeList& names) const{
     if(!names.empty())
         names.erase(names.begin(), names.end());
 
@@ -223,7 +247,7 @@ bool GunTracker::writeAllWeaponTypes () const {
     std::string fullPath { saveDirectory };
     fullPath += WEAPON_TYPES_FILENAME;
 
-    StringVector rawWeaponTypes;
+    WeaponTypeList rawWeaponTypes;
 
     for(auto& c : weaponTypes){
         rawWeaponTypes.emplace_back(c.second);
@@ -238,7 +262,7 @@ bool GunTracker::readWeaponTypes  () {
     std::string fullPath { saveDirectory };
     fullPath += WEAPON_TYPES_FILENAME;
 
-    StringVector rawWweaponTypes;
+    WeaponTypeList rawWweaponTypes;
     try{
         GunHelper::readWeaponTypes(fullPath, rawWweaponTypes);
     }
@@ -247,9 +271,9 @@ bool GunTracker::readWeaponTypes  () {
         logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
     }
 
-    for(const auto& s : rawWweaponTypes){
-        if(!addWeaponType(s))
-            logger->log("Weapon Type named [" + s + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+    for(const auto& wt : rawWweaponTypes){
+        if(!addWeaponType(wt))
+            logger->log("Weapon Type named [" + wt.getName() + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
     }
 
     return true;
@@ -270,7 +294,7 @@ bool GunTracker::addGun(Gun& gun){
 // MARK: GUN HELPER
 
 
-// MARK: R/W GUN
+// MARK: R/W Gun
 bool GunHelper::writeGun(std::string directory, const Gun& gun){
     using LAS::json;
 
@@ -319,8 +343,8 @@ Gun GunHelper::readGun(const std::string& path){
 
     return Gun{j.template get<ShooterCentral::Gun>()};
 }
-// MARK: R/W CARTRIDGES
-bool GunHelper::writeAllWeaponTypes(std::string path, const std::vector<std::string>& list){
+// MARK: R/W Cartridges
+bool GunHelper::writeAllWeaponTypes(std::string path, const WeaponTypeList& list){
     using LAS::json;
 
     if(list.empty())
@@ -341,7 +365,7 @@ bool GunHelper::writeAllWeaponTypes(std::string path, const std::vector<std::str
 
     return true;
 }
-bool GunHelper::readWeaponTypes (std::string path, StringVector& list){
+bool GunHelper::readWeaponTypes (std::string path, WeaponTypeList& list){
     using LAS::json;
 
     if(!std::filesystem::exists(path))
