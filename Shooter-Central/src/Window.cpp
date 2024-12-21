@@ -22,36 +22,7 @@ void ShooterCentralWindow::draw() {
         return;
     }
 
-    drawHome(ImGui::GetContentRegionAvail());
-    
-    ImGui::End();
-}
-bool ShooterCentralWindow::setAmmoTracker(AmmoTrackerPtr setAmmoTracker){
-    if(!setAmmoTracker)
-        return false;
-
-    ammoTracker = setAmmoTracker;
-    return true;
-}
-bool ShooterCentralWindow::setGunTracker(GunTrackerPtr setGunTracker){
-    if(!setGunTracker)
-        return false;
-
-    gunTracker = setGunTracker;
-    return true;
-}
-bool ShooterCentralWindow::setEventTracker(EventTrackerPtr setEventTracker){
-    if(!setEventTracker)
-        return false;
-
-    eventTracker = setEventTracker;
-    return true;
-}
-
-// MARK: PRIVATE FUNCTIONS
-
-// MARK: HOME
-void ShooterCentralWindow::drawHome(ImVec2 windowSize){
+    ImVec2  windowSize { ImGui::GetContentRegionAvail() };
     ImVec2  childWindowSizes { };
     bool    horizontalLayout { false };
 
@@ -78,33 +49,93 @@ void ShooterCentralWindow::drawHome(ImVec2 windowSize){
         ImGui::EndMenuBar();
     }
 
-    static std::vector<ConstGunPtr>                     gunList;
-    static std::unordered_map<std::string, uint64_t>    roundsPerCartridge;
-
-    gunTracker->getAllGuns(gunList);
-    gunTracker->getRoundsShotPerCartridge(roundsPerCartridge);
-
     if(ImGui::BeginChild("Armory Quick View", childWindowSizes, ImGuiChildFlags_Border) && showArmory){
-        drawArmoryUI(gunList, roundsPerCartridge);
+        static StringVector cartridgeNames;
+
+        ammoTracker->getAllCartridgeNames(cartridgeNames);
+
+        ArmoryUI::home(gunTracker, unsavedChanges.armory, cartridgeNames);
     }
     ImGui::EndChild();
 
     if(horizontalLayout)
         ImGui::SameLine();
 
-    if(ImGui::BeginChild("Stockpile Quick View", childWindowSizes, ImGuiChildFlags_Border) && showStockpile)
-        drawStockpile();
+    if(ImGui::BeginChild("Stockpile Quick View", childWindowSizes, ImGuiChildFlags_Border) && showStockpile){
+        StockpileUI::home(ammoTracker, unsavedChanges.stockpile);
+    }
     ImGui::EndChild();
 
     if(horizontalLayout)
         ImGui::SameLine();
 
     if(ImGui::BeginChild("Events Quick View", childWindowSizes, ImGuiChildFlags_Border) && showEvents)
-        drawEvents();
+        EventsUI::home(eventTracker, unsavedChanges.events);
     ImGui::EndChild();
+    
+    ImGui::End();
 }
-// MARK: ARMORY
-void ShooterCentralWindow::drawArmoryUI(const std::vector<ConstGunPtr>& gunList, const std::unordered_map<std::string, uint64_t>& roundsPerCartridge){
+
+bool ShooterCentralWindow::setAmmoTracker(AmmoTrackerPtr setAmmoTracker){
+    if(!setAmmoTracker)
+        return false;
+
+    ammoTracker = setAmmoTracker;
+    return true;
+}
+bool ShooterCentralWindow::setGunTracker(GunTrackerPtr setGunTracker){
+    if(!setGunTracker)
+        return false;
+
+    gunTracker = setGunTracker;
+    return true;
+}
+bool ShooterCentralWindow::setEventTracker(EventTrackerPtr setEventTracker){
+    if(!setEventTracker)
+        return false;
+
+    eventTracker = setEventTracker;
+    return true;
+}
+
+
+
+
+// MARK: UI Helper
+void UIHelper::centerText(std::string text){
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto textWidth   = ImGui::CalcTextSize(text.c_str()).x;
+
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+    ImGui::Text("%s", text.c_str());
+}
+void UIHelper::centerTextDisabled(std::string text){
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto textWidth   = ImGui::CalcTextSize(text.c_str()).x;
+
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+    ImGui::TextDisabled("%s", text.c_str());
+}
+bool UIHelper::centerButton(std::string text, ImVec2 buttonSize){
+    auto windowWidth = ImGui::GetWindowSize().x;
+
+    ImGui::SetCursorPosX((windowWidth - buttonSize.x) * 0.5f);
+    return ImGui::Button(text.c_str(), buttonSize);
+}
+
+
+
+
+// MARK: ARMORY UI
+void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const StringVector& cartridgeNames){
+
+    static StringVector                                 wpnTypeNames;
+    static std::vector<ConstGunPtr>                     gunList;
+    static std::unordered_map<std::string, uint64_t>    roundsPerCartridge;
+
+    gunTracker->getAllGuns(gunList);
+    gunTracker->getRoundsShotPerCartridge(roundsPerCartridge);
+    gunTracker->getAllWeaponTypeNames(wpnTypeNames);
     
     static bool savingGunsFailed { false }, savingWeaponTypesFailed { false }; // Flags to tell user what went wrong when attempting to save
 
@@ -121,7 +152,7 @@ void ShooterCentralWindow::drawArmoryUI(const std::vector<ConstGunPtr>& gunList,
     ImGui::Spacing();
     ImGui::Spacing();
 
-    WindowHelper::centerText("Armory");
+    UIHelper::centerText("Armory");
 
     ImGui::Separator();
     ImGui::Spacing();
@@ -140,7 +171,7 @@ void ShooterCentralWindow::drawArmoryUI(const std::vector<ConstGunPtr>& gunList,
     // Armory Button Window
     if(ImGui::BeginChild("Armory Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
 
-        if(WindowHelper::centerButton("Save All", ImVec2{200, 50})){
+        if(UIHelper::centerButton("Save All", ImVec2{200, 50})){
             if(!gunTracker->writeAllGuns())
                 savingGunsFailed = true;
 
@@ -149,7 +180,7 @@ void ShooterCentralWindow::drawArmoryUI(const std::vector<ConstGunPtr>& gunList,
 
             
             if(!savingGunsFailed || !savingWeaponTypesFailed)
-                unsavedChanges_Armory = false;  // Saving was successfu, reset unsavedChanges flag
+                unsavedChanges = false;  // Saving was successfu, reset unsavedChanges flag
         }
         
         if(savingGunsFailed || savingWeaponTypesFailed)
@@ -159,28 +190,28 @@ void ShooterCentralWindow::drawArmoryUI(const std::vector<ConstGunPtr>& gunList,
         // Popup showing error messages
         if(ImGui::BeginPopupModal("Error Saving", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
             if(savingGunsFailed){
-                WindowHelper::centerText("All guns could not be saved");
+                UIHelper::centerText("All guns could not be saved");
                 ImGui::Spacing();
             }
             if(savingWeaponTypesFailed)
-                WindowHelper::centerText("Weapon Types could not be saved");
+                UIHelper::centerText("Weapon Types could not be saved");
 
             ImGui::Spacing();
             ImGui::Spacing();
             
-            if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
+            if (UIHelper::centerButton("Close", ImVec2{120, 0})){
                 savingGunsFailed = false;
                 savingWeaponTypesFailed = false;
 
                 // Since error saving, set flag
-                unsavedChanges_Armory = true;
+                unsavedChanges = true;
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
         }
 
-        if(unsavedChanges_Armory)
-            WindowHelper::centerTextDisabled("(There are unsaved changes)");
+        if(unsavedChanges)
+            UIHelper::centerTextDisabled("(There are unsaved changes)");
     }
     ImGui::EndChild();
 
@@ -236,66 +267,65 @@ void ShooterCentralWindow::drawArmoryUI(const std::vector<ConstGunPtr>& gunList,
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Gun")){
-            drawAddGun(unsavedChanges_Armory);
+            std::pair<bool, Gun> returnVal {addGun(unsavedChanges, cartridgeNames, wpnTypeNames)};
+
+            if(returnVal.first)
+                gunTracker->createGun(returnVal.second.getName(), returnVal.second.getWeaponType(), returnVal.second.getCartridge());
+
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Weapon Type")){
-            drawAddWeaponType(unsavedChanges_Armory);
+            std::pair<bool, std::string> returnVal {addWeaponType(unsavedChanges)};
+
+            if(returnVal.first)
+                gunTracker->addWeaponType(returnVal.second);
+
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
     }
-
 }
-
-// LEFT OFF HERE, DO THE REST OF FUNCTIONS BELOW
-
-
-
-
-// MARK: ADD GUN
-void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
+// MARK: Add Gun
+std::pair<bool, Gun> ArmoryUI::addGun(bool& unsavedChanges, const StringVector& cartridgeNames, const StringVector& wpnTypeNames) {
     if(!ImGui::BeginChild("Add Gun")){
         ImGui::EndChild();
         return;
     }
-    static char nameBuf[MAX_TEXT_INPUT_CHARS] = "Enter Name";
 
-    // Get char array of cartrigde names
-    static StringVector cartridgeNamesBuf;
-    ammoTracker->getAllCartridgeNames(cartridgeNamesBuf);
+    static char     nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
+    static size_t   selectedWTIndex           { 0 };
+    static size_t   selectedCartridgeIndex    { 0 };
 
-    // Create ImGui array for cartridge names
-    const char* cartrdgeList[MAX_LIST_NUM];
-    cartrdgeList[0] = "CHOOSE CARTRIDGE";
+    static bool     invalidName { false }, invalidWeaponType { false }, invalidCartridge { false }; // Flags to let user know bad options when saving
+
+    bool    gunCreated  { false };
+    Gun     gunBuf      { };
+
+    const char* cartrdgeList    [UI_SETTINGS.MAX_LIST_NUM];
+    const char* weaponTypeList  [UI_SETTINGS.MAX_LIST_NUM];
+
+    const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
+    const char* wtComboPreview      { weaponTypeList    [selectedWTIndex] };
+
+    cartrdgeList[0]     = "CHOOSE CARTRIDGE";
+    weaponTypeList[0]   = "CHOOSE WEAPON TYPE";
+
+
     int i1 { 1 };
-    for(auto& s : cartridgeNamesBuf){
-        if(i1 < (MAX_LIST_NUM + 1)){
+    for(auto& s : cartridgeNames){
+        if(i1 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
             cartrdgeList[i1] = s.c_str();
         }
         ++i1;
     }
 
-    // Get char array of weapon type names
-    static StringVector weaponTypeNamesBuf;
-    gunTracker->getAllWeaponTypeNames(weaponTypeNamesBuf);
-
-    const char* weaponTypeList[MAX_LIST_NUM];
-    weaponTypeList[0] = "CHOOSE WEAPON TYPE";
-
     int i2 { 1 };
-    for(auto& s : weaponTypeNamesBuf){
-        if(i2 < (MAX_LIST_NUM + 1)){
+    for(auto& s : wpnTypeNames){
+        if(i2 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
             weaponTypeList[i2] = s.c_str();
         }
         ++i2;
     }
-
-    static size_t selectedWTIndex { 0 };
-    static size_t selectedCartridgeIndex { 0 };
-
-    const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
-    const char* wtComboPreview      { weaponTypeList    [selectedWTIndex] };
 
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new gun to tracked items.");
@@ -308,13 +338,13 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
     
     ImGui::Text("Name");
     ImGui::SameLine(100);
-    ImGui::InputText("##Input New Gun Name", nameBuf, MAX_TEXT_INPUT_CHARS);
+    ImGui::InputText("##Input New Gun Name", nameBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS);
 
     ImGui::Text("Weapon Type");
     ImGui::SameLine(100);
     if (ImGui::BeginCombo("##WeaponType Combo", wtComboPreview, ImGuiComboFlags_HeightSmall))
     {
-        for (size_t chooseWT { 0 }; chooseWT < weaponTypeNamesBuf.size()+1; ++chooseWT) // Add one to account for default option
+        for (size_t chooseWT { 0 }; chooseWT < wpnTypeNames.size()+1; ++chooseWT) // Add one to account for default option
         {
             const bool isSelected = (selectedWTIndex == chooseWT);
             if (ImGui::Selectable(weaponTypeList[chooseWT], isSelected))
@@ -330,7 +360,7 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
     ImGui::SameLine(100);
     if (ImGui::BeginCombo("##Cartridge Combo", cartComboPreview, ImGuiComboFlags_HeightSmall))
     {
-        for (size_t chooseCartridge { 0 }; chooseCartridge < cartridgeNamesBuf.size()+1; ++chooseCartridge) // Add one to account for default option
+        for (size_t chooseCartridge { 0 }; chooseCartridge < cartridgeNames.size()+1; ++chooseCartridge) // Add one to account for default option
         {
             const bool isSelected = (selectedCartridgeIndex == chooseCartridge);
             if (ImGui::Selectable(cartrdgeList[chooseCartridge], isSelected))
@@ -345,8 +375,7 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
     ImGui::Spacing();
     ImGui::Spacing();
 
-    static bool invalidName { false }, invalidWeaponType { false }, invalidCartridge { false };
-    if(WindowHelper::centerButton("Add New Gun", ImVec2{200,50})){
+    if(UIHelper::centerButton("Add New Gun", ImVec2{200,50})){
         // Ensure flags are valid
         invalidName         = false;
         invalidWeaponType   = false;
@@ -364,7 +393,8 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
         if(!invalidName && !invalidWeaponType &&! invalidWeaponType){
             std::string wtBuf { weaponTypeList[selectedWTIndex]}, cartBuf {cartrdgeList[selectedCartridgeIndex]};
 
-            gunTracker->createGun(name, wtBuf, cartBuf);
+            gunCreated = true;
+            gunBuf = Gun{name, wtBuf, cartBuf};
 
             // Reset buffers
             strcpy(nameBuf, "Enter Name");
@@ -375,10 +405,11 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
         }
         else
             ImGui::OpenPopup("Gun Not Created");
+
     }
 
     if(ImGui::BeginPopupModal("Gun Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        WindowHelper::centerText("This gun could not be created.");
+        UIHelper::centerText("This gun could not be created.");
 
         if(invalidName)
             ImGui::BulletText("Invalid name");
@@ -390,16 +421,21 @@ void ShooterCentralWindow::drawAddGun(bool& unsavedChanges) const {
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+        if (UIHelper::centerButton("Close", ImVec2{120, 0}))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 
     ImGui::EndChild();
+
+    return std::pair{gunCreated, gunBuf};
 }
-// MARK: ADD WT
-void ShooterCentralWindow::drawAddWeaponType(bool& unsavedChanges) const{
-    static char wtBuf[MAX_TEXT_INPUT_CHARS] = "New Weapon Type";
+// MARK: Add Wpn Type
+std::pair<bool, std::string> ArmoryUI::addWeaponType(bool& unsavedChanges) {
+    bool        weaponTypeCreated  { false };
+    std::string weaponTypeBuf      { };
+
+    static char wtBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Weapon Type";
 
     if(!ImGui::BeginChild("Add Gun")){
         ImGui::EndChild();
@@ -415,12 +451,12 @@ void ShooterCentralWindow::drawAddWeaponType(bool& unsavedChanges) const{
     
     ImGui::Text("Weapon Type");
     ImGui::SameLine(100);
-    ImGui::InputText("##Input New Weapon Type", wtBuf, MAX_TEXT_INPUT_CHARS, ImGuiInputTextFlags_CharsUppercase);
+    ImGui::InputText("##Input New Weapon Type", wtBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS, ImGuiInputTextFlags_CharsUppercase);
 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if(WindowHelper::centerButton("Add New Weapon Type", ImVec2{200,50})){
+    if(UIHelper::centerButton("Add New Weapon Type", ImVec2{200,50})){
         bool nameRejected { false };
         std::string wt { wtBuf };
 
@@ -433,7 +469,8 @@ void ShooterCentralWindow::drawAddWeaponType(bool& unsavedChanges) const{
         }
 
         if(wt != "New Weapon Type" && !nameRejected){
-            gunTracker->addWeaponType(wt);
+            weaponTypeCreated = true;
+            weaponTypeBuf = wt;
             strcpy(wtBuf, "New Weapon Type");   // Reset buffers
             unsavedChanges = true;              // Set flag
         }
@@ -442,45 +479,50 @@ void ShooterCentralWindow::drawAddWeaponType(bool& unsavedChanges) const{
     }
 
     if(ImGui::BeginPopupModal("Weapon Type Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        WindowHelper::centerText("The Weapon Type could not be created.");
-        WindowHelper::centerText("Invalid Weapon Type name.");
+        UIHelper::centerText("The Weapon Type could not be created.");
+        UIHelper::centerText("Invalid Weapon Type name.");
 
         ImGui::Spacing();
         ImGui::Spacing();
         
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+        if (UIHelper::centerButton("Close", ImVec2{120, 0}))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 
     ImGui::EndChild();
+
+    return std::pair{weaponTypeCreated, weaponTypeBuf};
 }
-// MARK: STOCKPILE
-void ShooterCentralWindow::drawStockpile() const{
-    static bool unsavedChanges  { false };
-    static bool detailedView    { true };
-    static StringVector                 ammoNames;
-    static StringVector                 cartridgeNames;
-    static std::vector<TrackedAmmoPtr>  ammo;
-    static std::vector<TrackedAmmo>     selectedCatridgeAmmoList;
+
+// MARK: STOCKPILE UI
+void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
+    static bool detailedView { true };
+
+    static StringVector                     ammoNames;
+    static StringVector                     cartridgeNames;
+    static StringVector                     manufacturerNames;
+    static std::vector<ConstTrackedAmmoPtr> ammoList;
+    static std::vector<TrackedAmmo>         selectedCatridgeAmmoList;
 
     static std::vector<std::pair<std::string, uint64_t>> countByCartridge;
 
     ammoTracker->getAllAmmoNames            (ammoNames);
     ammoTracker->getAllCartridgeNames       (cartridgeNames);
+    ammoTracker->getAllManufacturerNames    (manufacturerNames);
     ammoTracker->getAmmoCountByCartridge    (countByCartridge);
-    ammoTracker->getAllAmmo                 (ammo);
+    ammoTracker->getAllAmmo                 (ammoList);
 
     static int  highlilghtedItem        { 0 };
     static bool showAllAmmo             { false };
     static int  columnsInDetailedTable  { 5 };
 
-    const char* cartridgeList[MAX_LIST_NUM];
+    const char* cartridgeList[UI_SETTINGS.MAX_LIST_NUM];
     cartridgeList[0] = "ALL";       // Default option
 
     int i { 1 };                                    // Starts at one to offset the all option
     for(const auto& s : cartridgeNames){
-        if(i < (MAX_LIST_NUM+1)){      // Add one to offset the additional 'all' option
+        if(i < (UI_SETTINGS.MAX_LIST_NUM+1)){      // Add one to offset the additional 'all' option
             cartridgeList[i] = s.c_str();
             ++i;
         }
@@ -501,7 +543,7 @@ void ShooterCentralWindow::drawStockpile() const{
     ImGui::Spacing();
     ImGui::Spacing();
 
-    WindowHelper::centerText("Stockpile");
+    UIHelper::centerText("Stockpile");
 
     ImGui::Separator();
     ImGui::Spacing();
@@ -520,7 +562,7 @@ void ShooterCentralWindow::drawStockpile() const{
     if(ImGui::BeginChild("Stockpile Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         static bool ammoNotSaved { false }, cartridgesNotSaved { false }, manufacturersNotSaved { false };
 
-        if(WindowHelper::centerButton("Save All", ImVec2{200, 50})){
+        if(UIHelper::centerButton("Save All", ImVec2{200, 50})){
             // Ensure flags are valid
             ammoNotSaved            = false;
             cartridgesNotSaved      = false;
@@ -544,7 +586,7 @@ void ShooterCentralWindow::drawStockpile() const{
 
         // Popup showing error
         if(ImGui::BeginPopupModal("Stockpile Saving Error", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-            WindowHelper::centerText("There was an error attempting to save");
+            UIHelper::centerText("There was an error attempting to save");
 
             if(ammoNotSaved)
                 ImGui::BulletText("All ammo could not be saved");
@@ -556,7 +598,7 @@ void ShooterCentralWindow::drawStockpile() const{
             ImGui::Spacing();
             ImGui::Spacing();
             
-            if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
+            if (UIHelper::centerButton("Close", ImVec2{120, 0})){
                 // Since error saving, set flag
                 unsavedChanges = true;
                 ImGui::CloseCurrentPopup();
@@ -565,7 +607,7 @@ void ShooterCentralWindow::drawStockpile() const{
         }
 
         if(unsavedChanges)
-            WindowHelper::centerText("(There are unsaved changes)");
+            UIHelper::centerText("(There are unsaved changes)");
     }
     ImGui::EndChild();
 
@@ -607,7 +649,7 @@ void ShooterCentralWindow::drawStockpile() const{
                 ImGui::TableHeadersRow();
 
                 if(showAllAmmo){
-                    for(auto itr { ammo.begin() }; itr != ammo.end(); ++itr){
+                    for(auto itr { ammoList.begin() }; itr != ammoList.end(); ++itr){
                         const TrackedAmmo& trackedAmmo { **itr };
                         ImGui::TableNextRow();
                         for (int column{0}; column < columnsInDetailedTable; ++column)
@@ -711,34 +753,53 @@ void ShooterCentralWindow::drawStockpile() const{
     ImGui::Spacing();
     ImGui::Spacing();
 
-    WindowHelper::centerText("Stockpile Actions");
+    UIHelper::centerText("Stockpile Actions");
     ImGui::Separator();
 
     if(ImGui::BeginTabBar("Stockpile Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
                                             ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
     )){
         if(ImGui::BeginTabItem("Add to Existing Ammo")){
-            drawAddToExistingAmmoType(unsavedChanges);
+            std::pair<bool, TrackedAmmo> returnVal {addToExistingAmmoType(unsavedChanges, ammoList)};
+
+            if(returnVal.first)
+                ammoTracker->addAmmoToStockpile(returnVal.second);
+
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Ammo Type")){
-            drawAddNewAmmoType(unsavedChanges);
+            std::pair<bool, TrackedAmmo> returnVal {addAmmoType(unsavedChanges, cartridgeNames, manufacturerNames)};
+
+            if(returnVal.first)
+                ammoTracker->addAmmoToStockpile(returnVal.second);
+
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Cartridge")){
-            drawAddNewCartridge(unsavedChanges);
+            std::pair<bool, std::string> returnVal {addCartridge(unsavedChanges)};
+
+            if(returnVal.first)
+                ammoTracker->addCartridge(returnVal.second);
+
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Manufacturer")){
-            drawAddNewManufacturer(unsavedChanges);
+            std::pair<bool, std::string> returnVal {addManufacturer(unsavedChanges)};
+
+            if(returnVal.first)
+                ammoTracker->addManufacturer(returnVal.second);
+
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
     }
 }
-// MARK: ADD NEW CARTRIDGE
-void ShooterCentralWindow::drawAddNewCartridge (bool& unsavedChanges) const{
-    static char cartridgeBuf[MAX_TEXT_INPUT_CHARS] = "New Cartridge";
+// MARK: Add Cartrigde
+std::pair<bool, std::string> StockpileUI::addCartridge (bool& unsavedChanges) {
+    bool        cartridgeCreated    { false };
+    std::string cartridgeNameBuf    { };
+
+    static char cartridgeBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Cartridge";
 
     if(!ImGui::BeginChild("Add New Cartridge")){
         ImGui::EndChild();
@@ -754,12 +815,12 @@ void ShooterCentralWindow::drawAddNewCartridge (bool& unsavedChanges) const{
     
     ImGui::Text("Cartridge");
     ImGui::SameLine(100);
-    ImGui::InputText("##Input New Cartridge", cartridgeBuf, MAX_TEXT_INPUT_CHARS, 0);
+    ImGui::InputText("##Input New Cartridge", cartridgeBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS, 0);
 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if(WindowHelper::centerButton("Add New Cartridge", ImVec2{200,50})){
+    if(UIHelper::centerButton("Add New Cartridge", ImVec2{200,50})){
         std::string cartridgeName { cartridgeBuf };
         bool nameRejected { false };
         for(const auto& c : cartridgeName){
@@ -770,7 +831,8 @@ void ShooterCentralWindow::drawAddNewCartridge (bool& unsavedChanges) const{
         }
 
         if(cartridgeName != "New Cartridge" && !nameRejected){
-            ammoTracker->addCartridge(cartridgeBuf);
+            cartridgeCreated = true;
+            cartridgeNameBuf = cartridgeName;
             strcpy(cartridgeBuf, "New Cartridge");   // Reset buffers
             unsavedChanges = true;              // Set flag
         }
@@ -779,63 +841,60 @@ void ShooterCentralWindow::drawAddNewCartridge (bool& unsavedChanges) const{
     }
 
     if(ImGui::BeginPopupModal("Cartridge Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        WindowHelper::centerText("The cartridge could not be created.");
-        WindowHelper::centerText("Invalid cartridge name.");
+        UIHelper::centerText("The cartridge could not be created.");
+        UIHelper::centerText("Invalid cartridge name.");
 
         ImGui::Spacing();
         ImGui::Spacing();
         
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+        if (UIHelper::centerButton("Close", ImVec2{120, 0}))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 
     ImGui::EndChild();
+
+    return std::pair{cartridgeCreated, cartridgeNameBuf};
 }
-// MARK: ADD NEW AMMO TYPE
-void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
+// MARK: Add Ammo Type
+std::pair<bool, TrackedAmmo> StockpileUI::addAmmoType (bool& unsavedChanges, const StringVector& cartridgeNames, const StringVector& manufacturerNames){
     if(!ImGui::BeginChild("Add Ammo Type")){
         ImGui::EndChild();
         return;
     }
-    static char nameBuf[MAX_TEXT_INPUT_CHARS] = "Enter Name";
-    static int grainWeightBuf{0};
+    static char     nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
+    static int      grainWeightBuf              { 0 };
+    static size_t   selectedManufacturerIndex   { 0 };
+    static size_t   selectedCartridgeIndex      { 0 };
 
-    // Get char array of cartrigde names
-    static StringVector cartridgeNamesBuf;
-    static StringVector manufacturerNamesBuf;
+    bool        createdAmmoType { false };
+    TrackedAmmo ammoTypeCreated { };
 
-    ammoTracker->getAllCartridgeNames(cartridgeNamesBuf);
-    ammoTracker->getAllManufacturerNames(manufacturerNamesBuf);
+    const char* cartrdgeList    [UI_SETTINGS.MAX_LIST_NUM];
+    const char* manufacturerList[UI_SETTINGS.MAX_LIST_NUM];
+
+    const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
+    const char* manComboPreview     { manufacturerList  [selectedManufacturerIndex] };
+
+    cartrdgeList[0]     = "CHOOSE CARTRIDGE";
+    manufacturerList[0] = "CHOOSE MANUFACTURER";
 
 
-    // Create ImGui array for cartridge names
-    const char* cartrdgeList[MAX_LIST_NUM];
-    cartrdgeList[0] = "CHOOSE CARTRIDGE";
     int i1 { 1 };
-    for(auto& s : cartridgeNamesBuf){
-        if(i1 < (MAX_LIST_NUM + 1)){
+    for(auto& s : cartridgeNames){
+        if(i1 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
             cartrdgeList[i1] = s.c_str();
         }
         ++i1;
     }
 
-    // Create ImGui array for manufacturer names
-    const char* manufacturerList[MAX_LIST_NUM];
-    manufacturerList[0] = "CHOOSE MANUFACTURER";
     int i2 { 1 };
-    for(auto& s : manufacturerNamesBuf){
-        if(i2 < (MAX_LIST_NUM + 1)){
+    for(auto& s : manufacturerNames){
+        if(i2 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
             manufacturerList[i2] = s.c_str();
         }
         ++i2;
     }
-
-    static size_t selectedManufacturerIndex { 0 };
-    static size_t selectedCartridgeIndex { 0 };
-
-    const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
-    const char* manComboPreview     { manufacturerList  [selectedManufacturerIndex] };
 
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new ammo type to tracked items.");
@@ -848,13 +907,13 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
     
     ImGui::Text("Name");
     ImGui::SameLine(100);
-    ImGui::InputText("##Input Ammo Type Name", nameBuf, MAX_TEXT_INPUT_CHARS);
+    ImGui::InputText("##Input Ammo Type Name", nameBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS);
 
     ImGui::Text("Manufacturer");
     ImGui::SameLine(100);
     if (ImGui::BeginCombo("##Choose Manufacturer Combo", manComboPreview, ImGuiComboFlags_HeightSmall))
     {
-        for (size_t chooseManufacturer { 0 }; chooseManufacturer < manufacturerNamesBuf.size()+1; ++chooseManufacturer) // Add one to account for default option
+        for (size_t chooseManufacturer { 0 }; chooseManufacturer < manufacturerNames.size()+1; ++chooseManufacturer) // Add one to account for default option
         {
             const bool isSelected = (selectedManufacturerIndex == chooseManufacturer);
             if (ImGui::Selectable(manufacturerList[chooseManufacturer], isSelected))
@@ -870,7 +929,7 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
     ImGui::SameLine(100);
     if (ImGui::BeginCombo("##Choose Cartridge Combo", cartComboPreview, ImGuiComboFlags_HeightSmall))
     {
-        for (size_t chooseCartridge { 0 }; chooseCartridge < cartridgeNamesBuf.size()+1; ++chooseCartridge) // Add one to account for default option
+        for (size_t chooseCartridge { 0 }; chooseCartridge < cartridgeNames.size()+1; ++chooseCartridge) // Add one to account for default option
         {
             const bool isSelected = (selectedCartridgeIndex == chooseCartridge);
             if (ImGui::Selectable(cartrdgeList[chooseCartridge], isSelected))
@@ -890,7 +949,7 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
     ImGui::Spacing();
 
     static bool invalidName { false }, invalidManufacturer { false }, invalidCartridge { false }, invalidGrainWeight { false };
-    if(WindowHelper::centerButton("Add New Ammo Type", ImVec2{200,50})){
+    if(UIHelper::centerButton("Add New Ammo Type", ImVec2{200,50})){
         // Ensure buffers are valid
          invalidName            = false;
         invalidManufacturer     = false;
@@ -913,7 +972,8 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
         if(!invalidName && !invalidManufacturer && !invalidCartridge && !invalidGrainWeight){
             std::string manBuf { manufacturerList[selectedManufacturerIndex]}, cartBuf {cartrdgeList[selectedCartridgeIndex]};
 
-            ammoTracker->addAmmoToStockpile(0, AmmoType{ name, manBuf, cartBuf, uint8_t{grainWeightBuf}});
+            createdAmmoType = true;
+            ammoTypeCreated = {AmmoType{ name, manBuf, cartBuf, uint8_t{grainWeightBuf}}, 0};
 
             // Reset buffers
             strcpy(nameBuf, "Enter Name");
@@ -929,7 +989,7 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
     }
 
     if(ImGui::BeginPopupModal("Ammo Type Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        WindowHelper::centerText("This ammo type could not be created.");
+        UIHelper::centerText("This ammo type could not be created.");
 
         if(invalidName)
             ImGui::BulletText("Invalid name");
@@ -943,16 +1003,21 @@ void ShooterCentralWindow::drawAddNewAmmoType (bool& unsavedChanges) const{
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+        if (UIHelper::centerButton("Close", ImVec2{120, 0}))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 
     ImGui::EndChild();
+
+    return std::pair{createdAmmoType, ammoTypeCreated};
 }
-// MARK: ADD MANUFACTURER
-void ShooterCentralWindow::drawAddNewManufacturer (bool& unsavedChanges) const{
-    static char manBuf[MAX_TEXT_INPUT_CHARS] = "New Manufacturer";
+// MARK: Add Manufacturer
+std::pair<bool, std::string> StockpileUI::addManufacturer (bool& unsavedChanges){
+    static char manBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Manufacturer";
+
+    bool        manufactruerCreated    { false };
+    std::string manufacturerCreatedBuf { };
 
     if(!ImGui::BeginChild("Add New Manufacturer")){
         ImGui::EndChild();
@@ -968,12 +1033,12 @@ void ShooterCentralWindow::drawAddNewManufacturer (bool& unsavedChanges) const{
     
     ImGui::Text("Manufacturer");
     ImGui::SameLine(100);
-    ImGui::InputText("##Input New Manufacturer", manBuf, MAX_TEXT_INPUT_CHARS, 0);
+    ImGui::InputText("##Input New Manufacturer", manBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS, 0);
 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if(WindowHelper::centerButton("Add New Manufacturer", ImVec2{200,50})){
+    if(UIHelper::centerButton("Add New Manufacturer", ImVec2{200,50})){
         std::string manName { manBuf };
         bool nameRejected { false };
         for(const auto& c : manName){
@@ -984,7 +1049,8 @@ void ShooterCentralWindow::drawAddNewManufacturer (bool& unsavedChanges) const{
         }
 
         if(manName != "New Manufacturer" && !nameRejected){
-            ammoTracker->addManufacturer(manName);
+            manufactruerCreated = true;
+            manufacturerCreatedBuf = manName;
             strcpy(manBuf, "New Manufacturer");   // Reset buffers
             unsavedChanges = true;              // Set flag
         }
@@ -993,51 +1059,52 @@ void ShooterCentralWindow::drawAddNewManufacturer (bool& unsavedChanges) const{
     }
 
     if(ImGui::BeginPopupModal("Manufacturer Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        WindowHelper::centerText("The manufacturer could not be created.");
-        WindowHelper::centerText("Invalid manufacturer name.");
+        UIHelper::centerText("The manufacturer could not be created.");
+        UIHelper::centerText("Invalid manufacturer name.");
 
         ImGui::Spacing();
         ImGui::Spacing();
         
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+        if (UIHelper::centerButton("Close", ImVec2{120, 0}))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
 
     ImGui::EndChild();
+
+    return std::pair{manufactruerCreated, manufacturerCreatedBuf};
 }
-// MARK: ADD TO AMMO TYPE
-void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) const{
+// MARK: Add To Ammo Type
+std::pair<bool, TrackedAmmo> StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std::vector<ConstTrackedAmmoPtr>& ammoList){
     if(!ImGui::BeginChild("Add To Existing Ammo Type")){
         ImGui::EndChild();
         return;
     }
 
-    static std::vector<TrackedAmmoPtr> ammoListBuf;
-    ammoTracker->getAllAmmo(ammoListBuf);
+    static int          amountToAdd                 { 0 };
+    static size_t       selectedAmmoNameIndex       { 0 };
+    static TrackedAmmo  emptyAmmo                   { };
 
-    const char* ammoList[MAX_LIST_NUM];
-    ammoList[0] = "CHOOSE AMMO TYPE";
+    const char* ammoNamesArray[UI_SETTINGS.MAX_LIST_NUM];
+    const char* ammoNameComboPreview{ ammoNamesArray[selectedAmmoNameIndex] };
+
+    bool            createdAmmoToAdd    { false };
+    TrackedAmmo&    selectedAmmo        { emptyAmmo };
+    float           fullWindowWidth    { ImGui::GetWindowSize().x }; // Calculate center button add now (since cannot do inside child since middle will be skewed)
+
+    ammoNamesArray[0] = "CHOOSE AMMO TYPE";
+
     int i { 1 };
-    for(auto& trackedAmmo : ammoListBuf){
-        if(i < (MAX_LIST_NUM + 1)){
-            ammoList[i] = trackedAmmo->ammoType.name.c_str();
+    for(auto& trackedAmmo : ammoList){
+        if(i < (UI_SETTINGS.MAX_LIST_NUM + 1)){
+            ammoNamesArray[i] = trackedAmmo->ammoType.name.c_str();
         }
         ++i;
     }
 
-    static int amountToAdd              { 0 };
-    static size_t selectedAmmoNameIndex    { 0 };
-    const char* ammoNameComboPreview    { ammoList[selectedAmmoNameIndex] };
-
-    // Calculate center button add now (since cannot do inside child since middle will be skewed)
-    float fullWindowWidth { ImGui::GetWindowSize().x };
-    
-    static TrackedAmmo emptyAmmo {};
-    TrackedAmmo& selectedAmmo { emptyAmmo };
 
     if(selectedAmmoNameIndex > 0)
-        selectedAmmo = *ammoListBuf.at(selectedAmmoNameIndex -1 );
+        selectedAmmo = *ammoList.at(selectedAmmoNameIndex -1 );
     else
         selectedAmmo = emptyAmmo;
 
@@ -1052,9 +1119,9 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
         ImGui::Text("Ammo Name");
         ImGui::SameLine(100);
         if (ImGui::BeginCombo("##Choose Ammo Name Combo", ammoNameComboPreview, ImGuiComboFlags_HeightSmall)){
-            for (size_t chooseName { 0 }; chooseName < ammoListBuf.size()+1; ++chooseName){ // Add one to account for default option
+            for (size_t chooseName { 0 }; chooseName < ammoList.size()+1; ++chooseName){ // Add one to account for default option
                 const bool isSelected = (selectedAmmoNameIndex == chooseName);
-                if (ImGui::Selectable(ammoList[chooseName], isSelected))
+                if (ImGui::Selectable(ammoNamesArray[chooseName], isSelected))
                     selectedAmmoNameIndex = chooseName;
 
                 if (isSelected)
@@ -1084,7 +1151,7 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
                 ammoRejected = true;
 
             if(!ammoRejected && !amountRejected){
-                ammoTracker->addAmmoToStockpile(amountToAdd, selectedAmmo.ammoType);
+                createdAmmoToAdd = true;
                 selectedAmmoNameIndex = 0;
                 amountToAdd = 0;
                 unsavedChanges = true;              // Set flag
@@ -1094,7 +1161,7 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
         }
 
         if(ImGui::BeginPopupModal("Amount Not Added", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-            WindowHelper::centerText("The amount could not be added.");
+            UIHelper::centerText("The amount could not be added.");
 
             if(amountRejected)
                 ImGui::BulletText("Invalid amount");
@@ -1104,7 +1171,7 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
             ImGui::Spacing();
             ImGui::Spacing();
             
-            if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
+            if (UIHelper::centerButton("Close", ImVec2{120, 0}))
                 ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
         }
@@ -1112,9 +1179,8 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
     ImGui::EndChild();
     ImGui::SameLine();
 
-
     if(ImGui::BeginChild("Selected Ammo Detailed Information", ImGui::GetContentRegionAvail())){
-        WindowHelper::centerText("Detailed Ammo Information");
+        UIHelper::centerText("Detailed Ammo Information");
         ImGui::Separator();
         if(selectedAmmoNameIndex > 0){
             ImGui::Text("Name: ");
@@ -1138,16 +1204,17 @@ void ShooterCentralWindow::drawAddToExistingAmmoType  (bool& unsavedChanges) con
             ImGui::Text("%ld", selectedAmmo.amount);
         }
         else
-            WindowHelper::centerText("Select Ammo Type");
+            UIHelper::centerText("Select Ammo Type");
     }
     ImGui::EndChild();
 
     ImGui::EndChild();
 
+    return std::pair{createdAmmoToAdd, selectedAmmo};
 }
 
 // MARK: EVENTS
-void ShooterCentralWindow::drawEvents() const {
+void EventsUI::home(EventTrackerPtr eventTracker,  bool& unsavedChanges) {
     static bool unsavedChanges { false };
     static std::vector<EventPtr> eventList;
     std::vector<EventPtr>::iterator itr;
@@ -1163,7 +1230,7 @@ void ShooterCentralWindow::drawEvents() const {
     ImGui::Spacing();
     ImGui::Spacing();
 
-    WindowHelper::centerText("Events");
+    UIHelper::centerText("Events");
 
     ImGui::Separator();
     ImGui::Spacing();
@@ -1182,7 +1249,7 @@ void ShooterCentralWindow::drawEvents() const {
     if(ImGui::BeginChild("Event Tracker Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         static bool eventsNotSaved { false }, eventTypesNotSaved { false }, locationsNotSaved { false };
 
-        if(WindowHelper::centerButton("Save All", ImVec2{200, 50})){
+        if(UIHelper::centerButton("Save All", ImVec2{200, 50})){
 
             // Ensure flags are valid
             eventsNotSaved = false;
@@ -1206,7 +1273,7 @@ void ShooterCentralWindow::drawEvents() const {
 
         // Popup showing error
         if(ImGui::BeginPopupModal("Event Tracker Saving Error", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-            WindowHelper::centerText("There was an error attempting to save");
+            UIHelper::centerText("There was an error attempting to save");
 
             if(eventsNotSaved)
                 ImGui::BulletText("All events could not be saved");
@@ -1218,7 +1285,7 @@ void ShooterCentralWindow::drawEvents() const {
             ImGui::Spacing();
             ImGui::Spacing();
             
-            if (WindowHelper::centerButton("Close", ImVec2{120, 0})){
+            if (UIHelper::centerButton("Close", ImVec2{120, 0})){
                 // Since error saving, set flag
                 unsavedChanges = true;
                 ImGui::CloseCurrentPopup();
@@ -1227,7 +1294,7 @@ void ShooterCentralWindow::drawEvents() const {
         }
 
         if(unsavedChanges)
-            WindowHelper::centerText("(There are unsaved changes)");
+            UIHelper::centerText("(There are unsaved changes)");
     }
     ImGui::EndChild();
 
@@ -1305,33 +1372,33 @@ void ShooterCentralWindow::drawEvents() const {
     ImGui::Spacing();
     ImGui::Spacing();
 
-    WindowHelper::centerText("Event Tracker Actions");
+    UIHelper::centerText("Event Tracker Actions");
     ImGui::Separator();
 
     if(ImGui::BeginTabBar("Event Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
                                             ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
     )){
         if(ImGui::BeginTabItem("View Event")){
-            drawViewEvent(selectedEvent);
+            viewEvent(selectedEvent);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event")){
-            drawAddEvent(unsavedChanges);
+            addEvent(unsavedChanges);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event Type")){
-            drawAddEventType(unsavedChanges);
+            addEventType(unsavedChanges);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Location")){
-            drawAddLocation(unsavedChanges);
+            addLocation(unsavedChanges);
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
     }
 }
-// MARK: VIEW EVENT
-void ShooterCentralWindow::drawViewEvent(EventPtr selectedEvent) const{
+// MARK: View Event
+void EventsUI::viewEvent(EventPtr selectedEvent){
     if(!ImGui::BeginChild("View Event")){
         ImGui::EndChild();
         return;
@@ -1342,14 +1409,14 @@ void ShooterCentralWindow::drawViewEvent(EventPtr selectedEvent) const{
         ImGui::Spacing();
         ImGui::Spacing();
 
-        WindowHelper::centerTextDisabled("Select an Event");
+        UIHelper::centerTextDisabled("Select an Event");
         ImGui::EndChild();
         return;
     }
 
     // Detailed Event Information
     if(ImGui::BeginChild("Selected Event Detailed Information", ImVec2{ImGui::GetContentRegionAvail().x/2, 100})){
-        WindowHelper::centerText("Event Information");
+        UIHelper::centerText("Event Information");
         ImGui::Separator();
         if(selectedEvent){
             ImGui::Text("Name: ");
@@ -1365,7 +1432,7 @@ void ShooterCentralWindow::drawViewEvent(EventPtr selectedEvent) const{
             ImGui::Text("%s", selectedEvent->getEventType().c_str());
         }
         else
-            WindowHelper::centerText("(Select Event)");
+            UIHelper::centerText("(Select Event)");
     }
     ImGui::EndChild();
     ImGui::SameLine();
@@ -1376,7 +1443,7 @@ void ShooterCentralWindow::drawViewEvent(EventPtr selectedEvent) const{
         ImGui::Spacing();
         ImGui::Spacing();
         ImGui::Spacing();
-        WindowHelper::centerText("Show Ammo Used");
+        UIHelper::centerText("Show Ammo Used");
         ImGui::SameLine();
         ImGui::Checkbox("##Show Ammo Used Checkbox", &showAmmoUsed);
 
@@ -1397,7 +1464,7 @@ void ShooterCentralWindow::drawViewEvent(EventPtr selectedEvent) const{
         if(selectedEvent){
             static std::vector<std::pair<Gun, TrackedAmmo>> eventGunsUsed;
             selectedEvent->getAllGunsUsed(eventGunsUsed);
-            drawEventGunTable(eventGunsUsed, showAmmoUsed);
+            eventGunTable(eventGunsUsed, showAmmoUsed);
         }
     }
     ImGui::EndChild();
@@ -1406,8 +1473,8 @@ void ShooterCentralWindow::drawViewEvent(EventPtr selectedEvent) const{
     ImGui::EndChild();  // Ends tab child window
 }
 // MARK: EVENT GUN TABLE
-void ShooterCentralWindow::drawEventGunTable(std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) const{
-    WindowHelper::centerText("Guns Used");
+void EventsUI::eventGunTable(std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) {
+    UIHelper::centerText("Guns Used");
     ImGui::Separator();
 
     std::vector<std::pair<Gun, TrackedAmmo>>::iterator itr { list.begin() };
@@ -1488,7 +1555,7 @@ void ShooterCentralWindow::drawEventGunTable(std::vector<std::pair<Gun, TrackedA
 
 
 // MARK: ADD EVENT
-void ShooterCentralWindow::drawAddEvent(bool& unsavedChanges) const{
+void EventsUI::addEvent(bool& unsavedChanges){
     if(!ImGui::BeginChild("Add Event")){
         ImGui::EndChild();
         return;
@@ -1968,27 +2035,9 @@ void ShooterCentralWindow::drawAddLocation (bool& unsavedChanges) const{
     ImGui::EndChild();
 }
 
-// MARK: WindowHelper
-void WindowHelper::centerText(std::string text){
-    auto windowWidth = ImGui::GetWindowSize().x;
-    auto textWidth   = ImGui::CalcTextSize(text.c_str()).x;
 
-    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-    ImGui::Text("%s", text.c_str());
-}
-void WindowHelper::centerTextDisabled(std::string text){
-    auto windowWidth = ImGui::GetWindowSize().x;
-    auto textWidth   = ImGui::CalcTextSize(text.c_str()).x;
 
-    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
-    ImGui::TextDisabled("%s", text.c_str());
-}
-bool WindowHelper::centerButton(std::string text, ImVec2 buttonSize){
-    auto windowWidth = ImGui::GetWindowSize().x;
 
-    ImGui::SetCursorPosX((windowWidth - buttonSize.x) * 0.5f);
-    return ImGui::Button(text.c_str(), buttonSize);
-}
 void WindowHelper::drawSelectGunTable(const std::vector<ConstGunPtr>& gunList, Gun& selectedGun){
 
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-4, 200};
