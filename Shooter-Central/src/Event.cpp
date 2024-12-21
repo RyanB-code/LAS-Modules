@@ -2,8 +2,57 @@
 
 using namespace ShooterCentral;
 
+// MARK: Location
+Location::Location(std::string setName) : name { setName } {
 
-// MARK: EVENT
+}
+Location::~Location(){
+
+}
+std::string Location::getName() const {
+    return name;
+}
+Location::operator std::string() const {
+    return name;
+}
+bool Location::operator==(const Location& other) const{
+    if(this->name == other.getName())
+        return true;
+    else
+        return false;
+}
+
+std::ostream& operator<<(std::ostream& os, const Location& location){
+    os << location.getName();
+    return os;
+}
+
+// MARK: Event Type
+EventType::EventType(std::string setName) : name { setName } {
+
+}
+EventType::~EventType(){
+
+}
+std::string EventType::getName() const {
+    return name;
+}
+EventType::operator std::string() const {
+    return name;
+}
+bool EventType::operator==(const EventType& other) const{
+    if(this->name == other.getName())
+        return true;
+    else
+        return false;
+}
+
+std::ostream& operator<<(std::ostream& os, const EventType& eventType){
+    os << eventType.getName();
+    return os;
+}
+
+// MARK: Event
 Event::Event() 
     :   name { "N/A"}, \
         location {"N/A"},  
@@ -13,7 +62,7 @@ Event::Event()
 {
 
 }
-Event::Event(std::string setName, std::string setLocation, std::string setEventType, std::string setNotes, ymd setDate)
+Event::Event(std::string setName, Location setLocation, EventType setEventType, std::string setNotes, ymd setDate)
     :   name        { setName },
         location    { setLocation },
         eventType   { setEventType },
@@ -31,10 +80,10 @@ std::string Event::getName() const{
 std::string Event::getNotes() const{
     return notes;
 }
-std::string Event::getEventType() const{
+EventType Event::getEventType() const{
     return eventType;
 }
-std::string Event::getLocation() const{
+Location Event::getLocation() const{
     return location;
 }
 const ymd& Event::getDate() const{
@@ -95,7 +144,7 @@ bool Event::operator!=(const Event& other) const{
 
     return false;
 }
-// MARK: TO/FROM JSON
+// MARK: To/from JSON
 void ShooterCentral::to_json(LAS::json& j, const Event& event){
     using LAS::json;
 
@@ -135,7 +184,7 @@ void ShooterCentral::from_json(const LAS::json& j, Event& event){
 
     ymd dateBuf { std::chrono::floor<std::chrono::days>(EventHelper::stringToTimepoint(dateStringBuf)) };
 
-    Event eventBuf { nameBuf, locBuf, eventTypeBuf, notesBuf, dateBuf};
+    Event eventBuf { nameBuf, Location{locBuf}, EventType{eventTypeBuf}, notesBuf, dateBuf};
     
     nlohmann::json gunList;
 	j.at("gunsUsed").get_to(gunList);
@@ -148,7 +197,7 @@ void ShooterCentral::from_json(const LAS::json& j, Event& event){
     event = eventBuf;
 }
 
-// MARK: EVENT TRACKER
+// MARK: Event Tracker
 EventTracker::EventTracker(LAS::Logging::LoggerPtr setLogger) : logger { setLogger }
 {
 
@@ -170,7 +219,7 @@ bool EventTracker::setDirectory(std::string path) {
 std::string EventTracker::getDirectory() const{
     return saveDirectory;
 }
-uint64_t EventTracker::getTotalEvents  () const{
+int EventTracker::getTotalEvents  () const{
     return events.size();
 }
 
@@ -203,7 +252,7 @@ void EventTracker::getAllEventNames(StringVector& list) const {
     for(const auto& [key, event] : events)
         list.emplace_back(event->getName());
 }
-// MARK: R/W EVENTS
+// MARK: R/W Events
 bool EventTracker::writeAllEvents () const{
     using LAS::json;
 
@@ -244,8 +293,8 @@ bool EventTracker::readEvents(){
     
 	return true;
 }
-// MARK: GET EVENT TYPES
-void EventTracker::getAllEventTypes(StringVector& list) const{
+// MARK: Get Event Types
+void EventTracker::getAllEventTypes(EventTypeList& list) const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
@@ -254,7 +303,7 @@ void EventTracker::getAllEventTypes(StringVector& list) const{
     }
 }
 
-// MARK: ADD EVENT TYPE
+// MARK: Add Event Type
 bool EventTracker::addEventType (const std::string& type){
     if(eventTypes.contains(type))
         return false;
@@ -263,7 +312,7 @@ bool EventTracker::addEventType (const std::string& type){
     return eventTypes.contains(type);
 }
 // MARK: GET LOCATIONS
-void EventTracker::getAllLocations(StringVector& list) const{
+void EventTracker::getAllLocations(LocationList& list) const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
@@ -287,7 +336,7 @@ bool EventTracker::writeAllEventTypes() const{
     std::string fullPath { saveDirectory };
     fullPath += EVENT_TYPES_FILENAME;
 
-    StringVector rawEventTypes;
+    EventTypeList rawEventTypes;
 
     for(const auto& [key, value] : eventTypes){
         rawEventTypes.emplace_back(value);
@@ -302,7 +351,7 @@ bool EventTracker::readEventTypes(){
     std::string fullPath { saveDirectory };
     fullPath += EVENT_TYPES_FILENAME;
 
-    StringVector eventTypesBuf;
+    EventTypeList eventTypesBuf;
     try{
         EventHelper::readEventTypes(fullPath, eventTypesBuf);
     }
@@ -311,9 +360,9 @@ bool EventTracker::readEventTypes(){
         logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
     }
 
-    for(const auto& s : eventTypesBuf){
-        if(!addEventType(s))
-            logger->log("Event Type [" + s + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+    for(const auto& et : eventTypesBuf){
+        if(!addEventType(et))
+            logger->log("Event Type [" + et.getName() + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
     }
 
     return true;
@@ -326,7 +375,7 @@ bool EventTracker::writeAllLocations() const{
     std::string fullPath { saveDirectory };
     fullPath += LOCATIONS_FILENAME;
 
-    StringVector rawLocations;
+    LocationList rawLocations;
 
     for(const auto& [key, value] : locations){
         rawLocations.emplace_back(value);
@@ -341,7 +390,7 @@ bool EventTracker::readLocations(){
     std::string fullPath { saveDirectory };
     fullPath += LOCATIONS_FILENAME;
 
-    StringVector locationsBuf;
+    LocationList locationsBuf;
     try{
         EventHelper::readLocations(fullPath, locationsBuf);
     }
@@ -350,9 +399,9 @@ bool EventTracker::readLocations(){
         logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
     }
 
-    for(const auto& s : locationsBuf){
-        if(!addLocation(s))
-            logger->log("Location named [" + s + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+    for(const auto& location : locationsBuf){
+        if(!addLocation(location))
+            logger->log("Location named [" + location.getName() + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
     }
 
     return true;
@@ -415,16 +464,16 @@ std::chrono::system_clock::time_point EventHelper::stringToTimepoint(const std::
     return std::chrono::system_clock::from_time_t(std::mktime(&time));
 }
 // MARK: R/W EVENT TYPES
-bool EventHelper::writeAllEventTypes(std::string path, const StringVector& eventTypes){
+bool EventHelper::writeAllEventTypes(std::string path, const EventTypeList& list){
     using LAS::json;
 
-    if(eventTypes.empty())
+    if(list.empty())
         return true;
 
     json j;
     json entries = nlohmann::json::array();
 
-	for (const auto& eventType : eventTypes) 
+	for (const auto& eventType : list) 
         entries.emplace_back(eventType);
     
     j["eventTypes"] = entries;
@@ -436,14 +485,14 @@ bool EventHelper::writeAllEventTypes(std::string path, const StringVector& event
 
     return true;
 }
-bool EventHelper::readEventTypes (std::string path, StringVector& eventTypes){
+bool EventHelper::readEventTypes (std::string path, EventTypeList& list){
     using LAS::json;
 
     if(!std::filesystem::exists(path))
         return false;
 
-    if(!eventTypes.empty())
-        eventTypes.erase(eventTypes.begin(), eventTypes.end());
+    if(!list.empty())
+        list.erase(list.begin(), list.end());
 
     std::ifstream inputFile{ path, std::ios::in };
     json j = json::parse(inputFile);
@@ -457,13 +506,13 @@ bool EventHelper::readEventTypes (std::string path, StringVector& eventTypes){
 
 		obj.get_to(nameBuf);
 
-        eventTypes.emplace_back(nameBuf);
+        list.emplace_back(nameBuf);
 	}
 
     return true;
 }
 // MARK: R/W LOCATIONS
-bool EventHelper::writeAllLocations(std::string path, const StringVector& locations){
+bool EventHelper::writeAllLocations(std::string path, const LocationList& locations){
     using LAS::json;
 
     if(locations.empty())
@@ -484,7 +533,7 @@ bool EventHelper::writeAllLocations(std::string path, const StringVector& locati
 
     return true;
 }
-bool EventHelper::readLocations (std::string path, StringVector& locations){
+bool EventHelper::readLocations (std::string path, LocationList& locations){
     using LAS::json;
 
     if(!std::filesystem::exists(path))

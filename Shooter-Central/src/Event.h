@@ -14,16 +14,54 @@ using ymd       = std::chrono::year_month_day;
 using timepoint = std::chrono::system_clock::time_point;
 
 namespace ShooterCentral{
+
+    class Location{
+    public:
+        explicit Location(std::string setName="NULL");
+        ~Location();
+
+        std::string getName() const;
+        operator std::string() const;
+        bool operator==(const Location& other) const;
+
+    private:
+        std::string name;
+    };
+
+    std::ostream& operator<<(std::ostream& os, const Location& location);
+
+    using LocationList = std::vector<Location>;
+
+    class EventType{
+    public:
+        explicit EventType(std::string setName="NULL");
+        ~EventType();
+
+        std::string getName() const;
+        operator std::string() const;
+        bool operator==(const EventType& other) const;
+
+    private:
+        std::string name;
+    };
+
+    std::ostream& operator<<(std::ostream& os, const EventType& eventType);
+
+    using EventTypeList = std::vector<EventType>;
+
+
+
+
     class Event final {
     public:
         Event();
-        Event(std::string setName, std::string setLocation, std::string setEventType, std::string setNotes, ymd setDate);
+        Event(std::string setName, Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
         ~Event();
 
         std::string getName()       const;
         std::string getNotes()      const;
-        std::string getEventType()  const;
-        std::string getLocation()   const;
+        EventType   getEventType()  const;
+        Location    getLocation()   const;
         const ymd&  getDate()       const;
         timepoint   getTimepoint()  const;
         
@@ -40,8 +78,8 @@ namespace ShooterCentral{
         static constexpr int MAX_GUNS_PER_EVENT  { 5 };
 
         std::string name;
-        std::string location;
-        std::string eventType;
+        Location    location;
+        EventType   eventType;
         std::string notes;
         ymd         date;
 
@@ -55,6 +93,18 @@ namespace ShooterCentral{
 
 namespace std{
     template <>
+    struct hash<ShooterCentral::Location> {
+        size_t operator()(const ShooterCentral::Location& location) const{
+            return std::hash<std::string>()(location.getName());
+        }
+    };
+    template <>
+    struct hash<ShooterCentral::EventType> {
+        size_t operator()(const ShooterCentral::EventType& eventType) const{
+            return std::hash<std::string>()(eventType.getName());
+        }
+    };
+    template <>
     struct hash<ShooterCentral::Event> {
         size_t operator()(const ShooterCentral::Event& event) const{
             std::size_t seed { 0 };
@@ -62,6 +112,7 @@ namespace std{
             std::hash_combine(seed, event.getName());
             std::hash_combine(seed, event.getLocation());
             std::hash_combine(seed, event.printDate());
+            std::hash_combine(seed, event.getEventType());
 
             return seed;
         }
@@ -78,31 +129,29 @@ namespace ShooterCentral{
         bool        setDirectory    (std::string directory);
         std::string getDirectory    () const;
 
-        uint64_t    getTotalEvents  () const;
-
         bool addEvent           (Event& event);
-        void getAllEvents       (std::vector<EventPtr>& list)       const;  // Clears vector before adding elements
-        void getAllEventNames   (StringVector& list)                const;  // Clears vector before adding elements
+        bool addEventType       (const std::string& type);
+        bool addLocation        (const std::string& location);
 
-        bool writeAllEvents () const;
-        bool readEvents     ();
+        void    getAllEvents        (std::vector<EventPtr>& list)       const;  // Clears vector before adding elements
+        void    getAllEventNames    (StringVector& list)                const;  // Clears vector
+        void    getAllEventTypes    (EventTypeList& list)               const;   // Clears vector before adding elements
+        void    getAllLocations     (LocationList& list)                const;   // Clears vector before adding elements
+        int     getTotalEvents      ()                                  const;
 
-        void getAllEventTypes    (StringVector& lsit) const;   // Clears vector before adding elements
-        bool addEventType        (const std::string& type);
 
-        void getAllLocations     (StringVector& list) const;   // Clears vector before adding elements
-        bool addLocation         (const std::string& location);
-
+        bool writeAllEvents     () const;
         bool writeAllEventTypes () const;
-        bool readEventTypes     ();
-
         bool writeAllLocations  () const;
+
+        bool readEvents         ();
+        bool readEventTypes     ();
         bool readLocations      ();
 
     private:
         std::unordered_map<Event, EventPtr> events;
-        std::map<std::string, std::string>  eventTypes;
-        std::map<std::string, std::string>  locations;
+        std::map<std::string, EventType>  eventTypes;
+        std::map<std::string, Location>  locations;
 
         std::string             saveDirectory;
         LAS::Logging::LoggerPtr logger;
@@ -115,14 +164,13 @@ namespace ShooterCentral{
     using EventTrackerPtr = std::shared_ptr<EventTracker>;
 
     namespace EventHelper{
-        bool    writeEvent    (std::string directory, const Event& event);
-        Event   readEvent     (const std::string& path);
+        bool    writeEvent          (std::string directory, const Event&            event);
+        bool    writeAllLocations   (std::string path,      const LocationList&     list);
+        bool    writeAllEventTypes  (std::string path,      const EventTypeList&    list);
 
-        bool    writeAllEventTypes  (std::string path, const StringVector& eventTypes);
-        bool    readEventTypes      (std::string path, StringVector& eventTypes);               // Clears vector before adding elements
-
-        bool    writeAllLocations   (std::string path, const StringVector& locations);
-        bool    readLocations       (std::string path, StringVector& locations);               // Clears vector before adding elements
+        Event   readEvent           (const std::string& path);
+        bool    readEventTypes      (std::string path, EventTypeList&   list);               // Clears vector before adding elements
+        bool    readLocations       (std::string path, LocationList&    list);               // Clears vector before adding elements
 
         timepoint stringToTimepoint(const std::string& timeString);
     }
