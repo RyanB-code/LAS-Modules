@@ -6,8 +6,6 @@
 
 #include <LAS/Window.h>
 
-#include <iostream>     // FOR TESTING
-
 namespace ShooterCentral{
     struct UISettings{
         const int MAX_LIST_NUM               { 10 };
