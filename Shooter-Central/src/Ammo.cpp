@@ -122,6 +122,25 @@ void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
 }
 
 // MARK: STOCKPILE
+
+
+
+
+// MARK: Add Items
+bool AmmoTracker::addCartridge (const std::string& cartridge){
+    if(cartridges.contains(cartridge))
+        return false;
+
+    cartridges.try_emplace(cartridge, cartridge);
+    return cartridges.contains(cartridge);
+}
+bool AmmoTracker::addManufacturer (const std::string& manufacturer){
+    if(manufacturers.contains(manufacturer))
+        return false;
+
+    manufacturers.try_emplace(manufacturer, manufacturer);
+    return manufacturers.contains(manufacturer);
+}
 bool AmmoTracker::addAmmoToStockpile (const TrackedAmmo& trackedAmmo){
     if(ammoStockpile.contains(trackedAmmo.ammoType)){
         ammoStockpile.at(trackedAmmo.ammoType)->amount += trackedAmmo.amount;
@@ -139,6 +158,8 @@ bool AmmoTracker::addAmmoToStockpile (const TrackedAmmo& trackedAmmo){
     else
         return false;
 }
+
+// MARK: Remove Items
 bool AmmoTracker::removeAmmoFromStockpile (const TrackedAmmo& trackedAmmo){
     if(!ammoStockpile.contains(trackedAmmo.ammoType))
         return true;
@@ -159,7 +180,7 @@ void AmmoTracker::removeAllAmmoFromStockpile  (){
     ammoStockpile.clear();
 }
 
-// MARK: GET INFO
+// MARK: Get Info
 void AmmoTracker::getAllAmmoNames(StringVector& names) const{
     if(!names.empty())
         names.erase(names.begin(), names.end());
@@ -222,23 +243,8 @@ void AmmoTracker::getAllManufacturers(ManufacturerList& list) const{
         list.emplace_back(manufacturer);
     }
 }
-// MARK: ADD CART/MAN
-bool AmmoTracker::addCartridge (const std::string& cartridge){
-    if(cartridges.contains(cartridge))
-        return false;
 
-    cartridges.try_emplace(cartridge, cartridge);
-    return cartridges.contains(cartridge);
-}
-bool AmmoTracker::addManufacturer (const std::string& manufacturer){
-    if(manufacturers.contains(manufacturer))
-        return false;
-
-    manufacturers.try_emplace(manufacturer, manufacturer);
-    return manufacturers.contains(manufacturer);
-}
-
-// MARK: R/W AMMO
+// MARK: Write
 bool AmmoTracker::writeAllAmmo() const{
     if(ammoStockpile.empty())
         return true;
@@ -248,20 +254,75 @@ bool AmmoTracker::writeAllAmmo() const{
         return false;
     }
 
+    int ammoNotSaved { 0 };
 	for(const auto& pair : ammoStockpile) {
         const auto& ammo = *pair.second;
 
         try{
-            if(!AmmoHelper::writeTrackedAmmo(saveDirectory, ammo)) 
+            if(!AmmoHelper::writeTrackedAmmo(saveDirectory, ammo)){
                 logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + ammo.ammoType.name + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
+                ++ammoNotSaved;
+            }
         }
         catch(std::exception& e){
             logger->log("Error creating JSON object. Code " + std::string{e.what()} + ". What: " + std::string{e.what()}, LAS::Logging::Tags{"ERROR", "SC"});
+            ++ammoNotSaved;
         }
 	}
 
+    if(ammoNotSaved > 0)
+        logger->log("Could not save " + std::to_string(ammoNotSaved) + " ammo objects.", LAS::Logging::Tags{"ERROR", "SC"});
+    else
+        logger->log("Saved all ammo", LAS::Logging::Tags{"ROUTINE", "SC"});
+
     return true;
 }
+bool AmmoTracker::writeAllCartridges() const{
+    if(!std::filesystem::exists(saveDirectory))
+        return false;
+
+    std::string fullPath { saveDirectory };
+    fullPath += CARTRIDGES_FILENAME;
+
+    std::vector<std::string> rawCartridges;
+
+    for(auto& c : cartridges){
+        rawCartridges.emplace_back(c.second);
+    }
+
+    if(AmmoHelper::writeAllCartridges(fullPath, rawCartridges)){
+        logger->log("Saved cartridges", LAS::Logging::Tags{"ROUTINE", "SC"});
+        return true;
+    }
+    else{
+        logger->log("Could not save cartridges", LAS::Logging::Tags{"ERROR", "SC"});
+        return false;
+    }
+}
+bool AmmoTracker::writeAllManufacturers() const{
+    if(!std::filesystem::exists(saveDirectory))
+        return false;
+
+    std::string fullPath { saveDirectory };
+    fullPath += MANUFACTURERS_FILENAME;
+
+    StringVector rawManufacturers;
+
+    for(auto& c : manufacturers){
+        rawManufacturers.emplace_back(c.second);
+    }
+
+    if(AmmoHelper::writeAllManufacturers(fullPath, rawManufacturers)){
+        logger->log("Saved manufacturers", LAS::Logging::Tags{"ROUTINE", "SC"});
+        return true;
+    }
+    else{
+        logger->log("Could not save manufacturers", LAS::Logging::Tags{"ERROR", "SC"});
+        return false;
+    }
+}
+
+// MARK: Read
 bool AmmoTracker::readAllAmmo(){
     if(!std::filesystem::exists(saveDirectory))
         return false;
@@ -288,22 +349,6 @@ bool AmmoTracker::readAllAmmo(){
 
 	return true;
 }
-// MARK: R/W CARTRIDGE
-bool AmmoTracker::writeAllCartridges() const{
-    if(!std::filesystem::exists(saveDirectory))
-        return false;
-
-    std::string fullPath { saveDirectory };
-    fullPath += CARTRIDGES_FILENAME;
-
-    std::vector<std::string> rawCartridges;
-
-    for(auto& c : cartridges){
-        rawCartridges.emplace_back(c.second);
-    }
-
-    return AmmoHelper::writeAllCartridges(fullPath, rawCartridges);
-}
 bool AmmoTracker::readCartridges(){
     if(!std::filesystem::exists(saveDirectory))
         return false;
@@ -326,22 +371,6 @@ bool AmmoTracker::readCartridges(){
     }
 
     return true;
-}
-// MARK: R/W MANUFACTURERS
-bool AmmoTracker::writeAllManufacturers() const{
-    if(!std::filesystem::exists(saveDirectory))
-        return false;
-
-    std::string fullPath { saveDirectory };
-    fullPath += MANUFACTURERS_FILENAME;
-
-    StringVector rawManufacturers;
-
-    for(auto& c : manufacturers){
-        rawManufacturers.emplace_back(c.second);
-    }
-
-    return AmmoHelper::writeAllManufacturers(fullPath, rawManufacturers);
 }
 bool AmmoTracker::readManufacturers(){
     if(!std::filesystem::exists(saveDirectory))
@@ -367,6 +396,7 @@ bool AmmoTracker::readManufacturers(){
     return true;
 }
 
+
 bool AmmoTracker::setDirectory(std::string path) {
     path = LAS::TextManip::ensureSlash(path);
 
@@ -382,6 +412,11 @@ std::string AmmoTracker::getDirectory() const{
 }
 
 // MARK: AMMO HELPER
+
+
+
+
+// MARK: Write
 bool AmmoHelper::writeTrackedAmmo(std::string directory, const TrackedAmmo& ammo){
     using LAS::json;
 
@@ -419,18 +454,6 @@ bool AmmoHelper::writeTrackedAmmo(std::string directory, const TrackedAmmo& ammo
    
     return true;
 }
-TrackedAmmo AmmoHelper::readTrackedAmmo(const std::string& path){
-    using LAS::json;
-
-    if(!std::filesystem::exists(path))
-        throw std::filesystem::filesystem_error::runtime_error{"File does not exist"};
-
-    std::ifstream inputFile{ path, std::ios::in };
-    json j = json::parse(inputFile);
-
-    return TrackedAmmo{j.template get<ShooterCentral::TrackedAmmo>()};
-}
-// MARK: R/W CARTRIDGES
 bool AmmoHelper::writeAllCartridges(std::string path, const StringVector& cartridges){
     using LAS::json;
 
@@ -452,6 +475,41 @@ bool AmmoHelper::writeAllCartridges(std::string path, const StringVector& cartri
 
     return true;
 }
+bool AmmoHelper::writeAllManufacturers(std::string path, const StringVector& manufacturers){
+    using LAS::json;
+
+    if(manufacturers.empty())
+        return true;
+
+    json j;
+    json entries = nlohmann::json::array();
+
+	for (const auto& manufacturer : manufacturers) 
+        entries.emplace_back(manufacturer);
+    
+    j["manufacturers"] = entries;
+
+    // Write to file
+    std::ofstream file{path};
+    file << std::setw(1) << std::setfill('\t') << j;
+    file.close();
+
+    return true;
+}
+
+// MARK: Read
+TrackedAmmo AmmoHelper::readTrackedAmmo(const std::string& path){
+    using LAS::json;
+
+    if(!std::filesystem::exists(path))
+        throw std::filesystem::filesystem_error::runtime_error{"File does not exist"};
+
+    std::ifstream inputFile{ path, std::ios::in };
+    json j = json::parse(inputFile);
+
+    return TrackedAmmo{j.template get<ShooterCentral::TrackedAmmo>()};
+}
+
 bool AmmoHelper::readCartridges (std::string path, StringVector& cartridgeNames){
     using LAS::json;
 
@@ -475,28 +533,6 @@ bool AmmoHelper::readCartridges (std::string path, StringVector& cartridgeNames)
 
         cartridgeNames.emplace_back(nameBuf);
 	}
-
-    return true;
-}
-// MARK: R/W MANUFACTURERS
-bool AmmoHelper::writeAllManufacturers(std::string path, const StringVector& manufacturers){
-    using LAS::json;
-
-    if(manufacturers.empty())
-        return true;
-
-    json j;
-    json entries = nlohmann::json::array();
-
-	for (const auto& manufacturer : manufacturers) 
-        entries.emplace_back(manufacturer);
-    
-    j["manufacturers"] = entries;
-
-    // Write to file
-    std::ofstream file{path};
-    file << std::setw(1) << std::setfill('\t') << j;
-    file.close();
 
     return true;
 }
