@@ -126,12 +126,11 @@ namespace ShooterCentral{
         ~AmmoTracker();
 
         bool    addAmmoToStockpile          (const TrackedAmmo& trackedAmmo);
-        bool    removeAmmoFromStockpile     (const TrackedAmmo& trackedAmmo);
-        void    removeAllAmmoFromStockpile  ();
-
         bool    addCartridge            (const std::string& cartridge);
         bool    addManufacturer         (const std::string& manufacturer);
 
+        bool    removeAmmoFromStockpile     (const TrackedAmmo& trackedAmmo);
+        void    removeAllAmmoFromStockpile  ();
 
         void    getAllAmmoNames         (StringVector&                      names)                              const;  // Clears vector before adding elements
         void    getAllAmmo              (std::vector<ConstTrackedAmmoPtr>&  list)                               const;  // Clears vector before adding elements
@@ -170,14 +169,13 @@ namespace ShooterCentral{
     using AmmoTrackerPtr = std::shared_ptr<AmmoTracker>;
 
     namespace AmmoHelper{
-        bool        writeTrackedAmmo    (std::string directory, const TrackedAmmo& ammo);
-        TrackedAmmo readTrackedAmmo     (const std::string& path);
+        bool        writeTrackedAmmo        (std::string directory, const TrackedAmmo& ammo);
+        bool        writeAllCartridges      (std::string path, const StringVector& cartridges);
+        bool        writeAllManufacturers   (std::string path, const StringVector& manufacturers);
 
-        bool    writeAllCartridges      (std::string path, const StringVector& cartridges);
-        bool    readCartridges          (std::string path, StringVector& cartridgeNames);               // Clears vector before adding elements
-
-        bool    writeAllManufacturers   (std::string path, const StringVector& manufacturers);
-        bool    readManufacturers       (std::string path, StringVector& manufacturers);               // Clears vector before adding elements
+        TrackedAmmo readTrackedAmmo         (const std::string& path);
+        bool        readCartridges          (std::string path, StringVector& cartridgeNames);       // Clears vector before adding elements
+        bool        readManufacturers       (std::string path, StringVector& manufacturers);        // Clears vector before adding elements
     }
 
 }
