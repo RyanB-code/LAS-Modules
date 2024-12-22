@@ -70,13 +70,16 @@ namespace ShooterCentral{
     struct TrackedAmmo {
         AmmoType    ammoType    { };
         int         amount      { 0 };
+
+        bool operator==(const TrackedAmmo& other) const;
     };
 
     void to_json    (LAS::json& j, const TrackedAmmo& ammo);
     void from_json  (const LAS::json& j, TrackedAmmo& ammo);
 
-    using TrackedAmmoPtr        = std::shared_ptr<TrackedAmmo>;
-    using ConstTrackedAmmoPtr   = std::shared_ptr<const TrackedAmmo>;
+    using TrackedAmmoPtr            = std::shared_ptr<TrackedAmmo>;
+    using ConstTrackedAmmoPtr       = std::shared_ptr<const TrackedAmmo>;
+    using ConstTrackedAmmoPtrList   = std::vector<ConstTrackedAmmoPtr>;
 
 }
 
@@ -132,8 +135,8 @@ namespace ShooterCentral{
 
         void    getAllAmmoNames         (StringVector&                      names)                              const;  // Clears vector before adding elements
         void    getAllAmmo              (std::vector<ConstTrackedAmmoPtr>&  list)                               const;  // Clears vector before adding elements
-        void    getAllCartridgeNames    (CartridgeList&                     list)                               const;  // Clears vector before adding elements
-        void    getAllManufacturerNames (ManufacturerList&                  list)                               const;  // Clears vector before adding elements
+        void    getAllCartridges        (CartridgeList&                     list)                               const;  // Clears vector before adding elements
+        void    getAllManufacturers     (ManufacturerList&                  list)                               const;  // Clears vector before adding elements
         void    getAmmoCountByCartridge (AmountPerCartridgeList&            list)                               const;  // Clears vector before adding elements
         void    getAllAmmoByCartridge   (std::vector<TrackedAmmo>&          list, const Cartridge& cartridge)   const;  // Clears vector before adding elements, gives copies of ammo objects, adds if cartridge name is equal
 
