@@ -304,7 +304,7 @@ void EventTracker::getAllEventTypes(EventTypeList& list) const{
 }
 
 // MARK: Add Event Type
-bool EventTracker::addEventType (const std::string& type){
+bool EventTracker::addEventType (const EventType& type){
     if(eventTypes.contains(type))
         return false;
 
@@ -321,7 +321,7 @@ void EventTracker::getAllLocations(LocationList& list) const{
     }
 }
 // MARK: ADD LOCATION
-bool EventTracker::addLocation (const std::string& location){
+bool EventTracker::addLocation (const Location& location){
     if(locations.contains(location))
         return false;
 
