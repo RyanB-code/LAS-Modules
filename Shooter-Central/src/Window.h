@@ -53,30 +53,31 @@ namespace ShooterCentral{
     }
 
     namespace ArmoryUI{
-        void                            home            (GunTrackerPtr gunTracker, bool& unsavedChanges,  const StringVector& cartridgeNames);
-        std::pair<bool, Gun>            addGun          (bool& unsavedChanges, const StringVector& cartridgeNames, const StringVector& wpnTypeNames);
-        std::pair<bool, std::string>    addWeaponType   (bool& unsavedChanges);
+        void        home            (GunTrackerPtr gunTracker, bool& unsavedChanges,  const CartridgeList& cartridgeNames);
+        GunPtr      addGun          (bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes);
+        WeaponType  addWeaponType   (bool& unsavedChanges);
     }
 
     namespace StockpileUI{
-        void                            home                    (AmmoTrackerPtr ammoTracker, bool& unsavedChanges);
-        std::pair<bool, std::string>    addCartridge            (bool& unsavedChanges);
-        std::pair<bool, TrackedAmmo>    addAmmoType             (bool& unsavedChanges, const StringVector& cartridgeNames, const StringVector& manufacturerNames);
-        std::pair<bool, std::string>    addManufacturer         (bool& unsavedChanges);
-        std::pair<bool, TrackedAmmo>    addToExistingAmmoType   (bool& unsavedChanges, const std::vector<ConstTrackedAmmoPtr>& ammoList);
+        void            home                    (AmmoTrackerPtr ammoTracker, bool& unsavedChanges);
+        Cartridge       addCartridge            (bool& unsavedChanges);
+        TrackedAmmo     addAmmoType             (bool& unsavedChanges, const CartridgeList& cartridgeNames, const ManufacturerList& manufacturerNames);
+        Manufacturer    addManufacturer         (bool& unsavedChanges);
+        TrackedAmmo     addToExistingAmmoType   (bool& unsavedChanges, const std::vector<ConstTrackedAmmoPtr>& ammoList);
     }
 
     namespace EventsUI{
-        void    home                (EventTrackerPtr eventTracker,  bool& unsavedChanges);
-        void    addEventType        (bool& unsavedChanges);
-        void    addLocation         (bool& unsavedChanges);
-        void    addEvent            (bool& unsavedChanges);
-        void    viewEvent           (EventPtr selectedEvent);
-        void    eventGunTable       (std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed);
+        void    home                (EventTrackerPtr eventTracker,  AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChanges);
+        void    viewEvent           (std::shared_ptr<const Event> event);
+
+        EventType                   addEventType    (bool& unsavedChanges);
+        Location                    addLocation     (bool& unsavedChanges);
+        std::pair<bool, EventPtr>   addEvent        (   bool& unsavedChanges,           const EventTypeList& eventTypes,    const LocationList& locations, 
+                                                        const ConstGunPtrList& guns,    const ConstTrackedAmmoPtrList& ammoList );
+        
+        void    eventGunTable       (const std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed);
+        void    selectGunTable      (const ConstGunPtrList&         gunList,    Gun& selectedGun);
+        void    selectAmmoTable     (const ConstTrackedAmmoPtrList& ammoList,   TrackedAmmo& selectedAmmo);
     }
-
-
-        void    drawSelectGunTable      (const std::vector<ConstGunPtr>& gunList, Gun& selectedGun);
-        void    drawSelectAmmoTable     (const std::vector<TrackedAmmoPtr>& ammoList, TrackedAmmo& selectedAmmo);
 }
 
