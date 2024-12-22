@@ -55,7 +55,7 @@ namespace ShooterCentral{
     class Event final {
     public:
         Event();
-        Event(std::string setName, Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
+        Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
         ~Event();
 
         std::string getName()       const;
@@ -72,12 +72,10 @@ namespace ShooterCentral{
         uint8_t getNumGunsUsed  () const;
 
         bool operator==(const Event& other) const;
-        bool operator!=(const Event& other) const;
 
     private:
         static constexpr int MAX_GUNS_PER_EVENT  { 5 };
 
-        std::string name;
         Location    location;
         EventType   eventType;
         std::string notes;
@@ -109,7 +107,6 @@ namespace std{
         size_t operator()(const ShooterCentral::Event& event) const{
             std::size_t seed { 0 };
 
-            std::hash_combine(seed, event.getName());
             std::hash_combine(seed, event.getLocation());
             std::hash_combine(seed, event.printDate());
             std::hash_combine(seed, event.getEventType());
@@ -133,11 +130,10 @@ namespace ShooterCentral{
         bool addEventType       (const EventType& type);
         bool addLocation        (const Location& location);
 
-        void    getAllEvents        (std::vector<EventPtr>& list)       const;  // Clears vector before adding elements
-        void    getAllEventNames    (StringVector& list)                const;  // Clears vector before adding elements
-        void    getAllEventTypes    (EventTypeList& list)               const;  // Clears vector before adding elements
-        void    getAllLocations     (LocationList& list)                const;  // Clears vector before adding elements
-        int     getTotalEvents      ()                                  const;
+        void getAllEvents        (std::vector<EventPtr>& list)       const;  // Clears vector before adding elements
+        void getAllEventTypes    (EventTypeList& list)               const;  // Clears vector before adding elements
+        void getAllLocations     (LocationList& list)                const;  // Clears vector before adding elements
+        int  getTotalEvents      ()                                  const;
 
 
         bool writeAllEvents     () const;
