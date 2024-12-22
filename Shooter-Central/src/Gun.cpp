@@ -200,22 +200,53 @@ bool GunTracker::addWeaponType           (const WeaponType& type){
     weaponTypes.try_emplace(type, type);
     return weaponTypes.contains(type);
 }
-// MARK: R/W Guns
+// MARK: Write/Read
 bool GunTracker::writeAllGuns() const{
-    if(guns.empty())
+    if(guns.empty()){
+        logger->log("Saved all Guns", LAS::Logging::Tags{"ROUTINE", "SC"});
         return true;
+    }
 
     if(!std::filesystem::exists(saveDirectory)){
-        logger->log("Directory [" + saveDirectory + "] was not found. Did not attempt to save any Ammo objects.", LAS::Logging::Tags{"ERROR", "SC"});
+        logger->log("Directory [" + saveDirectory + "] was not found. Did not attempt to save any Gun objects.", LAS::Logging::Tags{"ERROR", "SC"});
         return false;
     }
 
+    int gunsNotSaved { 0 };
 	for(const auto& [key, gun] : guns) {
-        if(!GunHelper::writeGun(saveDirectory, *gun)) 
-            logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + gun->getName() + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
+        if(!GunHelper::writeGun(saveDirectory, *gun)){
+            logger->log("Failed to save gun [" + gun->getName() + "]", LAS::Logging::Tags{"ERROR", "SC"});
+            ++gunsNotSaved;
+        }
 	}
 
+    if(gunsNotSaved > 0)
+        logger->log("Could not save " + std::to_string(gunsNotSaved) + " guns.", LAS::Logging::Tags{"ERROR", "SC"});
+    else
+        logger->log("Saved guns", LAS::Logging::Tags{"ROUTINE", "SC"});
+
     return true;
+}
+bool GunTracker::writeAllWeaponTypes () const {    
+    if(!std::filesystem::exists(saveDirectory))
+        return false;
+
+    std::string fullPath { saveDirectory };
+    fullPath += WEAPON_TYPES_FILENAME;
+
+    WeaponTypeList rawWeaponTypes;
+
+    for(auto& c : weaponTypes)
+        rawWeaponTypes.emplace_back(c.second);
+
+    if(GunHelper::writeAllWeaponTypes(fullPath, rawWeaponTypes)){
+        logger->log("Saved weapon types", LAS::Logging::Tags{"ROUTINE", "SC"});
+        return true;
+    }
+    else{
+        logger->log("Could not save weapon types", LAS::Logging::Tags{"ERROR", "SC"});
+        return false;
+    }
 }
 bool GunTracker::readGuns(){
     if(!std::filesystem::exists(saveDirectory))
@@ -238,22 +269,6 @@ bool GunTracker::readGuns(){
 	}
     
 	return true;
-}
-// MARK: R/W Weapon Types
-bool GunTracker::writeAllWeaponTypes () const {    
-    if(!std::filesystem::exists(saveDirectory))
-        return false;
-
-    std::string fullPath { saveDirectory };
-    fullPath += WEAPON_TYPES_FILENAME;
-
-    WeaponTypeList rawWeaponTypes;
-
-    for(auto& c : weaponTypes){
-        rawWeaponTypes.emplace_back(c.second);
-    }
-
-    return GunHelper::writeAllWeaponTypes(fullPath, rawWeaponTypes);
 }
 bool GunTracker::readWeaponTypes  () {
     if(!std::filesystem::exists(saveDirectory))

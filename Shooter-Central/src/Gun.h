@@ -118,8 +118,8 @@ namespace ShooterCentral{
     };
 
     namespace GunHelper{
-        bool    writeGun            (std::string directory, const Gun& gun);
-        bool    writeAllWeaponTypes (std::string path,      const WeaponTypeList& list); 
+        bool    writeGun            (std::string directory, const Gun& gun);                // Creates a file for the gun
+        bool    writeAllWeaponTypes (std::string path,      const WeaponTypeList& list);    // Takes a list because they are all saved in the same file
 
         bool    readWeaponTypes     (std::string path, WeaponTypeList& list);       // Clears vector before adding elements
         Gun     readGun             (const std::string& path);
