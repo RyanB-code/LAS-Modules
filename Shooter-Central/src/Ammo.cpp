@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const Cartridge& cartridge){
     return os;
 }
 
-// MARK: AMMO TYPE
+// MARK: Ammo Type
 bool AmmoType::operator==(const AmmoType& other) const {
     if(this->name == other.name && this->manufacturer == other.manufacturer && this->cartridge == other.cartridge && this->grainWeight == other.grainWeight)
         return true;
@@ -68,6 +68,15 @@ AmmoTracker::AmmoTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger 
 AmmoTracker::~AmmoTracker(){
     
 }
+
+// MARK: Tracked Ammo
+bool TrackedAmmo::operator==(const TrackedAmmo& other) const{
+    if(this->ammoType == other.ammoType && this->amount == other.amount)
+        return true;
+    else
+        return false;
+}
+
 
 void ShooterCentral::to_json (LAS::json& j, const AmmoType& ammoType){
     j = LAS::json {
@@ -173,7 +182,7 @@ void AmmoTracker::getAmmoCountByCartridge (AmountPerCartridgeList& list) const{
         list.erase(list.begin(), list.end());
 
     CartridgeList namesList;
-    getAllCartridgeNames(namesList); // Get all the names of cartridges
+    getAllCartridges(namesList); // Get all the names of cartridges
 
     // For every cartridge, add the amounts together
     for(const auto& name : namesList){
@@ -196,7 +205,7 @@ void AmmoTracker::getAllAmmoByCartridge(std::vector<TrackedAmmo>& list, const Ca
             list.emplace_back(*trackedAmmoPtr);
     }
 }
-void AmmoTracker::getAllCartridgeNames(CartridgeList& list) const{
+void AmmoTracker::getAllCartridges(CartridgeList& list) const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
@@ -205,7 +214,7 @@ void AmmoTracker::getAllCartridgeNames(CartridgeList& list) const{
         list.emplace_back(cartridge);
     }
 }
-void AmmoTracker::getAllManufacturerNames(ManufacturerList& list) const{
+void AmmoTracker::getAllManufacturers(ManufacturerList& list) const{
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
