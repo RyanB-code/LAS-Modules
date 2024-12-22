@@ -67,7 +67,7 @@ namespace ShooterCentral{
     }
 
     namespace EventsUI{
-        void    home                (EventTrackerPtr eventTracker,  AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChanges);
+        void    home                (EventTrackerPtr eventTracker,  AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChangesEvents, bool& unsavedChangesStockpile);
         void    viewEvent           (std::shared_ptr<const Event> event);
 
         EventType                   addEventType    (bool& unsavedChanges);

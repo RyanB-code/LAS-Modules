@@ -71,8 +71,7 @@ void ShooterCentralWindow::draw() {
         ImGui::SameLine();
 
     if(ImGui::BeginChild("Events Quick View", childWindowSizes, ImGuiChildFlags_Border) && showEvents){
-        EventsUI::home(eventTracker, ammoTracker, gunTracker, unsavedChanges.events);
-
+        EventsUI::home(eventTracker, ammoTracker, gunTracker, unsavedChanges.events, unsavedChanges.stockpile);
     }
     ImGui::EndChild();
     
@@ -174,7 +173,7 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
     // Armory Button Window
     if(ImGui::BeginChild("Armory Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
 
-        if(UIHelper::centerButton("Save All", ImVec2{200, 50})){
+        if(UIHelper::centerButton("Save Armory", ImVec2{200, 50})){
             if(!gunTracker->writeAllGuns())
                 savingGunsFailed = true;
 
@@ -487,7 +486,7 @@ WeaponType ArmoryUI::addWeaponType(bool& unsavedChanges) {
 
 // MARK: STOCKPILE UI
 void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
-    static bool detailedView { true };
+    static bool detailedView { false };
 
     static const Cartridge EMPTY_CARTRIDGE { };
 
@@ -540,7 +539,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
 
     if(ImGui::BeginChild("Stockpile Options", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
-        ImGui::Checkbox("Show Detailed View", &detailedView);
+        ImGui::Checkbox("Show only a single cartridge", &detailedView);
         ImGui::Unindent(20);
     }
     ImGui::EndChild();
@@ -551,7 +550,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
     if(ImGui::BeginChild("Stockpile Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         static bool ammoNotSaved { false }, cartridgesNotSaved { false }, manufacturersNotSaved { false };
 
-        if(UIHelper::centerButton("Save All", ImVec2{200, 50})){
+        if(UIHelper::centerButton("Save Stockpile", ImVec2{200, 50})){
             // Ensure flags are valid
             ammoNotSaved            = false;
             cartridgesNotSaved      = false;
@@ -621,7 +620,13 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if(detailedView){
+    if(detailedView && selectedCartridge != EMPTY_CARTRIDGE){
+
+        // Title appropriately
+        std::ostringstream titleText;
+        titleText << "All " << selectedCartridge.getName() << " Ammo";
+        ImGui::SeparatorText(titleText.str().c_str());
+
         if(ImGui::BeginTable("Detailed Cartridge Breakdown", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
                             ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable | ImGuiTableFlags_HighlightHoveredColumn, tableSize ))
         {
@@ -664,6 +669,8 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         if(cartridges.empty())
             UIHelper::centerTextDisabled("There are no tracked cartridges.");
         else{
+            ImGui::SeparatorText("Ammo by Cartridge"); // Title appropriately
+
             if(ImGui::BeginTable("Stockpile", 2, 
                                                     ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
                                                     ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
@@ -703,8 +710,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
     ImGui::Spacing();
     ImGui::Spacing();
 
-    UIHelper::centerText("Stockpile Actions");
-    ImGui::Separator();
+    ImGui::SeparatorText("Stockpile Actions");
 
     if(ImGui::BeginTabBar("Stockpile Tabs",     ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
                                                 ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
@@ -1152,20 +1158,21 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
 }
 
 // MARK: EVENTS UI
-void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChanges) {
+void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChangesEvents, bool& unsavedChangesStockpile) {
     static std::vector<EventPtr> eventList;
 
-    static EventTypeList           eventTypes  { };
-    static LocationList            locations   { };
-    static ConstGunPtrList         guns        { };
-    static ConstTrackedAmmoPtrList ammo        { };
+    static EventTypeList            eventTypes      { };
+    static LocationList             locations       { };
+    static ConstGunPtrList          guns            { };
+    static ConstTrackedAmmoPtrList  ammo            { };
+    static EventPtr                 selectedEvent   { nullptr }; 
+
+    std::vector<EventPtr>::iterator itr;
 
     eventTracker->getAllEventTypes(eventTypes);
     eventTracker->getAllLocations(locations);
     gunTracker->getAllGuns(guns);
     ammoTracker->getAllAmmo(ammo);
-
-    std::vector<EventPtr>::iterator itr;
 
     eventTracker->getAllEvents(eventList);
 
@@ -1174,13 +1181,13 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
     if(tableSize.x < 400)
         tableSize = ImVec2{400, 200};
 
-    ImGui::Spacing();
+    
     ImGui::Spacing();
     ImGui::Spacing();
 
-    UIHelper::centerText("Events");
-
+    UIHelper::centerText("Event Tracker");
     ImGui::Separator();
+
     ImGui::Spacing();
     ImGui::Spacing();
 
@@ -1197,7 +1204,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
     if(ImGui::BeginChild("Event Tracker Buttons", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         static bool eventsNotSaved { false }, eventTypesNotSaved { false }, locationsNotSaved { false };
 
-        if(UIHelper::centerButton("Save All", ImVec2{200, 50})){
+        if(UIHelper::centerButton("Save Events", ImVec2{200, 50})){
 
             // Ensure flags are valid
             eventsNotSaved = false;
@@ -1213,7 +1220,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
 
             // Reset unsaved cahnges flag
             if(!eventsNotSaved && !eventTypesNotSaved && !locationsNotSaved)
-                unsavedChanges = false;
+                unsavedChangesEvents = false;
         }
         
         if(eventsNotSaved || eventTypesNotSaved || locationsNotSaved)
@@ -1235,93 +1242,81 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
             
             if (UIHelper::centerButton("Close", ImVec2{120, 0})){
                 // Since error saving, set flag
-                unsavedChanges = true;
+                unsavedChangesEvents = true;
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
         }
 
-        if(unsavedChanges)
+        if(unsavedChangesEvents)
             UIHelper::centerTextDisabled("(There are unsaved changes)");
     }
     ImGui::EndChild();
 
-    static EventPtr selectedEvent { nullptr }; 
+    ImGui::SeparatorText("Events");
 
     int row { 0 };
-    if(ImGui::BeginChild("Event Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
-        if(ImGui::BeginTable("Event Table", 5, 
-                                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                        ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
-                                        ImGuiTableFlags_HighlightHoveredColumn,
-                                        tableSize
-                                ))
-        {
-            ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None);
-            ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
-            ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
-            ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None);
-            ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None);
+    if(ImGui::BeginTable("Event Table", 4, 
+                                    ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                                    ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
+                                    ImGuiTableFlags_HighlightHoveredColumn,
+                                    tableSize )){
+        ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None);
 
-            ImGui::TableHeadersRow();
+        ImGui::TableHeadersRow();
 
-            for(auto itr { eventList.begin() }; itr != eventList.end(); ++itr){
-                const Event& event {**itr};
-                bool isEventSelected { false };
+        for(auto itr { eventList.begin() }; itr != eventList.end(); ++itr){
+            const Event& event {**itr};
+            bool isEventSelected { false };
 
-                if(selectedEvent){
-                    if(event == *selectedEvent){
-                        isEventSelected = true;
-                    }
-                }
-
-                ImGui::TableNextRow();
-
-                std::string imGuiID { event.printDate()};
-                imGuiID += "##";
-                imGuiID += std::to_string(row);
-
-                for (int column{0}; column < 4; ++column)
-                {                   
-                    ImGui::TableSetColumnIndex(column);
-                    switch( column ){
-                        case 0:
-                            ImGui::Selectable(imGuiID.c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                            if(isEventSelected)
-                                selectedEvent = *itr;
-
-                            break;
-                        case 1:
-                            ImGui::Text("%s", event.getName().c_str());
-                            break;
-                        case 2:
-                            ImGui::Text("%s", event.getLocation().getName().c_str());
-                            break;
-                        case 3:
-                            ImGui::Text("%s", event.getEventType().getName().c_str());
-                            break;
-                        case 4:
-                            ImGui::Text("%d", int{event.getNumGunsUsed()});
-                            break;
-                        default:
-                            ImGui::Text("Broken table");
-                            break;
-                    }
-                }
-                ++row;        
+            if(selectedEvent){
+                if(event == *selectedEvent)
+                    isEventSelected = true;
             }
 
-            ImGui::EndTable();
+            ImGui::TableNextRow();
+
+            std::string imGuiID { event.printDate()};
+            imGuiID += "##";
+            imGuiID += std::to_string(row);
+
+            for (int column{0}; column < 4; ++column)
+            {                   
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        ImGui::Selectable(imGuiID.c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                        if(isEventSelected)
+                            selectedEvent = *itr;
+
+                        break;
+                    case 1:
+                        ImGui::Text("%s", event.getLocation().getName().c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%s", event.getEventType().getName().c_str());
+                        break;
+                    case 3:
+                        ImGui::Text("%d", int{event.getNumGunsUsed()});
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }
+            ++row;        
         }
+        ImGui::EndTable();
     }
-    ImGui::EndChild(); // End table window
 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    UIHelper::centerText("Event Tracker Actions");
-    ImGui::Separator();
+    ImGui::SeparatorText("Event Tracker Actions");
 
     if(ImGui::BeginTabBar("Event Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
                                             ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
@@ -1331,7 +1326,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event")){
-            std::pair<bool, EventPtr> newEventBuf { addEvent(unsavedChanges, eventTypes, locations, guns, ammo) };
+            std::pair<bool, EventPtr> newEventBuf { addEvent(unsavedChangesEvents, eventTypes, locations, guns, ammo) };
 
             if(newEventBuf.second && *newEventBuf.second != Event { }){
                 Event& event { *newEventBuf.second };
@@ -1339,19 +1334,19 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
 
                 // Check if to apply subtraction of ammo
                 if(newEventBuf.first){
+                    unsavedChangesStockpile = true;
                     std::vector<std::pair<Gun, TrackedAmmo>> gunsUsed { };
                     event.getAllGunsUsed(gunsUsed);                         // Get all guns used
 
-                    for(const auto& [gun, ammo] : gunsUsed){
+                    for(const auto& [gun, ammo] : gunsUsed)
                         ammoTracker->removeAmmoFromStockpile(ammo);         // Apply subtraction for each gun
-                    }
                 }
             }
 
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event Type")){
-            EventType newEventType { addEventType(unsavedChanges) };
+            EventType newEventType { addEventType(unsavedChangesEvents) };
 
             if(newEventType != EventType { })
                 eventTracker->addEventType(newEventType);
@@ -1359,7 +1354,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Location")){
-            Location newLocation { addLocation(unsavedChanges) };
+            Location newLocation { addLocation(unsavedChangesEvents) };
 
             if(newLocation != Location { })
                 eventTracker->addLocation(newLocation);
@@ -1391,9 +1386,9 @@ void EventsUI::viewEvent(std::shared_ptr<const Event> event){
         UIHelper::centerText("Event Information");
         ImGui::Separator();
         if(event){
-            ImGui::TextDisabled("Name: ");
+            ImGui::TextDisabled("Date: ");
             ImGui::SameLine(100);
-            ImGui::Text("%s", event->getName().c_str());
+            ImGui::Text("%s", event->printDate().c_str());
 
             ImGui::TextDisabled("Location: ");
             ImGui::SameLine(100);
@@ -1449,9 +1444,7 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
     static const Location   EMPTY_LOCATION { };
     static const EventType  EMPTY_EVENTTYPE { };
 
-    static char nameBuf     [UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Event Name";
-    static char notesBuf    [UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES];
-
+    static char notesBuf [UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES];
     static int  numGuns { 1 };
 
     static int              dayBuf          { 0 },  monthBuf        { 0 },  yearBuf         { 2024 };
@@ -1462,7 +1455,7 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
     static EventType    selectedEventType    {  };
 
     // Flags to let user know what went wrong when saving
-    static bool invalidName             { false }, invalidLocation  { false },  invalidEventType    { false },  invalidDate{ false },   
+    static bool invalidLocation         { false }, invalidEventType { false },  invalidDate         { false },   
                 incompatibleCartridge   { false }, invalidGunOrAmmo { false },  invalidAmmoAmount   { false };
 
     static bool subtractRoundsUsedFromStockpile { false };  // Flag to apply ammo used to stockpile
@@ -1501,7 +1494,6 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
 
         if(UIHelper::centerButton("Add Event", ImVec2{200,50})){
             // Reset flags 
-            invalidName             = false;
             invalidLocation         = false;
             invalidEventType        = false;
             invalidDate             = false;
@@ -1511,15 +1503,13 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
 
             // Verify buffers
             using namespace std::chrono;
-            std::string nameStr { nameBuf }, notesStr { notesBuf };
+            std::string notesStr { notesBuf };
             year_month_day dateBuf { year{yearBuf}, month{monthBuf}, day{dayBuf}};
 
             if(selectedLocation == EMPTY_LOCATION) 
                 invalidLocation = true;
             if(selectedEventType == EMPTY_EVENTTYPE) 
                 invalidEventType = true;
-            if(nameStr == "Enter Event Name")
-                invalidName = true;
             if(!dateBuf.ok())
                 invalidDate = true;
 
@@ -1559,8 +1549,8 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
             }
 
             // If all information is good, create event
-            if(!invalidName && !invalidLocation && !invalidEventType && !invalidDate && !incompatibleCartridge && !invalidGunOrAmmo && !invalidAmmoAmount){
-                Event eventBuf { nameStr, selectedLocation, selectedEventType, notesStr, dateBuf};
+            if(!invalidLocation && !invalidEventType && !invalidDate && !incompatibleCartridge && !invalidGunOrAmmo && !invalidAmmoAmount){
+                Event eventBuf { selectedLocation, selectedEventType, notesStr, dateBuf};
                 switch (numGuns){
                     case 3:
                         eventBuf.addGun(selectedGun3, selectedTA3);
@@ -1577,7 +1567,6 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
                 unsavedChanges = true; // Set flag
 
                 // Reset buffers
-                strcpy(nameBuf,     "Enter Event Name");
                 strcpy(notesBuf,    "");
 
                 selectedLocation    = EMPTY_LOCATION;
@@ -1595,7 +1584,7 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
             }
 
             // Make popup modal
-            if(invalidName || invalidLocation || invalidEventType || invalidDate || incompatibleCartridge || invalidAmmoAmount || invalidGunOrAmmo)
+            if(invalidLocation || invalidEventType || invalidDate || incompatibleCartridge || invalidAmmoAmount || invalidGunOrAmmo)
                 ImGui::OpenPopup("Event Not Created");
         }
         // End Add Event Button
@@ -1603,8 +1592,6 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
         if(ImGui::BeginPopupModal("Event Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
             UIHelper::centerText("This Event could not be created.");
 
-            if(invalidName)
-                ImGui::BulletText("Invalid name");
             if(invalidLocation)
                 ImGui::BulletText("Invalid location");
             if(invalidEventType)
@@ -1642,10 +1629,6 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
         ImGui::Spacing();
         ImGui::Spacing();
         
-        ImGui::Text("Name");
-        ImGui::SameLine(100);
-        ImGui::InputText("##Input New Event Name", nameBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS);
-
         ImGui::Text("Location");
         ImGui::SameLine(100);
         if (ImGui::BeginCombo("##Choose Location Combo", locationComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
