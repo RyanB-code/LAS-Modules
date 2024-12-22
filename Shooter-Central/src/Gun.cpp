@@ -193,7 +193,7 @@ void GunTracker::getAllWeaponTypeNames   (WeaponTypeList& names) const{
         names.emplace_back(wt);
     }
 }
-bool GunTracker::addWeaponType           (const std::string& type){
+bool GunTracker::addWeaponType           (const WeaponType& type){
     if(weaponTypes.contains(type))
         return false;
 
@@ -278,8 +278,6 @@ bool GunTracker::readWeaponTypes  () {
 
     return true;
 }
-
-// MARK: PRIVATE FUNCTIONS
 bool GunTracker::addGun(Gun& gun){
     if(guns.contains(gun))
         return false;
@@ -288,6 +286,15 @@ bool GunTracker::addGun(Gun& gun){
     addWeaponType(gun.getWeaponType());
 
     return guns.try_emplace(gun, std::make_shared<Gun>(gun)).second;
+}
+bool GunTracker::addGun(GunPtr gun){
+    if(guns.contains(*gun))
+        return false;
+
+    // Add to known weapon types
+    addWeaponType(gun->getWeaponType());
+
+    return guns.try_emplace(*gun, gun).second;
 }
 
 
