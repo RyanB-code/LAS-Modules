@@ -10,6 +10,7 @@ ShooterCentralWindow::ShooterCentralWindow() : LAS::Windowing::Window{"Shooter C
 ShooterCentralWindow::~ShooterCentralWindow(){
 
 }
+// MARK: Draw
 void ShooterCentralWindow::draw() {
     if(!ImGui::Begin(title.c_str(), &shown, ImGuiWindowFlags_MenuBar)){
         ImGui::End();
@@ -50,11 +51,11 @@ void ShooterCentralWindow::draw() {
     }
 
     if(ImGui::BeginChild("Armory Quick View", childWindowSizes, ImGuiChildFlags_Border) && showArmory){
-        static StringVector cartridgeNames;
+        static CartridgeList cartridges;
 
-        ammoTracker->getAllCartridgeNames(cartridgeNames);
+        ammoTracker->getAllCartridges(cartridges);
 
-        ArmoryUI::home(gunTracker, unsavedChanges.armory, cartridgeNames);
+        ArmoryUI::home(gunTracker, unsavedChanges.armory, cartridges);
     }
     ImGui::EndChild();
 
@@ -69,8 +70,10 @@ void ShooterCentralWindow::draw() {
     if(horizontalLayout)
         ImGui::SameLine();
 
-    if(ImGui::BeginChild("Events Quick View", childWindowSizes, ImGuiChildFlags_Border) && showEvents)
-        EventsUI::home(eventTracker, unsavedChanges.events);
+    if(ImGui::BeginChild("Events Quick View", childWindowSizes, ImGuiChildFlags_Border) && showEvents){
+        EventsUI::home(eventTracker, ammoTracker, gunTracker, unsavedChanges.events);
+
+    }
     ImGui::EndChild();
     
     ImGui::End();
@@ -127,18 +130,18 @@ bool UIHelper::centerButton(std::string text, ImVec2 buttonSize){
 
 
 // MARK: ARMORY UI
-void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const StringVector& cartridgeNames){
+void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const CartridgeList& cartridges){
 
-    static StringVector                                 wpnTypeNames;
+    static WeaponTypeList                               wpnTypes;
     static std::vector<ConstGunPtr>                     gunList;
     static std::unordered_map<std::string, uint64_t>    roundsPerCartridge;
 
-    gunTracker->getAllGuns(gunList);
-    gunTracker->getRoundsShotPerCartridge(roundsPerCartridge);
-    gunTracker->getAllWeaponTypeNames(wpnTypeNames);
-    
     static bool savingGunsFailed { false }, savingWeaponTypesFailed { false }; // Flags to tell user what went wrong when attempting to save
 
+    gunTracker->getAllGuns(gunList);
+    gunTracker->getRoundsShotPerCartridge(roundsPerCartridge);
+    gunTracker->getAllWeaponTypeNames(wpnTypes);
+    
     uint64_t roundsInLifetime { 0 };
     for(const auto& gunElm : gunList)
         roundsInLifetime += gunElm->getRoundCount();
@@ -235,10 +238,10 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const String
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Text("%s", gun.getWeaponType().c_str());
+                        ImGui::Text("%s", gun.getWeaponType().getName().c_str());
                         break;
                     case 1:
-                        ImGui::Text("%s", gun.getCartridge().c_str());
+                        ImGui::Text("%s", gun.getCartridge().getName().c_str());
                         break;
                     case 2:
                         ImGui::Text("%s", gun.getName().c_str());
@@ -267,18 +270,18 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const String
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Gun")){
-            std::pair<bool, Gun> returnVal {addGun(unsavedChanges, cartridgeNames, wpnTypeNames)};
+            GunPtr newGun { addGun(unsavedChanges, cartridges, wpnTypes)};
 
-            if(returnVal.first)
-                gunTracker->createGun(returnVal.second.getName(), returnVal.second.getWeaponType(), returnVal.second.getCartridge());
+            if(newGun)
+                gunTracker->addGun(newGun);
 
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Weapon Type")){
-            std::pair<bool, std::string> returnVal {addWeaponType(unsavedChanges)};
+            WeaponType newWT {addWeaponType(unsavedChanges)};
 
-            if(returnVal.first)
-                gunTracker->addWeaponType(returnVal.second);
+            if(newWT != WeaponType{ })
+                gunTracker->addWeaponType(newWT);
 
             ImGui::EndTabItem();
         }
@@ -286,47 +289,29 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const String
     }
 }
 // MARK: Add Gun
-std::pair<bool, Gun> ArmoryUI::addGun(bool& unsavedChanges, const StringVector& cartridgeNames, const StringVector& wpnTypeNames) {
+GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes) {
     if(!ImGui::BeginChild("Add Gun")){
         ImGui::EndChild();
-        return;
+        return nullptr;
     }
 
+    static const Cartridge  EMPTY_CARTRIDGE     { };
+    static const WeaponType EMPTY_WT            { };
+
     static char     nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
-    static size_t   selectedWTIndex           { 0 };
-    static size_t   selectedCartridgeIndex    { 0 };
+    
+    static Cartridge   selectedCartridge   { };
+    static WeaponType  selectedWT          { };
 
     static bool     invalidName { false }, invalidWeaponType { false }, invalidCartridge { false }; // Flags to let user know bad options when saving
 
-    bool    gunCreated  { false };
-    Gun     gunBuf      { };
+    GunPtr returnVal { nullptr };
 
-    const char* cartrdgeList    [UI_SETTINGS.MAX_LIST_NUM];
-    const char* weaponTypeList  [UI_SETTINGS.MAX_LIST_NUM];
-
-    const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
-    const char* wtComboPreview      { weaponTypeList    [selectedWTIndex] };
-
-    cartrdgeList[0]     = "CHOOSE CARTRIDGE";
-    weaponTypeList[0]   = "CHOOSE WEAPON TYPE";
+    std::string cartComboPreview { };
+    std::string wtComboPreview   { };
 
 
-    int i1 { 1 };
-    for(auto& s : cartridgeNames){
-        if(i1 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
-            cartrdgeList[i1] = s.c_str();
-        }
-        ++i1;
-    }
-
-    int i2 { 1 };
-    for(auto& s : wpnTypeNames){
-        if(i2 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
-            weaponTypeList[i2] = s.c_str();
-        }
-        ++i2;
-    }
-
+    // Directions text
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new gun to tracked items.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -340,15 +325,26 @@ std::pair<bool, Gun> ArmoryUI::addGun(bool& unsavedChanges, const StringVector& 
     ImGui::SameLine(100);
     ImGui::InputText("##Input New Gun Name", nameBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS);
 
+
+    // Apply correct text to display in combo boxes
+    if(selectedCartridge != EMPTY_CARTRIDGE)
+        cartComboPreview = selectedCartridge.getName().c_str();
+    else
+        cartComboPreview = "CHOOSE CARTRIDGE";
+    
+    if(selectedWT != EMPTY_WT)
+        wtComboPreview = selectedWT.getName().c_str();
+    else
+        wtComboPreview = "CHOOSE WEAPON TYPE";
+
+    // Draw Combo Boxes
     ImGui::Text("Weapon Type");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##WeaponType Combo", wtComboPreview, ImGuiComboFlags_HeightSmall))
-    {
-        for (size_t chooseWT { 0 }; chooseWT < wpnTypeNames.size()+1; ++chooseWT) // Add one to account for default option
-        {
-            const bool isSelected = (selectedWTIndex == chooseWT);
-            if (ImGui::Selectable(weaponTypeList[chooseWT], isSelected))
-                selectedWTIndex = chooseWT;
+    if (ImGui::BeginCombo("##WeaponType Combo", wtComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+        for (const auto& wt : wpnTypes) {
+            const bool isSelected = (selectedWT == wt);
+            if (ImGui::Selectable(wt.getName().c_str(), isSelected))
+                selectedWT = wt;
 
             if (isSelected)
                 ImGui::SetItemDefaultFocus();
@@ -358,13 +354,11 @@ std::pair<bool, Gun> ArmoryUI::addGun(bool& unsavedChanges, const StringVector& 
 
     ImGui::Text("Cartridge");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Cartridge Combo", cartComboPreview, ImGuiComboFlags_HeightSmall))
-    {
-        for (size_t chooseCartridge { 0 }; chooseCartridge < cartridgeNames.size()+1; ++chooseCartridge) // Add one to account for default option
-        {
-            const bool isSelected = (selectedCartridgeIndex == chooseCartridge);
-            if (ImGui::Selectable(cartrdgeList[chooseCartridge], isSelected))
-                selectedCartridgeIndex = chooseCartridge;
+    if (ImGui::BeginCombo("##Cartridge Combo", cartComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+        for (const auto& cart : cartridges) {
+            const bool isSelected = (selectedCartridge == cart);
+            if (ImGui::Selectable(cart.getName().c_str(), isSelected))
+                selectedCartridge = cart;
 
             if (isSelected)
                 ImGui::SetItemDefaultFocus();
@@ -383,31 +377,29 @@ std::pair<bool, Gun> ArmoryUI::addGun(bool& unsavedChanges, const StringVector& 
 
         // Ensure it is not the default option
         std::string name { nameBuf };
-        if(selectedWTIndex <= 0)
+        if(selectedWT == EMPTY_WT)
             invalidWeaponType = true;
-        if(selectedCartridgeIndex <= 0)
+        if(selectedCartridge == EMPTY_CARTRIDGE)
             invalidCartridge = true;
         if(name == "Enter Name")
             invalidName = true;
 
+        // All checks passed, create new Gun
         if(!invalidName && !invalidWeaponType &&! invalidWeaponType){
-            std::string wtBuf { weaponTypeList[selectedWTIndex]}, cartBuf {cartrdgeList[selectedCartridgeIndex]};
 
-            gunCreated = true;
-            gunBuf = Gun{name, wtBuf, cartBuf};
+            returnVal = std::make_shared<Gun>(name, selectedWT, selectedCartridge);
+            unsavedChanges = true;
 
             // Reset buffers
             strcpy(nameBuf, "Enter Name");
-            selectedCartridgeIndex = 0;
-            selectedWTIndex = 0;
-
-            unsavedChanges = true; // Set flag
+            selectedWT = EMPTY_WT;
+            selectedCartridge = EMPTY_CARTRIDGE;
         }
         else
             ImGui::OpenPopup("Gun Not Created");
-
     }
 
+    // Display error popup
     if(ImGui::BeginPopupModal("Gun Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
         UIHelper::centerText("This gun could not be created.");
 
@@ -428,18 +420,17 @@ std::pair<bool, Gun> ArmoryUI::addGun(bool& unsavedChanges, const StringVector& 
 
     ImGui::EndChild();
 
-    return std::pair{gunCreated, gunBuf};
+    return returnVal;
 }
 // MARK: Add Wpn Type
-std::pair<bool, std::string> ArmoryUI::addWeaponType(bool& unsavedChanges) {
-    bool        weaponTypeCreated  { false };
-    std::string weaponTypeBuf      { };
+WeaponType ArmoryUI::addWeaponType(bool& unsavedChanges) {
+    WeaponType returnVal { };
 
     static char wtBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Weapon Type";
 
     if(!ImGui::BeginChild("Add Gun")){
         ImGui::EndChild();
-        return;
+        return WeaponType { };
     }
 
     ImGui::Text("Directions");
@@ -469,8 +460,7 @@ std::pair<bool, std::string> ArmoryUI::addWeaponType(bool& unsavedChanges) {
         }
 
         if(wt != "New Weapon Type" && !nameRejected){
-            weaponTypeCreated = true;
-            weaponTypeBuf = wt;
+            returnVal = WeaponType{wt};
             strcpy(wtBuf, "New Weapon Type");   // Reset buffers
             unsavedChanges = true;              // Set flag
         }
@@ -492,45 +482,44 @@ std::pair<bool, std::string> ArmoryUI::addWeaponType(bool& unsavedChanges) {
 
     ImGui::EndChild();
 
-    return std::pair{weaponTypeCreated, weaponTypeBuf};
+    return returnVal;
 }
 
 // MARK: STOCKPILE UI
 void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
     static bool detailedView { true };
 
+    static const Cartridge EMPTY_CARTRIDGE { };
+
     static StringVector                     ammoNames;
-    static StringVector                     cartridgeNames;
-    static StringVector                     manufacturerNames;
+    static CartridgeList                    cartridges;
+    static ManufacturerList                 manufacturers;
+    static AmountPerCartridgeList           countByCartridge;
+
     static std::vector<ConstTrackedAmmoPtr> ammoList;
     static std::vector<TrackedAmmo>         selectedCatridgeAmmoList;
 
-    static std::vector<std::pair<std::string, uint64_t>> countByCartridge;
+    static Cartridge selectedCartridge { };
 
     ammoTracker->getAllAmmoNames            (ammoNames);
-    ammoTracker->getAllCartridgeNames       (cartridgeNames);
-    ammoTracker->getAllManufacturerNames    (manufacturerNames);
+    ammoTracker->getAllCartridges           (cartridges);
+    ammoTracker->getAllManufacturers        (manufacturers);
     ammoTracker->getAmmoCountByCartridge    (countByCartridge);
     ammoTracker->getAllAmmo                 (ammoList);
 
-    static int  highlilghtedItem        { 0 };
-    static bool showAllAmmo             { false };
-    static int  columnsInDetailedTable  { 5 };
+    std::string cartridgeComboPreview { };
 
-    const char* cartridgeList[UI_SETTINGS.MAX_LIST_NUM];
-    cartridgeList[0] = "ALL";       // Default option
+    if(selectedCartridge != EMPTY_CARTRIDGE)
+        cartridgeComboPreview = selectedCartridge.getName().c_str();
+    else
+        cartridgeComboPreview = "CHOOSE CARTRIDGE";
 
-    int i { 1 };                                    // Starts at one to offset the all option
-    for(const auto& s : cartridgeNames){
-        if(i < (UI_SETTINGS.MAX_LIST_NUM+1)){      // Add one to offset the additional 'all' option
-            cartridgeList[i] = s.c_str();
-            ++i;
-        }
-    }
+    if(!detailedView)
+        selectedCartridge = EMPTY_CARTRIDGE;
 
     // HUD View measurements
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
-    if(showAllAmmo){
+    if(detailedView){
         if(tableSize.x < 400)
             tableSize = ImVec2{400, 200};
     }
@@ -607,148 +596,109 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         }
 
         if(unsavedChanges)
-            UIHelper::centerText("(There are unsaved changes)");
+            UIHelper::centerTextDisabled("(There are unsaved changes)");
     }
     ImGui::EndChild();
 
-    ImGui::Text("Cartridge Shown");
-    ImGui::SameLine (150);
-    ImGui::Combo("##Choose Cartridge", &highlilghtedItem, cartridgeList, cartridgeNames.size()+1); // This is the selector table. Add one to account for 'all' option
+    if(detailedView){
+        ImGui::Text("Cartridge Shown");
+        ImGui::SameLine (150);
+        if (ImGui::BeginCombo("##Cartridge Shown Combo", cartridgeComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+            for (const auto& cart : cartridges) {
+                const bool isSelected = (selectedCartridge == cart);
+                if (ImGui::Selectable(cart.getName().c_str(), isSelected))
+                    selectedCartridge = cart;
 
-    ammoTracker->getAllAmmoByCartridge(selectedCatridgeAmmoList, cartridgeList[highlilghtedItem]);  // Populates list of ammo with selected cartridge
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
 
+        ammoTracker->getAllAmmoByCartridge(selectedCatridgeAmmoList, selectedCartridge);  // Populates list of ammo with selected cartridge
+    }
 
-    // Change table based on what is highlighted
-    if(highlilghtedItem == 0){
-        showAllAmmo = true;
-        columnsInDetailedTable = 5;
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(detailedView){
+        if(ImGui::BeginTable("Detailed Cartridge Breakdown", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
+                            ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable | ImGuiTableFlags_HighlightHoveredColumn, tableSize ))
+        {
+            ImGui::TableSetupColumn("Name",         0);
+            ImGui::TableSetupColumn("Manufacturer", 0);
+            ImGui::TableSetupColumn("Grain Weight", 0);
+            ImGui::TableSetupColumn("Amount",       0);
+            ImGui::TableHeadersRow();
+
+            if (selectedCartridge != EMPTY_CARTRIDGE) {
+                for(auto itr { selectedCatridgeAmmoList.begin() }; itr != selectedCatridgeAmmoList.end(); ++itr){
+                    ImGui::TableNextRow();
+                    for (int column{0}; column < 4; ++column) {
+                        ImGui::TableSetColumnIndex(column);
+                        switch( column ){
+                            case 0:
+                                ImGui::Text("%s", itr->ammoType.name.c_str());
+                                break;
+                            case 1:
+                                ImGui::Text("%s", itr->ammoType.manufacturer.getName().c_str());
+                                break;
+                            case 2:
+                                ImGui::Text("%d", itr->ammoType.grainWeight);
+                                break;
+                            case 3:
+                                ImGui::Text("%d", itr->amount);
+                                break;
+                            default:
+                                ImGui::Text("Broken table");
+                                break;
+                        }
+                    }        
+                } // End populating selected cartridge table
+            }
+            ImGui::EndTable();
+        }
     }
     else{
-        showAllAmmo = false;
-        columnsInDetailedTable = 4;
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if(ImGui::BeginChild("Ammo Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
-        if(detailedView){
-            if(ImGui::BeginTable("Detailed Cartridge Breakdown", columnsInDetailedTable, 
+        // Not detailed view
+        if(cartridges.empty())
+            UIHelper::centerTextDisabled("There are no tracked cartridges.");
+        else{
+            if(ImGui::BeginTable("Stockpile", 2, 
                                                     ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
                                                     ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
                                                     ImGuiTableFlags_HighlightHoveredColumn,
                                                     tableSize
-                                ))
+                                                ))
             {
-                if(showAllAmmo)
-                    ImGui::TableSetupColumn("Cartridge",    0);
-                ImGui::TableSetupColumn("Name",         0);
-                ImGui::TableSetupColumn("Manufacturer", 0);
-                ImGui::TableSetupColumn("Grain Weight", 0);
+                ImGui::TableSetupColumn("Cartridge",    0);
                 ImGui::TableSetupColumn("Amount",       0);
                 ImGui::TableHeadersRow();
 
-                if(showAllAmmo){
-                    for(auto itr { ammoList.begin() }; itr != ammoList.end(); ++itr){
-                        const TrackedAmmo& trackedAmmo { **itr };
-                        ImGui::TableNextRow();
-                        for (int column{0}; column < columnsInDetailedTable; ++column)
-                        {
-                            ImGui::TableSetColumnIndex(column);
-                            switch( column ){
-                                case 0:
-                                    ImGui::Text("%s", trackedAmmo.ammoType.cartridge.c_str());
-                                    break;
-                                case 1:
-                                    ImGui::Text("%s", trackedAmmo.ammoType.name.c_str());
-                                    break;
-                                case 2:
-                                    ImGui::Text("%s", trackedAmmo.ammoType.manufacturer.c_str());
-                                    break;
-                                case 3:
-                                    ImGui::Text("%d", int{trackedAmmo.ammoType.grainWeight});
-                                    break;
-                                case 4:
-                                    ImGui::Text("%lu", trackedAmmo.amount);
-                                    break;
-                                default:
-                                    ImGui::Text("Broken table");
-                                    break;
-                            }
-                        }        
-                    } // End populating all table
+                // Display each item
+                for(auto itr { countByCartridge.begin() }; itr != countByCartridge.end(); ++itr){
+                    ImGui::TableNextRow();
+                    for (int column{0}; column < 2; ++column)
+                    {
+                        ImGui::TableSetColumnIndex(column);
+                        switch( column ){
+                            case 0:
+                                ImGui::Text("%s", itr->first.getName().c_str());
+                                break;
+                            case 1:
+                                ImGui::Text("%d", itr->second);
+                                break;
+                            default:
+                                ImGui::Text("Broken table");
+                                break;
+                        }
+                    }
                 }
-                else{
-                    for(auto itr { selectedCatridgeAmmoList.begin() }; itr != selectedCatridgeAmmoList.end(); ++itr){
-                        ImGui::TableNextRow();
-                        for (int column{0}; column < columnsInDetailedTable; ++column)
-                        {
-                            ImGui::TableSetColumnIndex(column);
-                            switch( column ){
-                                case 0:
-                                    ImGui::Text("%s", itr->ammoType.name.c_str());
-                                    break;
-                                case 1:
-                                    ImGui::Text("%s", itr->ammoType.manufacturer.c_str());
-                                    break;
-                                case 2:
-                                    ImGui::Text("%d", int{itr->ammoType.grainWeight});
-                                    break;
-                                case 3:
-                                    ImGui::Text("%lu", itr->amount);
-                                    break;
-                                default:
-                                    ImGui::Text("Broken table");
-                                    break;
-                            }
-                        }        
-                    } // End populating selected cartridge table
-                }
-
                 ImGui::EndTable();
             } // End table
         }
-        else{
-            // Not detailed view
-            if(cartridgeNames.empty())
-                ImGui::Text("There are no tracked cartridges.");
-            else{
-                if(ImGui::BeginTable("Stockpile", 2, 
-                                                        ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                                        ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable |
-                                                        ImGuiTableFlags_HighlightHoveredColumn,
-                                                        tableSize
-                                                    ))
-                {
-                    ImGui::TableSetupColumn("Cartridge",    0);
-                    ImGui::TableSetupColumn("Amount",       0);
-                    ImGui::TableHeadersRow();
-
-                    // Display each item
-                    for(auto itr { countByCartridge.begin() }; itr != countByCartridge.end(); ++itr){
-                        ImGui::TableNextRow();
-                        for (int column{0}; column < 2; ++column)
-                        {
-                            ImGui::TableSetColumnIndex(column);
-                            switch( column ){
-                                case 0:
-                                    ImGui::Text("%s", itr->first.c_str());
-                                    break;
-                                case 1:
-                                    ImGui::Text("%lu", itr->second);
-                                    break;
-                                default:
-                                    ImGui::Text("Broken table");
-                                    break;
-                            }
-                        }
-                    }
-                    ImGui::EndTable();
-                } // End table
-            }
-        }
     }
-    ImGui::EndChild(); // End table vhild window
+
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -756,54 +706,56 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
     UIHelper::centerText("Stockpile Actions");
     ImGui::Separator();
 
-    if(ImGui::BeginTabBar("Stockpile Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
-                                            ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
+    if(ImGui::BeginTabBar("Stockpile Tabs",     ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
+                                                ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
     )){
         if(ImGui::BeginTabItem("Add to Existing Ammo")){
-            std::pair<bool, TrackedAmmo> returnVal {addToExistingAmmoType(unsavedChanges, ammoList)};
+            
+            TrackedAmmo returnVal {addToExistingAmmoType(unsavedChanges, ammoList)};
 
-            if(returnVal.first)
-                ammoTracker->addAmmoToStockpile(returnVal.second);
+            if(returnVal != TrackedAmmo { })
+                ammoTracker->addAmmoToStockpile(returnVal);
 
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Ammo Type")){
-            std::pair<bool, TrackedAmmo> returnVal {addAmmoType(unsavedChanges, cartridgeNames, manufacturerNames)};
+            TrackedAmmo returnVal {addAmmoType(unsavedChanges, cartridges, manufacturers)};
 
-            if(returnVal.first)
-                ammoTracker->addAmmoToStockpile(returnVal.second);
+            if(returnVal != TrackedAmmo { })
+                ammoTracker->addAmmoToStockpile(returnVal);
 
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Cartridge")){
-            std::pair<bool, std::string> returnVal {addCartridge(unsavedChanges)};
+            Cartridge returnVal {addCartridge(unsavedChanges)};
 
-            if(returnVal.first)
-                ammoTracker->addCartridge(returnVal.second);
+            if(returnVal != Cartridge { })
+                ammoTracker->addCartridge(returnVal);
 
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Manufacturer")){
-            std::pair<bool, std::string> returnVal {addManufacturer(unsavedChanges)};
+            Manufacturer returnVal {addManufacturer(unsavedChanges)};
 
-            if(returnVal.first)
-                ammoTracker->addManufacturer(returnVal.second);
+            if(returnVal != Manufacturer { })
+                ammoTracker->addManufacturer(returnVal);
 
             ImGui::EndTabItem();
+
         }
         ImGui::EndTabBar();
     }
+
 }
 // MARK: Add Cartrigde
-std::pair<bool, std::string> StockpileUI::addCartridge (bool& unsavedChanges) {
-    bool        cartridgeCreated    { false };
-    std::string cartridgeNameBuf    { };
+Cartridge StockpileUI::addCartridge (bool& unsavedChanges) {
+    Cartridge returnVal    { };
 
     static char cartridgeBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Cartridge";
 
     if(!ImGui::BeginChild("Add New Cartridge")){
         ImGui::EndChild();
-        return;
+        return Cartridge { };
     }
 
     ImGui::Text("Directions");
@@ -831,8 +783,7 @@ std::pair<bool, std::string> StockpileUI::addCartridge (bool& unsavedChanges) {
         }
 
         if(cartridgeName != "New Cartridge" && !nameRejected){
-            cartridgeCreated = true;
-            cartridgeNameBuf = cartridgeName;
+            returnVal = Cartridge {cartridgeName};
             strcpy(cartridgeBuf, "New Cartridge");   // Reset buffers
             unsavedChanges = true;              // Set flag
         }
@@ -854,47 +805,38 @@ std::pair<bool, std::string> StockpileUI::addCartridge (bool& unsavedChanges) {
 
     ImGui::EndChild();
 
-    return std::pair{cartridgeCreated, cartridgeNameBuf};
+    return returnVal;
 }
 // MARK: Add Ammo Type
-std::pair<bool, TrackedAmmo> StockpileUI::addAmmoType (bool& unsavedChanges, const StringVector& cartridgeNames, const StringVector& manufacturerNames){
+TrackedAmmo StockpileUI::addAmmoType (bool& unsavedChanges, const CartridgeList& cartridges, const ManufacturerList& manufacturers){
     if(!ImGui::BeginChild("Add Ammo Type")){
         ImGui::EndChild();
-        return;
+        return TrackedAmmo{ };
     }
-    static char     nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
-    static int      grainWeightBuf              { 0 };
-    static size_t   selectedManufacturerIndex   { 0 };
-    static size_t   selectedCartridgeIndex      { 0 };
+    
+    static const Cartridge      EMPTY_CARTRIDGE     { };
+    static const Manufacturer   EMPTY_MANUFACTURER  { };
 
-    bool        createdAmmoType { false };
-    TrackedAmmo ammoTypeCreated { };
+    static char         nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
+    static int          grainWeightBuf                              { 0 };
+    static Cartridge    selectedCartridge                           { };
+    static Manufacturer selectedManufacturer                        { };
 
-    const char* cartrdgeList    [UI_SETTINGS.MAX_LIST_NUM];
-    const char* manufacturerList[UI_SETTINGS.MAX_LIST_NUM];
+    std::string cartridgeComboPreview       { };
+    std::string manufacturerComboPreview    { };
 
-    const char* cartComboPreview    { cartrdgeList      [selectedCartridgeIndex] };
-    const char* manComboPreview     { manufacturerList  [selectedManufacturerIndex] };
+    TrackedAmmo returnVal { };
 
-    cartrdgeList[0]     = "CHOOSE CARTRIDGE";
-    manufacturerList[0] = "CHOOSE MANUFACTURER";
+    if(selectedCartridge != EMPTY_CARTRIDGE)
+        cartridgeComboPreview = selectedCartridge.getName();
+    else
+        cartridgeComboPreview = "CHOOSE CARTRIDGE";
+    
+    if(selectedManufacturer != EMPTY_MANUFACTURER)
+        manufacturerComboPreview = selectedManufacturer.getName();
+    else
+        manufacturerComboPreview = "CHOOSE MANUFACTURER";
 
-
-    int i1 { 1 };
-    for(auto& s : cartridgeNames){
-        if(i1 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
-            cartrdgeList[i1] = s.c_str();
-        }
-        ++i1;
-    }
-
-    int i2 { 1 };
-    for(auto& s : manufacturerNames){
-        if(i2 < (UI_SETTINGS.MAX_LIST_NUM + 1)){
-            manufacturerList[i2] = s.c_str();
-        }
-        ++i2;
-    }
 
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new ammo type to tracked items.");
@@ -911,13 +853,12 @@ std::pair<bool, TrackedAmmo> StockpileUI::addAmmoType (bool& unsavedChanges, con
 
     ImGui::Text("Manufacturer");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Manufacturer Combo", manComboPreview, ImGuiComboFlags_HeightSmall))
-    {
-        for (size_t chooseManufacturer { 0 }; chooseManufacturer < manufacturerNames.size()+1; ++chooseManufacturer) // Add one to account for default option
-        {
-            const bool isSelected = (selectedManufacturerIndex == chooseManufacturer);
-            if (ImGui::Selectable(manufacturerList[chooseManufacturer], isSelected))
-                selectedManufacturerIndex = chooseManufacturer;
+    if (ImGui::BeginCombo("##Choose Manufacturer Combo", manufacturerComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+        for (const auto& man : manufacturers) {
+            const bool isSelected = (selectedManufacturer == man);
+
+            if (ImGui::Selectable(man.getName().c_str(), isSelected))
+                selectedManufacturer = man;
 
             if (isSelected)
                 ImGui::SetItemDefaultFocus();
@@ -925,15 +866,14 @@ std::pair<bool, TrackedAmmo> StockpileUI::addAmmoType (bool& unsavedChanges, con
         ImGui::EndCombo();
     }
 
+
     ImGui::Text("Cartridge");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Cartridge Combo", cartComboPreview, ImGuiComboFlags_HeightSmall))
-    {
-        for (size_t chooseCartridge { 0 }; chooseCartridge < cartridgeNames.size()+1; ++chooseCartridge) // Add one to account for default option
-        {
-            const bool isSelected = (selectedCartridgeIndex == chooseCartridge);
-            if (ImGui::Selectable(cartrdgeList[chooseCartridge], isSelected))
-                selectedCartridgeIndex = chooseCartridge;
+    if (ImGui::BeginCombo("##Choose Cartridge Combo", cartridgeComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+        for (const auto& cart : cartridges) {
+            const bool isSelected = (selectedCartridge == cart);
+            if (ImGui::Selectable(cart.getName().c_str(), isSelected))
+                selectedCartridge = cart;
 
             if (isSelected)
                 ImGui::SetItemDefaultFocus();
@@ -948,18 +888,21 @@ std::pair<bool, TrackedAmmo> StockpileUI::addAmmoType (bool& unsavedChanges, con
     ImGui::Spacing();
     ImGui::Spacing();
 
+
     static bool invalidName { false }, invalidManufacturer { false }, invalidCartridge { false }, invalidGrainWeight { false };
     if(UIHelper::centerButton("Add New Ammo Type", ImVec2{200,50})){
         // Ensure buffers are valid
-         invalidName            = false;
+        invalidName             = false;
         invalidManufacturer     = false;
         invalidCartridge        = false;
         invalidGrainWeight      = false;
+
+        
         // Verify data        
-        if(selectedManufacturerIndex <= 0) 
+        if(selectedManufacturer == EMPTY_MANUFACTURER) 
             invalidManufacturer = true;
         
-        if(selectedCartridgeIndex <= 0) 
+        if(selectedCartridge == EMPTY_CARTRIDGE) 
             invalidCartridge = true;
 
         if(grainWeightBuf <= 0 || grainWeightBuf > 255) 
@@ -970,16 +913,15 @@ std::pair<bool, TrackedAmmo> StockpileUI::addAmmoType (bool& unsavedChanges, con
             invalidName = true;
         
         if(!invalidName && !invalidManufacturer && !invalidCartridge && !invalidGrainWeight){
-            std::string manBuf { manufacturerList[selectedManufacturerIndex]}, cartBuf {cartrdgeList[selectedCartridgeIndex]};
 
-            createdAmmoType = true;
-            ammoTypeCreated = {AmmoType{ name, manBuf, cartBuf, uint8_t{grainWeightBuf}}, 0};
+            returnVal = TrackedAmmo {AmmoType{ name, selectedManufacturer, selectedCartridge, grainWeightBuf}, 0};
 
             // Reset buffers
             strcpy(nameBuf, "Enter Name");
 
-            selectedCartridgeIndex      = 0;
-            selectedManufacturerIndex   = 0;
+            selectedManufacturer    = EMPTY_MANUFACTURER;
+            selectedCartridge       = EMPTY_CARTRIDGE;
+            grainWeightBuf          = 0;
 
             unsavedChanges = true; // Set flag
 
@@ -1010,18 +952,17 @@ std::pair<bool, TrackedAmmo> StockpileUI::addAmmoType (bool& unsavedChanges, con
 
     ImGui::EndChild();
 
-    return std::pair{createdAmmoType, ammoTypeCreated};
+    return returnVal;
 }
 // MARK: Add Manufacturer
-std::pair<bool, std::string> StockpileUI::addManufacturer (bool& unsavedChanges){
+Manufacturer StockpileUI::addManufacturer (bool& unsavedChanges){
     static char manBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Manufacturer";
 
-    bool        manufactruerCreated    { false };
-    std::string manufacturerCreatedBuf { };
+    Manufacturer returnVal { };
 
     if(!ImGui::BeginChild("Add New Manufacturer")){
         ImGui::EndChild();
-        return;
+        return Manufacturer { };
     }
 
     ImGui::Text("Directions");
@@ -1049,8 +990,7 @@ std::pair<bool, std::string> StockpileUI::addManufacturer (bool& unsavedChanges)
         }
 
         if(manName != "New Manufacturer" && !nameRejected){
-            manufactruerCreated = true;
-            manufacturerCreatedBuf = manName;
+            returnVal = Manufacturer{manName};
             strcpy(manBuf, "New Manufacturer");   // Reset buffers
             unsavedChanges = true;              // Set flag
         }
@@ -1072,41 +1012,26 @@ std::pair<bool, std::string> StockpileUI::addManufacturer (bool& unsavedChanges)
 
     ImGui::EndChild();
 
-    return std::pair{manufactruerCreated, manufacturerCreatedBuf};
+    return returnVal;
 }
 // MARK: Add To Ammo Type
-std::pair<bool, TrackedAmmo> StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std::vector<ConstTrackedAmmoPtr>& ammoList){
+TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std::vector<ConstTrackedAmmoPtr>& ammoList){
     if(!ImGui::BeginChild("Add To Existing Ammo Type")){
         ImGui::EndChild();
-        return;
+        return TrackedAmmo { };
     }
+    static const TrackedAmmo    EMPTY_AMMO  { };
+    static TrackedAmmo          selectedAmmo{  };
+    static int                  amountToAdd { 0 };
 
-    static int          amountToAdd                 { 0 };
-    static size_t       selectedAmmoNameIndex       { 0 };
-    static TrackedAmmo  emptyAmmo                   { };
+    bool            submitAmmo          { false }; // Flag to return the proper selected ammo instead of empty ammo
+    std::string     ammoNamePreview     { };
+    float           fullWindowWidth     { ImGui::GetWindowSize().x }; // Calculate center button add now (since cannot do inside child since middle will be skewed)
 
-    const char* ammoNamesArray[UI_SETTINGS.MAX_LIST_NUM];
-    const char* ammoNameComboPreview{ ammoNamesArray[selectedAmmoNameIndex] };
-
-    bool            createdAmmoToAdd    { false };
-    TrackedAmmo&    selectedAmmo        { emptyAmmo };
-    float           fullWindowWidth    { ImGui::GetWindowSize().x }; // Calculate center button add now (since cannot do inside child since middle will be skewed)
-
-    ammoNamesArray[0] = "CHOOSE AMMO TYPE";
-
-    int i { 1 };
-    for(auto& trackedAmmo : ammoList){
-        if(i < (UI_SETTINGS.MAX_LIST_NUM + 1)){
-            ammoNamesArray[i] = trackedAmmo->ammoType.name.c_str();
-        }
-        ++i;
-    }
-
-
-    if(selectedAmmoNameIndex > 0)
-        selectedAmmo = *ammoList.at(selectedAmmoNameIndex -1 );
+    if(selectedAmmo != EMPTY_AMMO)
+        ammoNamePreview = selectedAmmo.ammoType.name;
     else
-        selectedAmmo = emptyAmmo;
+        ammoNamePreview = "CHOOSE AMMO TYPE";
 
     ImGui::Text("Directions");
     ImGui::BulletText("This will add the amount to an existing Ammo Type in the stockpile.");
@@ -1115,14 +1040,17 @@ std::pair<bool, TrackedAmmo> StockpileUI::addToExistingAmmoType  (bool& unsavedC
     ImGui::Spacing();
     ImGui::Spacing();
 
+
     if(ImGui::BeginChild("Enter Info", ImVec2{ImGui::GetContentRegionAvail().x-300, ImGui::GetContentRegionAvail().y})){
         ImGui::Text("Ammo Name");
         ImGui::SameLine(100);
-        if (ImGui::BeginCombo("##Choose Ammo Name Combo", ammoNameComboPreview, ImGuiComboFlags_HeightSmall)){
-            for (size_t chooseName { 0 }; chooseName < ammoList.size()+1; ++chooseName){ // Add one to account for default option
-                const bool isSelected = (selectedAmmoNameIndex == chooseName);
-                if (ImGui::Selectable(ammoNamesArray[chooseName], isSelected))
-                    selectedAmmoNameIndex = chooseName;
+        
+        if (ImGui::BeginCombo("##Choose Ammo Name Combo", ammoNamePreview.c_str(), ImGuiComboFlags_HeightSmall)){
+            for (const auto& ammo : ammoList){ // Add one to account for default option
+                const bool isSelected = (selectedAmmo == *ammo);
+
+                if (ImGui::Selectable(ammo->ammoType.name.c_str(), isSelected))
+                    selectedAmmo = *ammo;
 
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
@@ -1147,14 +1075,18 @@ std::pair<bool, TrackedAmmo> StockpileUI::addToExistingAmmoType  (bool& unsavedC
             if(amountToAdd <= 0)
                 amountRejected = true;
 
-            if(selectedAmmoNameIndex <= 0)
+            if(selectedAmmo == EMPTY_AMMO)
                 ammoRejected = true;
 
+            // All checks passed
             if(!ammoRejected && !amountRejected){
-                createdAmmoToAdd = true;
-                selectedAmmoNameIndex = 0;
+                submitAmmo = true;
+                unsavedChanges = true;
+
+                selectedAmmo.amount = amountToAdd;
+
+                // Reset flags
                 amountToAdd = 0;
-                unsavedChanges = true;              // Set flag
             }
             else
                 ImGui::OpenPopup("Amount Not Added");
@@ -1182,41 +1114,57 @@ std::pair<bool, TrackedAmmo> StockpileUI::addToExistingAmmoType  (bool& unsavedC
     if(ImGui::BeginChild("Selected Ammo Detailed Information", ImGui::GetContentRegionAvail())){
         UIHelper::centerText("Detailed Ammo Information");
         ImGui::Separator();
-        if(selectedAmmoNameIndex > 0){
+        if(selectedAmmo != EMPTY_AMMO){
             ImGui::Text("Name: ");
             ImGui::SameLine(150);
             ImGui::Text("%s", selectedAmmo.ammoType.name.c_str());
 
             ImGui::Text("Manufacturer: ");
             ImGui::SameLine(150);
-            ImGui::Text("%s", selectedAmmo.ammoType.manufacturer.c_str());
+            ImGui::Text("%s", selectedAmmo.ammoType.manufacturer.getName().c_str());
 
             ImGui::Text("Cartridge: ");
             ImGui::SameLine(150);
-            ImGui::Text("%s", selectedAmmo.ammoType.cartridge.c_str());
+            ImGui::Text("%s", selectedAmmo.ammoType.cartridge.getName().c_str());
 
             ImGui::Text("Grain Weight: ");
             ImGui::SameLine(150);
-            ImGui::Text("%d", int{selectedAmmo.ammoType.grainWeight});
+            ImGui::Text("%d", selectedAmmo.ammoType.grainWeight);
 
             ImGui::Text("Amount On Hand: ");
             ImGui::SameLine(150);
-            ImGui::Text("%ld", selectedAmmo.amount);
+            ImGui::Text("%d", selectedAmmo.amount);
         }
         else
-            UIHelper::centerText("Select Ammo Type");
+            UIHelper::centerTextDisabled("Select Ammo Type");
     }
     ImGui::EndChild();
 
     ImGui::EndChild();
 
-    return std::pair{createdAmmoToAdd, selectedAmmo};
+    if(submitAmmo){
+        TrackedAmmo ammoBuf { selectedAmmo };   // Need this buffer to reset selected Ammo before returning
+        selectedAmmo = EMPTY_AMMO;
+        return ammoBuf;
+    }
+    else
+        return EMPTY_AMMO;
 }
 
-// MARK: EVENTS
-void EventsUI::home(EventTrackerPtr eventTracker,  bool& unsavedChanges) {
-    static bool unsavedChanges { false };
+// MARK: EVENTS UI
+void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChanges) {
     static std::vector<EventPtr> eventList;
+
+    static EventTypeList           eventTypes  { };
+    static LocationList            locations   { };
+    static ConstGunPtrList         guns        { };
+    static ConstTrackedAmmoPtrList ammo        { };
+
+    eventTracker->getAllEventTypes(eventTypes);
+    eventTracker->getAllLocations(locations);
+    gunTracker->getAllGuns(guns);
+    ammoTracker->getAllAmmo(ammo);
+
     std::vector<EventPtr>::iterator itr;
 
     eventTracker->getAllEvents(eventList);
@@ -1238,7 +1186,7 @@ void EventsUI::home(EventTrackerPtr eventTracker,  bool& unsavedChanges) {
 
     if(ImGui::BeginChild("Events Details", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
-        ImGui::Text("Total Events:      %ld", eventTracker->getTotalEvents());
+        ImGui::Text("Total Events:      %d", eventTracker->getTotalEvents());
         ImGui::Unindent(20);
     }
     ImGui::EndChild();
@@ -1294,7 +1242,7 @@ void EventsUI::home(EventTrackerPtr eventTracker,  bool& unsavedChanges) {
         }
 
         if(unsavedChanges)
-            UIHelper::centerText("(There are unsaved changes)");
+            UIHelper::centerTextDisabled("(There are unsaved changes)");
     }
     ImGui::EndChild();
 
@@ -1348,10 +1296,10 @@ void EventsUI::home(EventTrackerPtr eventTracker,  bool& unsavedChanges) {
                             ImGui::Text("%s", event.getName().c_str());
                             break;
                         case 2:
-                            ImGui::Text("%s", event.getLocation().c_str());
+                            ImGui::Text("%s", event.getLocation().getName().c_str());
                             break;
                         case 3:
-                            ImGui::Text("%s", event.getEventType().c_str());
+                            ImGui::Text("%s", event.getEventType().getName().c_str());
                             break;
                         case 4:
                             ImGui::Text("%d", int{event.getNumGunsUsed()});
@@ -1383,29 +1331,53 @@ void EventsUI::home(EventTrackerPtr eventTracker,  bool& unsavedChanges) {
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event")){
-            addEvent(unsavedChanges);
+            std::pair<bool, EventPtr> newEventBuf { addEvent(unsavedChanges, eventTypes, locations, guns, ammo) };
+
+            if(newEventBuf.second && *newEventBuf.second != Event { }){
+                Event& event { *newEventBuf.second };
+                eventTracker->addEvent(event);
+
+                // Check if to apply subtraction of ammo
+                if(newEventBuf.first){
+                    std::vector<std::pair<Gun, TrackedAmmo>> gunsUsed { };
+                    event.getAllGunsUsed(gunsUsed);                         // Get all guns used
+
+                    for(const auto& [gun, ammo] : gunsUsed){
+                        ammoTracker->removeAmmoFromStockpile(ammo);         // Apply subtraction for each gun
+                    }
+                }
+            }
+
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event Type")){
-            addEventType(unsavedChanges);
+            EventType newEventType { addEventType(unsavedChanges) };
+
+            if(newEventType != EventType { })
+                eventTracker->addEventType(newEventType);
+
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Location")){
-            addLocation(unsavedChanges);
+            Location newLocation { addLocation(unsavedChanges) };
+
+            if(newLocation != Location { })
+                eventTracker->addLocation(newLocation);
+            
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
     }
 }
 // MARK: View Event
-void EventsUI::viewEvent(EventPtr selectedEvent){
+void EventsUI::viewEvent(std::shared_ptr<const Event> event){
     if(!ImGui::BeginChild("View Event")){
         ImGui::EndChild();
         return;
     }
     static bool showAmmoUsed { false };
 
-    if(!selectedEvent){
+    if(!event){
         ImGui::Spacing();
         ImGui::Spacing();
 
@@ -1418,18 +1390,18 @@ void EventsUI::viewEvent(EventPtr selectedEvent){
     if(ImGui::BeginChild("Selected Event Detailed Information", ImVec2{ImGui::GetContentRegionAvail().x/2, 100})){
         UIHelper::centerText("Event Information");
         ImGui::Separator();
-        if(selectedEvent){
-            ImGui::Text("Name: ");
-            ImGui::SameLine(150);
-            ImGui::Text("%s", selectedEvent->getName().c_str());
+        if(event){
+            ImGui::TextDisabled("Name: ");
+            ImGui::SameLine(100);
+            ImGui::Text("%s", event->getName().c_str());
 
-            ImGui::Text("Location: ");
-            ImGui::SameLine(150);
-            ImGui::Text("%s", selectedEvent->getLocation().c_str());
+            ImGui::TextDisabled("Location: ");
+            ImGui::SameLine(100);
+            ImGui::Text("%s", event->getLocation().getName().c_str());
 
-            ImGui::Text("Event Type: ");
-            ImGui::SameLine(150);
-            ImGui::Text("%s", selectedEvent->getEventType().c_str());
+            ImGui::TextDisabled("Event Type: ");
+            ImGui::SameLine(100);
+            ImGui::Text("%s", event->getEventType().getName().c_str());
         }
         else
             UIHelper::centerText("(Select Event)");
@@ -1446,56 +1418,510 @@ void EventsUI::viewEvent(EventPtr selectedEvent){
         UIHelper::centerText("Show Ammo Used");
         ImGui::SameLine();
         ImGui::Checkbox("##Show Ammo Used Checkbox", &showAmmoUsed);
-
     }
     ImGui::EndChild();
 
     ImGui::SeparatorText("Notes");
     ImGui::Spacing();
     ImGui::Spacing();
-    if(selectedEvent)
-        ImGui::Text("%s", selectedEvent->getNotes().c_str());
+    if(event)
+        ImGui::Text("%s", event->getNotes().c_str());
     ImGui::Spacing();
     ImGui::Spacing();
-    ImGui::Separator();
 
-    // Table To Show Event Information
-    if(ImGui::BeginChild("Selected Event Detailed Gun Information", ImVec2{ ImGui::GetContentRegionAvail().x, 140})){
-        if(selectedEvent){
-            static std::vector<std::pair<Gun, TrackedAmmo>> eventGunsUsed;
-            selectedEvent->getAllGunsUsed(eventGunsUsed);
-            eventGunTable(eventGunsUsed, showAmmoUsed);
-        }
+    if(event){
+        static std::vector<std::pair<Gun, TrackedAmmo>> eventGunsUsed;
+        event->getAllGunsUsed(eventGunsUsed);
+        eventGunTable(eventGunsUsed, showAmmoUsed);
     }
-    ImGui::EndChild();
-
 
     ImGui::EndChild();  // Ends tab child window
 }
-// MARK: EVENT GUN TABLE
-void EventsUI::eventGunTable(std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) {
-    UIHelper::centerText("Guns Used");
-    ImGui::Separator();
+// MARK: Add Event
+std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const EventTypeList& eventTypes, 
+                                                const LocationList& locations,  const ConstGunPtrList& guns,    const ConstTrackedAmmoPtrList& ammoList
+){
+    if(!ImGui::BeginChild("Add Event")){
+        ImGui::EndChild();
+        return std::pair(false, nullptr);
+    }
 
-    std::vector<std::pair<Gun, TrackedAmmo>>::iterator itr { list.begin() };
+    static const Location   EMPTY_LOCATION { };
+    static const EventType  EMPTY_EVENTTYPE { };
+
+    static char nameBuf     [UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Event Name";
+    static char notesBuf    [UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES];
+
+    static int  numGuns { 1 };
+
+    static int              dayBuf          { 0 },  monthBuf        { 0 },  yearBuf         { 2024 };
+    static Gun              selectedGun1    {  },   selectedGun2    {  },   selectedGun3    {  };
+    static TrackedAmmo      selectedTA1     {  },   selectedTA2     {  },   selectedTA3     {  };
+
+    static Location     selectedLocation     {  };
+    static EventType    selectedEventType    {  };
+
+    // Flags to let user know what went wrong when saving
+    static bool invalidName             { false }, invalidLocation  { false },  invalidEventType    { false },  invalidDate{ false },   
+                incompatibleCartridge   { false }, invalidGunOrAmmo { false },  invalidAmmoAmount   { false };
+
+    static bool subtractRoundsUsedFromStockpile { false };  // Flag to apply ammo used to stockpile
+
+    EventPtr    returnVal               { };
+    std::string locationComboPreview    { };
+    std::string eventTypeComboPreview   { };
+
+
+    if(selectedLocation != EMPTY_LOCATION)
+        locationComboPreview = selectedLocation.getName();
+    else
+        locationComboPreview = "CHOOSE LOCATION";
+    
+    if(selectedEventType != EMPTY_EVENTTYPE)
+        eventTypeComboPreview = selectedEventType.getName().c_str();
+    else
+        eventTypeComboPreview = "CHOOSE EVENT TYPE";
+
+
+    if(ImGui::BeginChild("Add Event Directions", ImVec2{ImGui::GetContentRegionAvail().x/2, 120})){
+        ImGui::Text("Directions");
+        ImGui::BulletText("This will add a new Event to tracked events.");
+        ImGui::BulletText("Select a Gun and Ammo from the table to add to the event");
+        ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+        ImGui::BulletText("To add a new Event Type, see the \"Add New Event Type\" tab.");
+        ImGui::BulletText("To add a new location, see the \"Add New Location\" tab.");
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Add Event Options", ImVec2{ImGui::GetContentRegionAvail().x, 120})){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(UIHelper::centerButton("Add Event", ImVec2{200,50})){
+            // Reset flags 
+            invalidName             = false;
+            invalidLocation         = false;
+            invalidEventType        = false;
+            invalidDate             = false;
+            incompatibleCartridge   = false;
+            invalidGunOrAmmo        = false;
+            invalidAmmoAmount       = false;
+
+            // Verify buffers
+            using namespace std::chrono;
+            std::string nameStr { nameBuf }, notesStr { notesBuf };
+            year_month_day dateBuf { year{yearBuf}, month{monthBuf}, day{dayBuf}};
+
+            if(selectedLocation == EMPTY_LOCATION) 
+                invalidLocation = true;
+            if(selectedEventType == EMPTY_EVENTTYPE) 
+                invalidEventType = true;
+            if(nameStr == "Enter Event Name")
+                invalidName = true;
+            if(!dateBuf.ok())
+                invalidDate = true;
+
+            
+            // Check cartridges of selected ammo and respective gun
+            switch (numGuns){
+                case 3:
+                    if(selectedGun3 == Gun { } || selectedTA3.ammoType == AmmoType { })
+                        invalidGunOrAmmo = true;
+                    else{
+                        if(selectedGun3.getCartridge() != selectedTA3.ammoType.cartridge)
+                            incompatibleCartridge = true;
+                        if(selectedTA3.amount == 0)
+                            invalidAmmoAmount = true;
+                    }
+                case 2:
+                    if(selectedGun2 == Gun { } || selectedTA2.ammoType == AmmoType { })
+                        invalidGunOrAmmo = true;
+                    else{
+                        if(selectedGun2.getCartridge() != selectedTA2.ammoType.cartridge)
+                            incompatibleCartridge = true;
+                        if(selectedTA2.amount == 0)
+                            invalidAmmoAmount = true;
+                    }
+                case 1:
+                    if(selectedGun1 == Gun { } || selectedTA1.ammoType == AmmoType { })
+                        invalidGunOrAmmo = true;
+                    else{
+                        if(selectedGun1.getCartridge() != selectedTA1.ammoType.cartridge)
+                            incompatibleCartridge = true;
+                        if(selectedTA1.amount == 0)
+                            invalidAmmoAmount = true;
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            // If all information is good, create event
+            if(!invalidName && !invalidLocation && !invalidEventType && !invalidDate && !incompatibleCartridge && !invalidGunOrAmmo && !invalidAmmoAmount){
+                Event eventBuf { nameStr, selectedLocation, selectedEventType, notesStr, dateBuf};
+                switch (numGuns){
+                    case 3:
+                        eventBuf.addGun(selectedGun3, selectedTA3);
+                    case 2:
+                        eventBuf.addGun(selectedGun2, selectedTA2);
+                    case 1:
+                        eventBuf.addGun(selectedGun1, selectedTA1);
+                        break;
+                    default:
+                        break;
+                }
+                
+                returnVal = std::make_shared<Event>(eventBuf);
+                unsavedChanges = true; // Set flag
+
+                // Reset buffers
+                strcpy(nameBuf,     "Enter Event Name");
+                strcpy(notesBuf,    "");
+
+                selectedLocation    = EMPTY_LOCATION;
+                selectedEventType   = EMPTY_EVENTTYPE;
+                dayBuf              = 0;
+                monthBuf            = 0;
+                yearBuf             = 2024;
+
+                selectedGun1 = Gun { };
+                selectedGun2 = Gun { };
+                selectedGun3 = Gun { };
+                selectedTA1 = TrackedAmmo { };
+                selectedTA2 = TrackedAmmo { };
+                selectedTA3 = TrackedAmmo { };
+            }
+
+            // Make popup modal
+            if(invalidName || invalidLocation || invalidEventType || invalidDate || incompatibleCartridge || invalidAmmoAmount || invalidGunOrAmmo)
+                ImGui::OpenPopup("Event Not Created");
+        }
+        // End Add Event Button
+
+        if(ImGui::BeginPopupModal("Event Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+            UIHelper::centerText("This Event could not be created.");
+
+            if(invalidName)
+                ImGui::BulletText("Invalid name");
+            if(invalidLocation)
+                ImGui::BulletText("Invalid location");
+            if(invalidEventType)
+                ImGui::BulletText("Invalid Event Type");
+            if(invalidDate)
+                ImGui::BulletText("Invalid date");
+            if(incompatibleCartridge)
+                ImGui::BulletText("Incompatible cartridge for a gun");
+            if(invalidGunOrAmmo)
+                ImGui::BulletText("Invalid gun or ammo selection");
+             if(invalidAmmoAmount)
+                ImGui::BulletText("Ammo used amount cannot be 0");
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            if (UIHelper::centerButton("Close", ImVec2{120, 0}))
+                ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        // Center the text and checkbox
+        static constexpr std::string_view checkboxText { "Subtract Ammo From Stockpile" };
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - (ImGui::CalcTextSize(std::string{checkboxText}.c_str()).x + 20)) * 0.5f); // Add 10 for checkbox size
+        ImGui::Text("%s", std::string{checkboxText}.c_str());
+        ImGui::SameLine();
+        ImGui::Checkbox("##SubtractRoundsUsed", &subtractRoundsUsedFromStockpile);
+        UIHelper::centerTextDisabled("(Applied regardless of the event being saved)");
+    }
+    ImGui::EndChild();
+
+    if(ImGui::CollapsingHeader("Event Information")){
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        ImGui::Text("Name");
+        ImGui::SameLine(100);
+        ImGui::InputText("##Input New Event Name", nameBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS);
+
+        ImGui::Text("Location");
+        ImGui::SameLine(100);
+        if (ImGui::BeginCombo("##Choose Location Combo", locationComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+            for (const auto& loc : locations) {
+                const bool isSelected = (selectedLocation == loc);
+                if (ImGui::Selectable(loc.getName().c_str(), isSelected))
+                    selectedLocation = loc;
+
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::Text("Event Type");
+        ImGui::SameLine(100);
+        if (ImGui::BeginCombo("##Choose Event Type Combo", eventTypeComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+            for (const auto& et : eventTypes) {
+                const bool isSelected = (selectedEventType == et);
+                if (ImGui::Selectable(et.getName().c_str(), isSelected))
+                    selectedEventType = et;
+
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::Text("Notes");
+        ImGui::SameLine(100);
+        ImGui::InputTextMultiline("##Input Notes", notesBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES, ImVec2{ImGui::GetContentRegionAvail().x, 100});
+        ImGui::SameLine();
+        ImGui::TextDisabled("(May be left blank)");
+
+        ImGui::Text("Date");
+        ImGui::SameLine(100);
+        ImGui::SetNextItemWidth(100);
+        ImGui::InputInt("##Input Day", &dayBuf);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(100);
+        ImGui::InputInt("##Input Month", &monthBuf);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(100);
+        ImGui::InputInt("##Input Year", &yearBuf);
+
+        // Grayed out details, approximate centers of text box did the trick
+        ImGui::SetCursorPosX(125);
+        ImGui::TextDisabled("(Day)");
+        ImGui::SameLine(0, 70);
+        ImGui::TextDisabled("(Month)");
+        ImGui::SameLine(0, 70);
+        ImGui::TextDisabled("(Year)");
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(ImGui::CollapsingHeader("Select Guns")){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::Text("Number of Guns");
+        ImGui::SameLine();
+        ImGui::InputInt("(Maximum 3)", &numGuns);
+
+        if(numGuns <= 0)
+            numGuns = 1;
+        if(numGuns > 3)
+            numGuns = 3;
+
+        switch(numGuns){
+            case 3:
+                ImGui::PushID("Select Gun 3");
+                selectGunTable(guns, selectedGun3);
+                ImGui::PopID();
+            case 2:
+                ImGui::PushID("Select Gun 2");
+                selectGunTable(guns, selectedGun2);
+                ImGui::PopID();
+            case 1:
+                ImGui::PushID("Select Gun 1");
+                selectGunTable(guns, selectedGun1);
+                ImGui::PopID();                
+                break;
+            default:
+                break;
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(ImGui::CollapsingHeader("Select Ammo Used")){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        switch(numGuns){
+            case 3:
+                if(selectedGun3 != Gun { }){
+                    ImGui::PushID("Select Ammo 3");
+                    ImGui::Separator();
+                    UIHelper::centerText("Select Ammo for \"" + selectedGun3.getName() + "\"");
+                    selectAmmoTable(ammoList, selectedTA3);
+                    ImGui::PopID();
+                }
+            case 2:
+                if(selectedGun2 != Gun { }){
+                    ImGui::PushID("Select Ammo 2");
+                    ImGui::Separator();
+                    UIHelper::centerText("Select Ammo for \"" + selectedGun2.getName() + "\"");
+                    selectAmmoTable(ammoList, selectedTA2);
+                    ImGui::PopID();
+                }
+            case 1:
+                if(selectedGun1 != Gun { }){
+                    ImGui::PushID("Select Ammo 1");
+                    ImGui::Separator();
+                    UIHelper::centerText("Select Ammo for \"" + selectedGun1.getName() + "\"");
+                    selectAmmoTable(ammoList, selectedTA1);
+                    ImGui::PopID();
+                }
+                else
+                    ImGui::TextDisabled("Must select a gun first");
+                break;
+            default:
+                break;
+        }
+    }
+
+    ImGui::EndChild();
+
+    return std::pair(subtractRoundsUsedFromStockpile, returnVal);
+}
+// MARK: ADD Event Type
+EventType EventsUI::addEventType (bool& unsavedChanges) {
+    static char eventTypeBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Event Type";
+
+    EventType returnVal;
+
+    if(!ImGui::BeginChild("Add New Event Type")){
+        ImGui::EndChild();
+        return EventType { };
+    }
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Event Type to choose from when creating an Event.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Event Type");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input New Event Type", eventTypeBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS, ImGuiInputTextFlags_CharsUppercase);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(UIHelper::centerButton("Add Event Type", ImVec2{200,50})){
+        bool nameRejected { false };
+        std::string eventTypeStrBuf { eventTypeBuf };
+
+        for(auto& c : eventTypeStrBuf){
+            if(!isalnum(c) && c != ' '){
+                nameRejected = true;
+                break;
+            }
+            c = toupper(c);
+        }
+
+        if(eventTypeStrBuf != "New Event Type" && !nameRejected){
+            returnVal = EventType {eventTypeStrBuf};
+            strcpy(eventTypeBuf, "New Event Type");     // Reset buffers
+            unsavedChanges = true;                      // Set flag
+        }   
+        else
+            ImGui::OpenPopup("Event Type Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Event Type Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        UIHelper::centerText("The Event Type could not be created.");
+        UIHelper::centerText("Invalid name.");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        if (UIHelper::centerButton("Close", ImVec2{120, 0}))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+
+    return returnVal;
+}
+// MARK: ADD Location
+Location EventsUI::addLocation (bool& unsavedChanges) {
+    static char locationBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "New Location";
+
+    Location returnVal;
+
+    if(!ImGui::BeginChild("Add New Location")){
+        ImGui::EndChild();
+        return Location { };
+    }
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new location to choose from when creating an Event.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
+    
+    ImGui::Text("Location");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input New Location", locationBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS, 0);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(UIHelper::centerButton("Add Location", ImVec2{200,50})){
+        bool nameRejected { false };
+        std::string locationStrBuf { locationBuf };
+        for(const auto& c : locationStrBuf){
+            if(!isalnum(c) && c != ' '){
+                nameRejected = true;
+                break;
+            }
+        }
+
+        if(locationStrBuf != "New Location" && !nameRejected){
+            returnVal = Location{locationStrBuf};
+            strcpy(locationBuf, "New Location");     // Reset buffers
+            unsavedChanges = true;                   // Set flag
+        }   
+        else
+            ImGui::OpenPopup("Location Not Created");
+    }
+
+    if(ImGui::BeginPopupModal("Location Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+        UIHelper::centerText("The location could not be created.");
+        UIHelper::centerText("Invalid name.");
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        if (UIHelper::centerButton("Close", ImVec2{120, 0}))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::EndChild();
+
+    return returnVal;
+}
+// MARK: Event Gun Table
+void EventsUI::eventGunTable(const std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) {
+    std::vector<std::pair<Gun, TrackedAmmo>>::const_iterator itr { list.begin() };
 
     static const Gun emptyGun   { };
-    static int tableColumns     { 3 };
-    static float boxSise        { 100 };
 
-    if(showAmmoUsed){
+    static int      tableColumns    { 3 };
+    static float    tableHeight     { 100 };
+
+    if(showAmmoUsed)
         tableColumns = 7;
-        boxSise = 50;
-    }
-    else{
+    else
         tableColumns = 3;
-        boxSise = 50;
-    }
 
-     if(ImGui::BeginTable("Gun Table", tableColumns, 
+    ImGui::SeparatorText("Guns Used");
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(ImGui::BeginTable("Gun Table", tableColumns, 
                                 ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, ImVec2(ImGui::GetContentRegionAvail().x, boxSise)
-                        ))
+                                ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, ImVec2(ImGui::GetContentRegionAvail().x-2, tableHeight) ))
     {
         ImGui::TableSetupColumn("Weapon Type");
         ImGui::TableSetupColumn("Cartridge");
@@ -1524,7 +1950,7 @@ void EventsUI::eventGunTable(std::vector<std::pair<Gun, TrackedAmmo>>& list, boo
                                 ImGui::Text("%s", std::string{gun.getWeaponType()}.c_str());
                                 break;
                             case 1:
-                                ImGui::Text("%s", gun.getCartridge().c_str());
+                                ImGui::Text("%s", gun.getCartridge().getName().c_str());
                                 break;
                             case 2:
                                 ImGui::Text("%s", gun.getName().c_str());
@@ -1533,13 +1959,13 @@ void EventsUI::eventGunTable(std::vector<std::pair<Gun, TrackedAmmo>>& list, boo
                                 ImGui::Text("%s", ammo.ammoType.name.c_str());
                                 break;
                             case 4:
-                                ImGui::Text("%s", ammo.ammoType.manufacturer.c_str());
+                                ImGui::Text("%s", ammo.ammoType.manufacturer.getName().c_str());
                                 break;
                             case 5:
-                                ImGui::Text("%d", int{ammo.ammoType.grainWeight});
+                                ImGui::Text("%d", ammo.ammoType.grainWeight);
                                 break;
                             case 6:
-                                ImGui::Text("%lu", ammo.amount);
+                                ImGui::Text("%d", ammo.amount);
                                 break;
                             default:
                                 ImGui::Text("Broken table");
@@ -1553,492 +1979,8 @@ void EventsUI::eventGunTable(std::vector<std::pair<Gun, TrackedAmmo>>& list, boo
     }
 }
 
-
-// MARK: ADD EVENT
-void EventsUI::addEvent(bool& unsavedChanges){
-    if(!ImGui::BeginChild("Add Event")){
-        ImGui::EndChild();
-        return;
-    }
-    static char nameBuf[MAX_TEXT_INPUT_CHARS]   = "Enter Event Name";
-    static char notesBuf[MAX_TEXT_INPUT_CHARS_NOTES];
-
-    static StringVector                 eventTypesVector {};
-    static StringVector                 locationsVector {};
-    static std::vector<ConstGunPtr>     gunList;
-    static std::vector<TrackedAmmoPtr>  ammoList;
-
-    static int numGuns { 1 };
-
-    static int              dayBuf          { 0 },          monthBuf        { 0 },          yearBuf         { 2024 };
-    static Gun              selectedGun1    {  },           selectedGun2    {  },           selectedGun3    {  };
-    static TrackedAmmo      selectedTA1     {  },           selectedTA2     {  },           selectedTA3     {  };
-
-    static bool invalidName             { false }, invalidLocation  { false },  invalidEventType    { false },  invalidDate{ false },   
-                incompatibleCartridge   { false }, invalidGunOrAmmo { false },  invalidAmmoAmount   { false };
-    static bool subtractRoundsUsedFromStockpile { false };
-
-
-    eventTracker->getAllEventTypes(eventTypesVector);
-    eventTracker->getAllLocations(locationsVector);
-    gunTracker->getAllGuns(gunList);
-    ammoTracker->getAllAmmo(ammoList);
-
-
-    // Create array for event types
-    const char* eventTypesArray[MAX_LIST_NUM];
-    eventTypesArray[0] = "CHOOSE EVENT TYPE";
-    int i1 { 1 };
-    for(auto& s : eventTypesVector){
-        if(i1 < (MAX_LIST_NUM + 1)){
-            eventTypesArray[i1] = s.c_str();
-        }
-        ++i1;
-    }
-
-    // Create array for locaitons
-    const char* locationsArray[MAX_LIST_NUM];
-    locationsArray[0] = "CHOOSE LOCATION";
-    int i2 { 1 };
-    for(auto& s : locationsVector){
-        if(i2 < (MAX_LIST_NUM + 1)){
-            locationsArray[i2] = s.c_str();
-        }
-        ++i2;
-    }
-
-    static size_t selectedLocationIndex     { 0 };
-    static size_t selectedEventTypeIndex    { 0 };
-
-    const char* eventTypePreview    { eventTypesArray   [selectedEventTypeIndex] };
-    const char* locationPreview     { locationsArray    [selectedLocationIndex] };
-
-    if(ImGui::BeginChild("Add Event Directions", ImVec2{ImGui::GetContentRegionAvail().x/2, 120})){
-        ImGui::Text("Directions");
-        ImGui::BulletText("This will add a new Event to tracked events.");
-        ImGui::BulletText("Select a Gun and Ammo from the table to add to the event");
-        ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
-        ImGui::BulletText("To add a new Event Type, see the \"Add New Event Type\" tab.");
-        ImGui::BulletText("To add a new location, see the \"Add New Location\" tab.");
-    }
-    ImGui::EndChild();
-
-    ImGui::SameLine();
-
-    if(ImGui::BeginChild("Add Event Options", ImVec2{ImGui::GetContentRegionAvail().x, 120})){
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        if(WindowHelper::centerButton("Add Event", ImVec2{200,50})){
-            // Reset flags 
-            invalidName             = false;
-            invalidLocation         = false;
-            invalidEventType        = false;
-            invalidDate             = false;
-            incompatibleCartridge   = false;
-            invalidGunOrAmmo        = false;
-            invalidAmmoAmount       = false;
-
-            // Verify buffers
-            using namespace std::chrono;
-            std::string nameStr { nameBuf }, notesStr { notesBuf };
-            year_month_day dateBuf { year{yearBuf}, month{monthBuf}, day{dayBuf}};
-
-            if(selectedLocationIndex <= 0) 
-                invalidLocation = true;
-            if(selectedEventTypeIndex <= 0) 
-                invalidEventType = true;
-            if(nameStr == "Enter Event Name")
-                invalidName = true;
-            if(!dateBuf.ok())
-                invalidDate = true;
-
-            
-            // Check cartridges of selected ammo and respective gun
-            switch (numGuns){
-                case 3:
-                    if(selectedGun3 != Gun { } || selectedTA3.ammoType == AmmoType { })
-                        invalidGunOrAmmo = true;
-                    else{
-                        if(selectedGun3.getCartridge() != selectedTA3.ammoType.cartridge)
-                            incompatibleCartridge = true;
-                        if(selectedTA3.amount == 0)
-                            invalidAmmoAmount = true;
-                    }
-                case 2:
-                    if(selectedGun2 != Gun { }|| selectedTA2.ammoType == AmmoType { })
-                        invalidGunOrAmmo = true;
-                    else{
-                        if(selectedGun2.getCartridge() != selectedTA2.ammoType.cartridge)
-                            incompatibleCartridge = true;
-                        if(selectedTA2.amount == 0)
-                            invalidAmmoAmount = true;
-                    }
-                case 1:
-                    if(selectedGun1 != Gun { } || selectedTA1.ammoType == AmmoType { })
-                        invalidGunOrAmmo = true;
-                    else{
-                        if(selectedGun1.getCartridge() != selectedTA1.ammoType.cartridge)
-                            incompatibleCartridge = true;
-                        if(selectedTA1.amount == 0)
-                            invalidAmmoAmount = true;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            // If all information is good, create event
-            if(!invalidName && !invalidLocation && !invalidEventType && !invalidDate && !incompatibleCartridge && !invalidGunOrAmmo && !invalidAmmoAmount){
-                std::string eventTypeStr { eventTypesArray[selectedEventTypeIndex]}, locationStr {locationsArray[selectedLocationIndex]};
-
-                Event eventBuf { nameStr, locationStr, eventTypeStr, notesStr, dateBuf};
-                switch (numGuns){
-                    case 3:
-                        eventBuf.addGun(selectedGun3, selectedTA3);
-
-                        if(subtractRoundsUsedFromStockpile)
-                            ammoTracker->removeAmmoFromStockpile(selectedTA3.amount, selectedTA3.ammoType);
-                    case 2:
-                        eventBuf.addGun(selectedGun2, selectedTA2);
-
-                        if(subtractRoundsUsedFromStockpile)
-                            ammoTracker->removeAmmoFromStockpile(selectedTA2.amount, selectedTA2.ammoType);
-                    case 1:
-                        eventBuf.addGun(selectedGun1, selectedTA1);
-
-                        if(subtractRoundsUsedFromStockpile)
-                            ammoTracker->removeAmmoFromStockpile(selectedTA1.amount, selectedTA1.ammoType);
-                        break;
-                    default:
-                        break;
-                }
-                eventTracker->addEvent(eventBuf);
-
-                // Subtract rounds from stockpile
-                if(subtractRoundsUsedFromStockpile){
-
-                }
-
-                // Reset buffers
-                strcpy(nameBuf,     "Enter Event Name");
-                strcpy(notesBuf,    "");
-
-                selectedLocationIndex   = 0;
-                selectedEventTypeIndex  = 0;
-                dayBuf      = 0;
-                monthBuf    = 0;
-                yearBuf     = 2024;
-
-                selectedGun1 = Gun { };
-                selectedGun2 = Gun { };
-                selectedGun3 = Gun { };
-                selectedTA1 = TrackedAmmo { };
-                selectedTA2 = TrackedAmmo { };
-                selectedTA3 = TrackedAmmo { };
-
-                unsavedChanges = true; // Set flag
-
-            }
-
-            // Make popup modal
-            if(invalidName || invalidLocation || invalidEventType || invalidDate || incompatibleCartridge || invalidAmmoAmount || invalidGunOrAmmo)
-                ImGui::OpenPopup("Event Not Created");
-        }
-        // End Add Event Button
-
-        if(ImGui::BeginPopupModal("Event Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-            WindowHelper::centerText("This Event could not be created.");
-
-            if(invalidName)
-                ImGui::BulletText("Invalid name");
-            if(invalidLocation)
-                ImGui::BulletText("Invalid location");
-            if(invalidEventType)
-                ImGui::BulletText("Invalid Event Type");
-            if(invalidDate)
-                ImGui::BulletText("Invalid date");
-            if(incompatibleCartridge)
-                ImGui::BulletText("Incompatible cartridge for a gun");
-            if(invalidGunOrAmmo)
-                ImGui::BulletText("Invalid gun or ammo selection");
-             if(invalidAmmoAmount)
-                ImGui::BulletText("Ammo used amount cannot be 0");
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
-                ImGui::CloseCurrentPopup();
-            ImGui::EndPopup();
-        }
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        // Center the text and checkbox
-        static constexpr std::string_view checkboxText { "Subtract Ammo From Stockpile" };
-        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - (ImGui::CalcTextSize(std::string{checkboxText}.c_str()).x + 20)) * 0.5f); // Add 10 for checkbox size
-        ImGui::Text("%s", std::string{checkboxText}.c_str());
-        ImGui::SameLine();
-        ImGui::Checkbox("##SubtractRoundsUsed", &subtractRoundsUsedFromStockpile);
-        WindowHelper::centerTextDisabled("(Applied regardless of the event being saved)");
-
-    }
-    ImGui::EndChild();
-
-    if(ImGui::CollapsingHeader("Event Information")){
-        ImGui::Text("Name");
-        ImGui::SameLine(100);
-        ImGui::InputText("##Input New Event Name", nameBuf, MAX_TEXT_INPUT_CHARS);
-
-        ImGui::Text("Location");
-        ImGui::SameLine(100);
-        if (ImGui::BeginCombo("##Choose Location Combo", locationPreview, ImGuiComboFlags_HeightSmall))
-        {
-            for (size_t chooseLocation { 0 }; chooseLocation < locationsVector.size()+1; ++chooseLocation) // Add one to account for default option
-            {
-                const bool isSelected = (selectedLocationIndex == chooseLocation);
-                if (ImGui::Selectable(locationsArray[chooseLocation], isSelected))
-                    selectedLocationIndex = chooseLocation;
-
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-        ImGui::Text("Event Type");
-        ImGui::SameLine(100);
-        if (ImGui::BeginCombo("##Choose Event Type Combo", eventTypePreview, ImGuiComboFlags_HeightSmall))
-        {
-            for (size_t chooseEventType { 0 }; chooseEventType < eventTypesVector.size()+1; ++chooseEventType) // Add one to account for default option
-            {
-                const bool isSelected = (selectedEventTypeIndex == chooseEventType);
-                if (ImGui::Selectable(eventTypesArray[chooseEventType], isSelected))
-                    selectedEventTypeIndex = chooseEventType;
-
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-        ImGui::Text("Notes");
-        ImGui::SameLine(100);
-        ImGui::InputTextMultiline("##Input Notes", notesBuf, MAX_TEXT_INPUT_CHARS_NOTES, ImVec2{ImGui::GetContentRegionAvail().x, 100});
-        ImGui::SameLine();
-        ImGui::TextDisabled("(May be left blank)");
-
-        ImGui::Text("Date");
-        ImGui::SameLine(100);
-        ImGui::SetNextItemWidth(100);
-        ImGui::InputInt("##Input Day", &dayBuf);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(100);
-        ImGui::InputInt("##Input Month", &monthBuf);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(100);
-        ImGui::InputInt("##Input Year", &yearBuf);
-
-        // Grayed out details, approximate centers of text box did the trick
-        ImGui::SetCursorPosX(125);
-        ImGui::TextDisabled("(Day)");
-        ImGui::SameLine(0, 70);
-        ImGui::TextDisabled("(Month)");
-        ImGui::SameLine(0, 70);
-        ImGui::TextDisabled("(Year)");
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if(ImGui::CollapsingHeader("Select Guns")){
-        ImGui::Text("Number of Guns");
-        ImGui::SameLine();
-        ImGui::InputInt("(Maximum 3)", &numGuns);
-
-        if(numGuns <= 0)
-            numGuns = 1;
-        if(numGuns > 3)
-            numGuns = 3;
-
-        switch(numGuns){
-            case 3:
-                ImGui::PushID("Select Gun 3");
-                WindowHelper::drawSelectGunTable(gunList, selectedGun3);
-                ImGui::PopID();
-            case 2:
-                ImGui::PushID("Select Gun 2");
-                WindowHelper::drawSelectGunTable(gunList, selectedGun2);
-                ImGui::PopID();
-            case 1:
-                ImGui::PushID("Select Gun 1");
-                WindowHelper::drawSelectGunTable(gunList, selectedGun1);
-                ImGui::PopID();                
-                break;
-            default:
-                break;
-        }
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if(ImGui::CollapsingHeader("Select Ammo Used")){
-       switch(numGuns){
-            case 3:
-                if(selectedGun3 != Gun { }){
-                    ImGui::PushID("Select Ammo 3");
-                    ImGui::Separator();
-                    WindowHelper::centerText("Select Ammo for \"" + selectedGun3.getName() + "\"");
-                    WindowHelper::drawSelectAmmoTable(ammoList, selectedTA3);
-                    ImGui::PopID();
-                }
-            case 2:
-                if(selectedGun2 != Gun { }){
-                    ImGui::PushID("Select Ammo 2");
-                    ImGui::Separator();
-                    WindowHelper::centerText("Select Ammo for \"" + selectedGun2.getName() + "\"");
-                    WindowHelper::drawSelectAmmoTable(ammoList, selectedTA2);
-                    ImGui::PopID();
-                }
-            case 1:
-                if(selectedGun1 != Gun { }){
-                    ImGui::PushID("Select Ammo 1");
-                    ImGui::Separator();
-                    WindowHelper::centerText("Select Ammo for \"" + selectedGun1.getName() + "\"");
-                    WindowHelper::drawSelectAmmoTable(ammoList, selectedTA1);
-                    ImGui::PopID();
-                }
-                else
-                    ImGui::TextDisabled("Must select a gun first");
-                break;
-            default:
-                break;
-        }
-    }        
-
-    ImGui::EndChild();
-}
-// MARK: ADD Event Type
-void ShooterCentralWindow::drawAddEventType (bool& unsavedChanges) const{
-    static char eventTypeBuf[MAX_TEXT_INPUT_CHARS] = "New Event Type";
-
-    if(!ImGui::BeginChild("Add New Event Type")){
-        ImGui::EndChild();
-        return;
-    }
-
-    ImGui::Text("Directions");
-    ImGui::BulletText("This will add a new Event Type to choose from when creating an Event.");
-    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
-    
-    ImGui::Spacing();
-    ImGui::Spacing();
-    
-    ImGui::Text("Event Type");
-    ImGui::SameLine(100);
-    ImGui::InputText("##Input New Event Type", eventTypeBuf, MAX_TEXT_INPUT_CHARS, ImGuiInputTextFlags_CharsUppercase);
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if(WindowHelper::centerButton("Add Event Type", ImVec2{200,50})){
-        bool nameRejected { false };
-        std::string eventTypeStrBuf { eventTypeBuf };
-
-        for(auto& c : eventTypeStrBuf){
-            if(!isalnum(c) && c != ' '){
-                nameRejected = true;
-                break;
-            }
-            c = toupper(c);
-        }
-
-        if(eventTypeStrBuf != "New Event Type" && !nameRejected){
-            eventTracker->addEventType(eventTypeStrBuf);
-            strcpy(eventTypeBuf, "New Event Type");     // Reset buffers
-            unsavedChanges = true;                      // Set flag
-        }   
-        else
-            ImGui::OpenPopup("Event Type Not Created");
-    }
-
-    if(ImGui::BeginPopupModal("Event Type Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        WindowHelper::centerText("The Event Type could not be created.");
-        WindowHelper::centerText("Invalid name.");
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-        
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
-            ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
-
-    ImGui::EndChild();
-}
-// MARK: ADD LOCATION
-void ShooterCentralWindow::drawAddLocation (bool& unsavedChanges) const{
-    static char locationBuf[MAX_TEXT_INPUT_CHARS] = "New Location";
-
-    if(!ImGui::BeginChild("Add New Location")){
-        ImGui::EndChild();
-        return;
-    }
-
-    ImGui::Text("Directions");
-    ImGui::BulletText("This will add a new location to choose from when creating an Event.");
-    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
-    
-    ImGui::Spacing();
-    ImGui::Spacing();
-    
-    ImGui::Text("Location");
-    ImGui::SameLine(100);
-    ImGui::InputText("##Input New Location", locationBuf, MAX_TEXT_INPUT_CHARS, 0);
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    if(WindowHelper::centerButton("Add Location", ImVec2{200,50})){
-        bool nameRejected { false };
-        std::string locationStrBuf { locationBuf };
-        for(const auto& c : locationStrBuf){
-            if(!isalnum(c) && c != ' '){
-                nameRejected = true;
-                break;
-            }
-        }
-
-        if(locationStrBuf != "New Location" && !nameRejected){
-            eventTracker->addLocation(locationStrBuf);
-            strcpy(locationBuf, "New Location");     // Reset buffers
-            unsavedChanges = true;                   // Set flag
-        }   
-        else
-            ImGui::OpenPopup("Location Not Created");
-    }
-
-    if(ImGui::BeginPopupModal("Location Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        WindowHelper::centerText("The location could not be created.");
-        WindowHelper::centerText("Invalid name.");
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-        
-        if (WindowHelper::centerButton("Close", ImVec2{120, 0}))
-            ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
-
-    ImGui::EndChild();
-}
-
-
-
-
-void WindowHelper::drawSelectGunTable(const std::vector<ConstGunPtr>& gunList, Gun& selectedGun){
+// MARK: Select Gun Table
+void EventsUI::selectGunTable(const ConstGunPtrList& gunList, Gun& selectedGun){
 
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-4, 200};
     if(tableSize.x < 400){
@@ -2085,7 +2027,7 @@ void WindowHelper::drawSelectGunTable(const std::vector<ConstGunPtr>& gunList, G
 
                             break;
                         case 1:
-                            ImGui::Text("%s", gun.getCartridge().c_str());
+                            ImGui::Text("%s", gun.getCartridge().getName().c_str());
                             break;
                         case 2:
                             ImGui::Text("%s", gun.getName().c_str());
@@ -2104,7 +2046,8 @@ void WindowHelper::drawSelectGunTable(const std::vector<ConstGunPtr>& gunList, G
     ImGui::Spacing();
 }
 
-void WindowHelper::drawSelectAmmoTable(const std::vector<TrackedAmmoPtr>& ammoList, TrackedAmmo& selectedAmmo){
+// MARK: Select Ammo Table
+void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& ammoList, TrackedAmmo& selectedAmmo){
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-4, 200};
     if(tableSize.x < 400){
         tableSize = ImVec2{400, 200};
@@ -2114,11 +2057,7 @@ void WindowHelper::drawSelectAmmoTable(const std::vector<TrackedAmmoPtr>& ammoLi
     if(ImGui::BeginChild("Ammo Table Window", ImVec2{tableSize.x + 2, tableSize.y+2})){
 
         // Select Ammo Table
-        if(ImGui::BeginTable("Ammo Table", 4, 
-                                    ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
-                                    ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize
-                            ))
-        {
+        if(ImGui::BeginTable("Ammo Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
             ImGui::TableSetupColumn("Cartridge",    0);
             ImGui::TableSetupColumn("Name",         0);
             ImGui::TableSetupColumn("Manufacturer", 0);
@@ -2153,7 +2092,7 @@ void WindowHelper::drawSelectAmmoTable(const std::vector<TrackedAmmoPtr>& ammoLi
                             ImGui::Text("%s", ammoType.name.c_str());
                             break;
                         case 2:
-                            ImGui::Text("%s", ammoType.manufacturer.c_str());
+                            ImGui::Text("%s", ammoType.manufacturer.getName().c_str());
                             break;
                         case 3:
                             ImGui::Text("%d", int{ammoType.grainWeight});
