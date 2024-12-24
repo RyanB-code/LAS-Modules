@@ -70,7 +70,7 @@ void ShooterCentralWindow::draw() {
         ImGui::SameLine();
 
     if(ImGui::BeginChild("Events Quick View", childWindowSizes, ImGuiChildFlags_Border) && showEvents)
-        EventsUI::home(eventTracker, ammoTracker, gunTracker, unsavedChanges.events, unsavedChanges.stockpile);
+        EventsUI::home(eventTracker, ammoTracker, gunTracker, unsavedChanges);
     ImGui::EndChild();
     
     ImGui::End();
@@ -129,9 +129,12 @@ bool UIHelper::centerButton(std::string text, ImVec2 buttonSize){
 // MARK: ARMORY UI
 void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const CartridgeList& cartridges){
 
+    static const Gun EMPTY_GUN { };
+
     static WeaponTypeList                               wpnTypes;
     static std::vector<ConstGunPtr>                     gunList;
     static std::unordered_map<std::string, uint64_t>    roundsPerCartridge;
+    static ConstGunPtr                                  selectedGun { };
 
     static bool savingGunsFailed { false }, savingWeaponTypesFailed { false }; // Flags to tell user what went wrong when attempting to save
 
@@ -224,9 +227,11 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
     ImGui::EndChild();
 
     // Display guns tracked
+
     ImGui::SeparatorText( "Guns" );
     ImGui::Spacing();
-    if(ImGui::BeginTable("Gun Table", 4, ImGuiTableFlags_Borders  | ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize)) {
+    int row { 0 };
+    if(ImGui::BeginTable("View Gun Table", 4, ImGuiTableFlags_Borders  | ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize)) {
         ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
@@ -236,14 +241,23 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
 
         for(const auto& gunElement : gunList){
             const Gun& gun {*gunElement};
+            bool isGunSelected { false };
+            
+            if(gunElement == selectedGun)
+                isGunSelected = true;
 
+            ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
 
             for (int column{0}; column < 4; ++column){
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Text("%s", gun.getWeaponType().getName().c_str());
+                        ImGui::Selectable(gun.getWeaponType().getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                        if(isGunSelected)
+                            selectedGun = gunElement;
+
                         break;
                     case 1:
                         ImGui::Text("%s", gun.getCartridge().getName().c_str());
@@ -258,7 +272,9 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
                         ImGui::TextDisabled("Broken table");
                         break;
                 }
-            }        
+            }
+            ImGui::PopID();
+            ++row;       
         }
         ImGui::EndTable();
     }
@@ -271,7 +287,7 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
     if(ImGui::BeginTabBar("Armory Tabs",    ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
                                             ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown)) {
         if(ImGui::BeginTabItem("Detailed Gun Viewer")){
-            ImGui::Text("Tab Stuff");
+            viewGun(selectedGun);
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Gun")){
@@ -293,6 +309,69 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
         ImGui::EndTabBar();
     }
 }
+// MARK: View Gun
+void ArmoryUI::viewGun(std::shared_ptr<const Gun> gun){
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if(!gun){
+        UIHelper::centerTextDisabled("Select a Gun");
+        return;
+    }
+
+    static ConstTrackedAmmoPtrList ammoList;
+    gun->getAllAmmoUsed(ammoList);
+
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
+    if(tableSize.x < 400)
+        tableSize = ImVec2{400, 200};
+
+    int row { 0 };
+    if(ImGui::BeginTable("Detailed Gun View Table", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
+        ImGui::TableSetupColumn("Cartridge",    0);
+        ImGui::TableSetupColumn("Name",         0);
+        ImGui::TableSetupColumn("Manufacturer", 0);
+        ImGui::TableSetupColumn("Grain Weight", 0);
+        ImGui::TableSetupColumn("Rounds Shot",  0);
+        ImGui::TableHeadersRow();            
+
+        for(const auto& ta : ammoList){
+            
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 5; ++column) {
+                ImGui::TableSetColumnIndex(column);
+
+                switch( column ){
+                    case 0:
+                        ImGui::Text("%s", ta->ammoType.cartridge.getName().c_str());
+                        break;
+                    case 1:
+                        ImGui::Text("%s", ta->ammoType.name.c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%s", ta->ammoType.manufacturer.getName().c_str());
+                        break;
+                    case 3:
+                        ImGui::Text("%d", ta->ammoType.grainWeight);
+                        break;
+                    case 4:
+                        ImGui::Text("%d", ta->amount);
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
+    }
+}
+
 // MARK: Add Gun
 GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes) {
     if(!ImGui::BeginChild("Add Gun")){
@@ -1178,12 +1257,11 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
 }
 
 // MARK: EVENTS UI
-void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChangesEvents, bool& unsavedChangesStockpile) {
+void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, GunTrackerPtr gunTracker, ShooterCentralWindow::UnsavedChanges& unsavedChanges) {
     
     static std::vector<EventPtr>    eventList       { };
     static EventTypeList            eventTypes      { };
     static LocationList             locations       { };
-    static ConstGunPtrList          guns            { };
     static ConstTrackedAmmoPtrList  ammo            { };
     static EventPtr                 selectedEvent   { nullptr }; 
 
@@ -1191,7 +1269,6 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
 
     eventTracker->getAllEventTypes  (eventTypes);
     eventTracker->getAllLocations   (locations);
-    gunTracker->getAllGuns          (guns);
     ammoTracker->getAllAmmo         (ammo);
     eventTracker->getAllEvents      (eventList);
 
@@ -1236,7 +1313,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
 
             // Reset unsaved changes flag
             if(!eventsNotSaved && !eventTypesNotSaved && !locationsNotSaved)
-                unsavedChangesEvents = false;
+                unsavedChanges.events = false;
         }
         
         if(eventsNotSaved || eventTypesNotSaved || locationsNotSaved)
@@ -1258,13 +1335,13 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
             
             if (UIHelper::centerButton("Close", ImVec2{120, 0})){
                 // Since error saving, set flag
-                unsavedChangesEvents = true;
+                unsavedChanges.events = true;
                 ImGui::CloseCurrentPopup();
             }
             ImGui::EndPopup();
         }
 
-        if(unsavedChangesEvents)
+        if(unsavedChanges.events)
             UIHelper::centerTextDisabled("(There are unsaved changes)");
     }
     ImGui::EndChild();
@@ -1285,8 +1362,8 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
         ImGui::TableHeadersRow();
 
         for(const auto& e : eventList){
-            const Event& event {*e};
-            bool isEventSelected { false };
+            const Event& event      { *e };
+            bool isEventSelected    { false };
 
             if(selectedEvent){
                 if(event == *selectedEvent)
@@ -1296,7 +1373,6 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
             ImGui::PushID(std::to_string(row).c_str()); // Needed to ensure no selectable collisions due to same ID
 
             ImGui::TableNextRow();
-
             for (int column{0}; column < 4; ++column){                   
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
@@ -1305,7 +1381,6 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
 
                         if(isEventSelected)
                             selectedEvent = e;
-
                         break;
                     case 1:
                         ImGui::Text("%s", event.getLocation().getName().c_str());
@@ -1314,7 +1389,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
                         ImGui::Text("%s", event.getEventType().getName().c_str());
                         break;
                     case 3:
-                        ImGui::Text("%d", int{event.getNumGunsUsed()});
+                        ImGui::Text("%d", event.getNumGunsUsed());
                         break;
                     default:
                         ImGui::Text("Broken table");
@@ -1322,7 +1397,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
                 }
             }
             ImGui::PopID();
-            ++row;        
+            ++row;
         }
         ImGui::EndTable();
     }
@@ -1340,29 +1415,40 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event")){
-            std::pair<bool, EventPtr> newEventBuf { addEvent(unsavedChangesEvents, eventTypes, locations, guns, ammo) };
+            auto newEventBuf { addEvent(gunTracker, eventTypes, locations, ammo, unsavedChanges.events) };
 
             // Check should make new event
-            if(newEventBuf.second && *newEventBuf.second != Event { }){
-                Event& event { *newEventBuf.second };
+            if(std::get<2>(newEventBuf) && *std::get<2>(newEventBuf) != Event { }){
+                Event& event { *std::get<2>(newEventBuf) };
                 eventTracker->addEvent(event);
 
-                // Check if supposed to apply subtraction of ammo
-                if(newEventBuf.first){
-                    std::vector<std::pair<Gun, TrackedAmmo>> gunsUsed { };
+                // Check if supposed to apply subtraction of ammo OR to guns
+                if(std::get<0>(newEventBuf) || std::get<1>(newEventBuf)){
+                    std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>> gunsUsed { };
                     event.getAllGunsUsed(gunsUsed);                         // Get all guns used
 
-                    for(const auto& [gun, ammo] : gunsUsed)
-                        ammoTracker->removeAmmoFromStockpile(ammo);         // Apply subtraction for each gun
+                    for(const auto& [gun, ammo] : gunsUsed){
 
-                    unsavedChangesStockpile = true;                         // Set flag for other section
+                        // Apply Stockpile changes
+                        if(std::get<0>(newEventBuf)){
+                            ammoTracker->removeAmmoFromStockpile(*ammo);
+                            unsavedChanges.stockpile = true; 
+                        }
+                        
+                        // Apply Gun history changes
+                        if(std::get<1>(newEventBuf)){
+                            GunPtr gunBuf { gunTracker->getGun(*gun) };
+                            gunBuf->addToRoundCount(*ammo);
+                            unsavedChanges.armory = true; 
+                        }
+                    } 
                 }
             }
 
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event Type")){
-            EventType newEventType { addEventType(unsavedChangesEvents) };
+            EventType newEventType { addEventType(unsavedChanges.events) };
 
             if(newEventType != EventType { })
                 eventTracker->addEventType(newEventType);
@@ -1370,7 +1456,7 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, st
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Location")){
-            Location newLocation { addLocation(unsavedChangesEvents) };
+            Location newLocation { addLocation(unsavedChanges.events) };
 
             if(newLocation != Location { })
                 eventTracker->addLocation(newLocation);
@@ -1388,7 +1474,7 @@ void EventsUI::viewEvent(std::shared_ptr<const Event> event){
     }
     static bool showAmmoUsed { false };
 
-    static std::vector<std::pair<Gun, TrackedAmmo>> eventGunsUsed;
+    static std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>> eventGunsUsed;
 
 
     if(!event){
@@ -1450,25 +1536,29 @@ void EventsUI::viewEvent(std::shared_ptr<const Event> event){
     ImGui::EndChild();
 }
 // MARK: Add Event
-std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const EventTypeList& eventTypes, 
-                                                const LocationList& locations,  const ConstGunPtrList& guns,    const ConstTrackedAmmoPtrList& ammoList
+std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,  const EventTypeList& eventTypes, 
+                                                const LocationList& locations,  const ConstTrackedAmmoPtrList& ammoList, bool& unsavedChanges
 ){
     if(!ImGui::BeginChild("Add Event")){
         ImGui::EndChild();
-        return std::pair(false, nullptr);
+        return std::tuple(false, false, nullptr);
     }
 
     static constexpr std::string_view checkboxText { "Subtract Ammo From Stockpile" };
 
-    static const Location   EMPTY_LOCATION { };
-    static const EventType  EMPTY_EVENTTYPE { };
+    static ConstGunPtrList guns { };
+
+    static const Location       EMPTY_LOCATION  { };
+    static const EventType      EMPTY_EVENTTYPE { };
+    static const Gun            EMPTY_GUN       { };
+    static const TrackedAmmo    EMPTY_AMMO      { };
 
     static char notesBuf [UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES];
     static int  numGuns { 1 };
 
-    static int              dayBuf          { 0 },  monthBuf        { 0 },  yearBuf         { 2024 };
-    static Gun              selectedGun1    {  },   selectedGun2    {  },   selectedGun3    {  };
-    static TrackedAmmo      selectedTA1     {  },   selectedTA2     {  },   selectedTA3     {  };
+    static int          dayBuf          { 0 },  monthBuf        { 0 }, yearBuf         { 2024 };
+    static Gun          selectedGun1    {  },   selectedGun2    {  },  selectedGun3    {  };
+    static TrackedAmmo  selectedTA1     {  },   selectedTA2     {  },  selectedTA3     {  };
 
     static Location     selectedLocation     {  };
     static EventType    selectedEventType    {  };
@@ -1477,11 +1567,14 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
     static bool invalidLocation         { false }, invalidEventType { false },  invalidDate         { false },   
                 incompatibleCartridge   { false }, invalidGunOrAmmo { false },  invalidAmmoAmount   { false };
 
-    static bool subtractRoundsUsedFromStockpile { false };  // Flag to apply ammo used to stockpile
+    static bool applyToStockpile { false }, applyToGuns { false };  // Flag to apply items to other parts of SC
 
     EventPtr    returnVal               { };
     std::string locationComboPreview    { };
     std::string eventTypeComboPreview   { };
+
+    gunTracker->getAllGuns (guns);
+
 
     // Apply proper text to prompt
     if(selectedLocation != EMPTY_LOCATION)
@@ -1536,7 +1629,7 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
             // Check cartridges of selected ammo and respective gun for valid input
             switch (numGuns){
                 case 3:
-                    if(selectedGun3 == Gun { } || selectedTA3.ammoType == AmmoType { })
+                    if(selectedGun3 == EMPTY_GUN|| selectedTA3 == EMPTY_AMMO)
                         invalidGunOrAmmo = true;
                     else{
                         if(selectedGun3.getCartridge() != selectedTA3.ammoType.cartridge)
@@ -1545,7 +1638,7 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
                             invalidAmmoAmount = true;
                     }
                 case 2:
-                    if(selectedGun2 == Gun { } || selectedTA2.ammoType == AmmoType { })
+                    if(selectedGun2 == EMPTY_GUN || selectedTA2 == EMPTY_AMMO)
                         invalidGunOrAmmo = true;
                     else{
                         if(selectedGun2.getCartridge() != selectedTA2.ammoType.cartridge)
@@ -1554,7 +1647,7 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
                             invalidAmmoAmount = true;
                     }
                 case 1:
-                    if(selectedGun1 == Gun { } || selectedTA1.ammoType == AmmoType { })
+                    if(selectedGun1 == EMPTY_GUN || selectedTA1== EMPTY_AMMO)
                         invalidGunOrAmmo = true;
                     else{
                         if(selectedGun1.getCartridge() != selectedTA1.ammoType.cartridge)
@@ -1581,6 +1674,8 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
                     default:
                         break;
                 }
+
+
                 
                 returnVal = std::make_shared<Event>(eventBuf);
                 unsavedChanges = true; // Set flag
@@ -1594,12 +1689,12 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
                 monthBuf            = 0;
                 yearBuf             = 2024;
 
-                selectedGun1 = Gun { };
-                selectedGun2 = Gun { };
-                selectedGun3 = Gun { };
-                selectedTA1 = TrackedAmmo { };
-                selectedTA2 = TrackedAmmo { };
-                selectedTA3 = TrackedAmmo { };
+                selectedGun1    = EMPTY_GUN;
+                selectedGun2    = EMPTY_GUN;
+                selectedGun3    = EMPTY_GUN;
+                selectedTA1     = EMPTY_AMMO;
+                selectedTA2     = EMPTY_AMMO;
+                selectedTA3     = EMPTY_AMMO;
             }
 
             // Make popup modal if there was an error
@@ -1634,11 +1729,16 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
         ImGui::Spacing();
         ImGui::Spacing();
 
-        // Checkbox to apply ammo amount used to stockpile
+        // Checkboxes for options
         ImGui::SetCursorPosX((ImGui::GetWindowSize().x - (ImGui::CalcTextSize(std::string{checkboxText}.c_str()).x + 20)) * 0.5f); // Add 10 for checkbox size. This centers the items
         ImGui::Text("%s", std::string{checkboxText}.c_str());
         ImGui::SameLine();
-        ImGui::Checkbox("##SubtractRoundsUsed", &subtractRoundsUsedFromStockpile);
+        ImGui::Checkbox("##Apply To Stockpile", &applyToStockpile);
+
+        ImGui::Text("Apply to guns");
+        ImGui::SameLine();
+        ImGui::Checkbox("##Apply To Guns", &applyToGuns);
+
         UIHelper::centerTextDisabled("(Applied regardless of the event being saved)");
     }
     ImGui::EndChild();
@@ -1747,27 +1847,54 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
 
         switch(numGuns){
             case 3:
-                if(selectedGun3 != Gun { }){
+                if(selectedGun3 != EMPTY_GUN){
                     ImGui::PushID("Select Ammo 3");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun3.getName() + "\"");
                     selectAmmoTable(ammoList, selectedTA3);
+
+                    // Select amount of ammo used
+                    ImGui::Text("Amount Used");
+                    ImGui::SameLine();
+                    ImGui::InputInt("##Amount of Ammo Used", &selectedTA3.amount);
+
+                    ImGui::Spacing();
+                    ImGui::Spacing();
+
                     ImGui::PopID();
                 }
             case 2:
-                if(selectedGun2 != Gun { }){
+                if(selectedGun2 != EMPTY_GUN){
                     ImGui::PushID("Select Ammo 2");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun2.getName() + "\"");
                     selectAmmoTable(ammoList, selectedTA2);
+
+                    // Select amount of ammo used
+                    ImGui::Text("Amount Used");
+                    ImGui::SameLine();
+                    ImGui::InputInt("##Amount of Ammo Used", &selectedTA2.amount);
+
+                    ImGui::Spacing();
+                    ImGui::Spacing();
+
                     ImGui::PopID();
                 }
             case 1:
-                if(selectedGun1 != Gun { }){
+                if(selectedGun1 != EMPTY_GUN){
                     ImGui::PushID("Select Ammo 1");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun1.getName() + "\"");
                     selectAmmoTable(ammoList, selectedTA1);
+
+                    // Select amount of ammo used
+                    ImGui::Text("Amount Used");
+                    ImGui::SameLine();
+                    ImGui::InputInt("##Amount of Ammo Used", &selectedTA1.amount);
+
+                    ImGui::Spacing();
+                    ImGui::Spacing();
+
                     ImGui::PopID();
                 }
                 else
@@ -1780,7 +1907,7 @@ std::pair<bool, EventPtr> EventsUI::addEvent(   bool& unsavedChanges,  const Eve
 
     ImGui::EndChild();
 
-    return std::pair(subtractRoundsUsedFromStockpile, returnVal);
+    return std::tuple(applyToStockpile, applyToGuns, returnVal);
 }
 // MARK: ADD Event Type
 EventType EventsUI::addEventType (bool& unsavedChanges) {
@@ -1909,7 +2036,7 @@ Location EventsUI::addLocation (bool& unsavedChanges) {
     return returnVal;
 }
 // MARK: Event Gun Table
-void EventsUI::eventGunTable(const std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed) {
+void EventsUI::eventGunTable(const std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list, bool showAmmoUsed) {
     static const Gun emptyGun   { };
 
     static int      tableColumns    { 3 };
@@ -1942,31 +2069,31 @@ void EventsUI::eventGunTable(const std::vector<std::pair<Gun, TrackedAmmo>>& lis
         ImGui::TableHeadersRow();
 
         for(const auto& [gun, ammo] : list){
-            if(gun != emptyGun){
+            if(*gun != emptyGun){
                 ImGui::TableNextRow();
                 for (int column{0}; column < tableColumns; ++column){
                     ImGui::TableSetColumnIndex(column);
                     switch( column ){
                         case 0:
-                            ImGui::Text("%s", gun.getWeaponType().getName().c_str());
+                            ImGui::Text("%s", gun->getWeaponType().getName().c_str());
                             break;
                         case 1:
-                            ImGui::Text("%s", gun.getCartridge().getName().c_str());
+                            ImGui::Text("%s", gun->getCartridge().getName().c_str());
                             break;
                         case 2:
-                            ImGui::Text("%s", gun.getName().c_str());
+                            ImGui::Text("%s", gun->getName().c_str());
                             break;
                         case 3:
-                            ImGui::Text("%s", ammo.ammoType.name.c_str());
+                            ImGui::Text("%s", ammo->ammoType.name.c_str());
                             break;
                         case 4:
-                            ImGui::Text("%s", ammo.ammoType.manufacturer.getName().c_str());
+                            ImGui::Text("%s", ammo->ammoType.manufacturer.getName().c_str());
                             break;
                         case 5:
-                            ImGui::Text("%d", ammo.ammoType.grainWeight);
+                            ImGui::Text("%d", ammo->ammoType.grainWeight);
                             break;
                         case 6:
-                            ImGui::Text("%d", ammo.amount);
+                            ImGui::Text("%d", ammo->amount);
                             break;
                         default:
                             ImGui::Text("Broken table");
@@ -1980,7 +2107,7 @@ void EventsUI::eventGunTable(const std::vector<std::pair<Gun, TrackedAmmo>>& lis
 }
 
 // MARK: Select Gun Table
-void EventsUI::selectGunTable(const ConstGunPtrList& list, Gun& selectedGun){
+void EventsUI::selectGunTable (const ConstGunPtrList& list, Gun& selectedGun){
 
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
     if(tableSize.x < 400)
@@ -2002,9 +2129,9 @@ void EventsUI::selectGunTable(const ConstGunPtrList& list, Gun& selectedGun){
             const Gun& gun { *gunElement };
             bool isGunSelected { false };
             
-            if(gun == selectedGun)
+            if(*gunElement == selectedGun)
                 isGunSelected = true;
-
+            
             ImGui::PushID(std::to_string(row).c_str()); // Needed to ensure no name collisions for selectable
             
             ImGui::TableNextRow();
@@ -2039,7 +2166,7 @@ void EventsUI::selectGunTable(const ConstGunPtrList& list, Gun& selectedGun){
 }
 
 // MARK: Select Ammo Table
-void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& ammoList, TrackedAmmo& selectedAmmo){
+void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& list, TrackedAmmo& selectedAmmo){
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
     if(tableSize.x < 400)
         tableSize = ImVec2{400, 200};
@@ -2052,7 +2179,7 @@ void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& ammoList, TrackedA
         ImGui::TableSetupColumn("Grain Weight", 0);
         ImGui::TableHeadersRow();            
 
-            for(const auto& ammoElement : ammoList){
+            for(const auto& ammoElement : list){
             const AmmoType& ammoType {ammoElement->ammoType};           
             bool isAmmoSelected { false };
             
@@ -2070,7 +2197,7 @@ void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& ammoList, TrackedA
                         ImGui::Selectable(ammoType.cartridge.getName().c_str(), &isAmmoSelected, ImGuiSelectableFlags_SpanAllColumns);
 
                         if(isAmmoSelected)
-                            selectedAmmo.ammoType = ammoType;
+                            selectedAmmo.ammoType = ammoElement->ammoType;
 
                         break;
                     case 1:
@@ -2092,14 +2219,6 @@ void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& ammoList, TrackedA
         }
         ImGui::EndTable();
     }
-    ImGui::Spacing();
-
-    // Select amount of ammo used
-    ImGui::Text("Amount Used");
-    ImGui::SameLine();
-    ImGui::InputInt("##Amount of Ammo Used", &selectedAmmo.amount);
-
-    ImGui::Spacing();
     ImGui::Spacing();
 }
 
