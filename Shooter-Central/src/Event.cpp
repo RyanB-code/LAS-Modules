@@ -22,7 +22,7 @@ bool Location::operator==(const Location& other) const{
         return false;
 }
 
-std::ostream& operator<<(std::ostream& os, const Location& location){
+std::ostream& ShooterCentral::operator<<(std::ostream& os, const Location& location){
     os << location.getName();
     return os;
 }
@@ -47,7 +47,7 @@ bool EventType::operator==(const EventType& other) const{
         return false;
 }
 
-std::ostream& operator<<(std::ostream& os, const EventType& eventType){
+std::ostream& ShooterCentral::operator<<(std::ostream& os, const EventType& eventType){
     os << eventType.getName();
     return os;
 }
@@ -98,12 +98,15 @@ timepoint Event::getTimepoint()  const{
 
 
 bool Event::addGun(Gun gun, TrackedAmmo ammoUsed){
-    auto gunsInList { 0 };
+    
+    // Count guns in gunList to ensure a new gun can be added
+    int gunsInList { 0 };
     for(const auto& [gunElm, ammoElm] : gunsUsed){
-        if(gunElm.getName() != "N/A")
+        if(gunElm != Gun { })
             ++gunsInList;
     }
 
+    // Verify there is space
     if(size_t(gunsInList) >= gunsUsed.max_size())
         return false;
 
@@ -111,22 +114,24 @@ bool Event::addGun(Gun gun, TrackedAmmo ammoUsed){
     gunsUsed[gunsInList] = std::pair(gun, ammoUsed);    // Do not need to subtract one since list[i] is 1 greater than the count, which is what I want
     
     // Add to round counter for gun
-    if(!gun.addToRoundCount(ammoUsed.amount, ammoUsed.ammoType))
+    if(!gun.addToRoundCount(ammoUsed))
         return false;
     
     return true;
 }
-void Event::getAllGunsUsed(std::vector<std::pair<Gun, TrackedAmmo>>& list) const {
+void Event::getAllGunsUsed(std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list) const {
     if(!list.empty())
         list.erase(list.begin(), list.end());
 
-    for(const auto& [gun, ammo] : gunsUsed)
-        list.emplace_back(gun, ammo);
+    for(const auto& [gun, ammo] : gunsUsed){
+        if(gun != Gun { })
+            list.emplace_back(std::make_shared<const Gun>(gun), std::make_shared<const TrackedAmmo>(ammo));
+    }
 }
-uint8_t Event::getNumGunsUsed() const{
+int Event::getNumGunsUsed() const{
     uint8_t retVal { 0 };
     for (const auto& [gun, ammo] : gunsUsed){
-        if(gun.getName() != "N/A")
+        if(gun != Gun { })
             ++retVal;
     }
     return retVal;
@@ -143,13 +148,13 @@ void ShooterCentral::to_json(LAS::json& j, const Event& event){
     using LAS::json;
 
     // Write every ammo type used and amount
-    std::vector<std::pair<Gun, TrackedAmmo>> gunsUsed;
+    std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>> gunsUsed;
     event.getAllGunsUsed(gunsUsed);
     
 	nlohmann::json gunsArray = nlohmann::json::array();
 	for (const auto& [gun, ammo] : gunsUsed){
-        if(gun.getName() != "N/A"){
-            json gunsJson { gun, ammo }; 
+        if(*gun != Gun { }){
+            json gunsJson { *gun, *ammo }; 
             gunsArray.emplace_back(gunsJson);
         }
     }
@@ -183,13 +188,17 @@ void ShooterCentral::from_json(const LAS::json& j, Event& event){
 	
     // Add for each element
 	for (auto& gun : gunList.items()) {
-		nlohmann::json gunJson = gun.value();
-        eventBuf.addGun(Gun{ gunJson.at(0).template get<ShooterCentral::Gun>()}, gunJson.at(1).template get<ShooterCentral::TrackedAmmo>() );
+		nlohmann::json  gunJson = gun.value();
+
+        Gun         gunBuf  { gunJson.at(0).template get<ShooterCentral::Gun>() };
+        TrackedAmmo taBuf   { gunJson.at(1).template get<ShooterCentral::TrackedAmmo>() };
+
+        eventBuf.addGun(gunBuf, taBuf );
 	}
     event = eventBuf;
 }
 
-// MARK: Event Tracker
+// MARK: EVENT TRACKER
 EventTracker::EventTracker(LAS::Logging::LoggerPtr setLogger) : logger { setLogger }
 {
 
