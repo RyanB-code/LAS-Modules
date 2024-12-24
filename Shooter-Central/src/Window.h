@@ -6,6 +6,8 @@
 
 #include <LAS/Window.h>
 
+#include <iostream> // FOR TESTING ONLY
+
 namespace ShooterCentral{
     struct UISettings{
         const int MAX_LIST_NUM               { 10 };
@@ -26,18 +28,18 @@ namespace ShooterCentral{
         bool setGunTracker      (GunTrackerPtr setGunTracker);
         bool setEventTracker    (EventTrackerPtr setEventTracker);
 
+        struct UnsavedChanges{
+            bool armory     { false };
+            bool stockpile  { false };
+            bool events     { false };
+        };
+
     private:
         AmmoTrackerPtr  ammoTracker;
         GunTrackerPtr   gunTracker;
         EventTrackerPtr eventTracker;
 
         bool showArmory { true }, showStockpile { true }, showEvents{ true };
-
-        struct UnsavedChanges{
-            bool armory     { false };
-            bool stockpile  { false };
-            bool events     { false };
-        };
 
         UnsavedChanges unsavedChanges { };
     };
@@ -52,6 +54,7 @@ namespace ShooterCentral{
 
     namespace ArmoryUI{
         void        home            (GunTrackerPtr gunTracker, bool& unsavedChanges,  const CartridgeList& cartridgeNames);
+        void        viewGun         (std::shared_ptr<const Gun> gun);
         GunPtr      addGun          (bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes);
         WeaponType  addWeaponType   (bool& unsavedChanges);
     }
@@ -65,17 +68,20 @@ namespace ShooterCentral{
     }
 
     namespace EventsUI{
-        void    home                (EventTrackerPtr eventTracker,  AmmoTrackerPtr ammoTracker, std::shared_ptr<const GunTracker> gunTracker, bool& unsavedChangesEvents, bool& unsavedChangesStockpile);
+        void    home                (EventTrackerPtr eventTracker,  AmmoTrackerPtr ammoTracker, GunTrackerPtr gunTracker, ShooterCentralWindow::UnsavedChanges& unsavedChanges);
         void    viewEvent           (std::shared_ptr<const Event> event);
 
         EventType                   addEventType    (bool& unsavedChanges);
         Location                    addLocation     (bool& unsavedChanges);
-        std::pair<bool, EventPtr>   addEvent        (   bool& unsavedChanges,           const EventTypeList& eventTypes,    const LocationList& locations, 
-                                                        const ConstGunPtrList& guns,    const ConstTrackedAmmoPtrList& ammoList );
+
+        // Apply to stockpile, apply to guns. event
+        std::tuple<bool, bool, EventPtr>   addEvent        (GunTrackerPtr gunTracker,                  const EventTypeList& eventTypes,    const LocationList& locations, 
+                                                            const ConstTrackedAmmoPtrList& ammoList,    bool& unsavedChanges);
+            
         
-        void    eventGunTable       (const std::vector<std::pair<Gun, TrackedAmmo>>& list, bool showAmmoUsed);
-        void    selectGunTable      (const ConstGunPtrList&         gunList,    Gun& selectedGun);
-        void    selectAmmoTable     (const ConstTrackedAmmoPtrList& ammoList,   TrackedAmmo& selectedAmmo);
+        void    eventGunTable       (const std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list, bool showAmmoUsed);
+        void    selectGunTable      (const ConstGunPtrList&         list,   Gun&         selectedGun);
+        void    selectAmmoTable     (const ConstTrackedAmmoPtrList& list,   TrackedAmmo& selectedAmmo);
     }
 }
 
