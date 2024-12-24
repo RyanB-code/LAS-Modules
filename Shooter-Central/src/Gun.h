@@ -34,13 +34,13 @@ namespace ShooterCentral{
         ~Gun();
 
         std::string getName         () const;
-        uint64_t    getRoundCount   () const;
+        int         getRoundCount   () const;
         WeaponType  getWeaponType   () const;
         Cartridge   getCartridge    () const;
 
-        bool addToRoundCount (int amount, const AmmoType& ammoType);
+        bool addToRoundCount (TrackedAmmo trackedAmmo);
 
-        void getAllAmmoUsed (std::vector<TrackedAmmo>& ammoUsed) const; // Clears vector before adding elements
+        void getAllAmmoUsed (ConstTrackedAmmoPtrList& ammoUsed) const; // Clears vector before adding elements
 
         bool operator==(const Gun& other) const;
 
@@ -49,7 +49,7 @@ namespace ShooterCentral{
         WeaponType  weaponType;
         Cartridge   cartridge;
 
-        std::unordered_map<AmmoType, TrackedAmmoPtr> ammoTracker;
+        std::unordered_map<AmmoType, TrackedAmmo> ammoTracker;
     };
 
     void to_json    (LAS::json& j, const Gun& gun);
@@ -90,11 +90,14 @@ namespace ShooterCentral{
         std::string getDirectory    () const;
 
         GunPtr  createGun       (const std::string& name, const WeaponType& weaponType, const Cartridge& cartridge);
-        bool    addGun          (Gun& gun);
-        bool    addGun          (GunPtr gun);
         bool    addWeaponType   (const WeaponType& type);
 
+        std::pair<GunPtr, bool>    addGun (Gun& gun);       // Return a pair, first is ptr to possibly inserted item, second is whether the item was inserted
+        std::pair<GunPtr, bool>    addGun (GunPtr gun);     // Return a pair, first is ptr to possibly inserted item, second is whether the item was inserted
+
         bool    removeGun       (const Gun& gun);
+
+        GunPtr  getGun (const Gun& gun);
 
         void    getRoundsShotPerCartridge   (std::unordered_map<std::string, uint64_t>& list)   const;  // Clears vector before adding elements
         void    getAllWeaponTypeNames       (WeaponTypeList& names)                             const;  // Clears vector before adding elements

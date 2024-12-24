@@ -22,7 +22,7 @@ bool WeaponType::operator==(const WeaponType& other) const{
         return false;
 }
 
-std::ostream& operator<<(std::ostream& os, const WeaponType& weaponType){
+std::ostream& ShooterCentral::operator<<(std::ostream& os, const WeaponType& weaponType){
     os << weaponType.getName();
     return os;
 }
@@ -45,11 +45,11 @@ Gun::~Gun(){
 std::string Gun::getName() const{
     return name;
 }
-uint64_t Gun::getRoundCount() const{
+int Gun::getRoundCount() const{
     uint64_t rounds { 0 };
-    for(const auto& pair : ammoTracker){
-        rounds += pair.second->amount;
-    }
+
+    for(const auto& [key, ta] : ammoTracker)
+        rounds += ta.amount;
 
     return rounds;
 }
@@ -59,19 +59,18 @@ WeaponType Gun::getWeaponType() const{
 Cartridge Gun::getCartridge () const{
     return cartridge;
 }
-bool Gun::addToRoundCount(int amount, const AmmoType& ammoType){
-    if(!ammoTracker.contains(ammoType))
-        return ammoTracker.try_emplace(ammoType, std::make_shared<TrackedAmmo>(TrackedAmmo{ammoType, amount})).second;
+bool Gun::addToRoundCount(TrackedAmmo trackedAmmo){
+    if(!ammoTracker.contains(trackedAmmo.ammoType))
+        return ammoTracker.try_emplace(trackedAmmo.ammoType, trackedAmmo).second;
     
-    ammoTracker.at(ammoType)->amount += amount;
     return true;
 }
-void Gun::getAllAmmoUsed(std::vector<TrackedAmmo>& ammoUsed) const{
+void Gun::getAllAmmoUsed(ConstTrackedAmmoPtrList& ammoUsed) const{
     if(!ammoUsed.empty())
         ammoUsed.erase(ammoUsed.begin(), ammoUsed.end());
 
-    for(const auto& [ammoType, trackedAmmoPtr] : ammoTracker){
-        ammoUsed.push_back(*trackedAmmoPtr);
+    for(const auto& [ammoType, trackedAmmo] : ammoTracker){
+        ammoUsed.emplace_back(std::make_shared<const TrackedAmmo>(trackedAmmo));
     }
 }
 bool Gun::operator==(const Gun& other) const{
@@ -85,12 +84,12 @@ void ShooterCentral::to_json(LAS::json& j, const Gun& gun){
     using LAS::json;
 
     // Write every ammo type used and amount
-    std::vector<TrackedAmmo> ammoUsed;
+    ConstTrackedAmmoPtrList ammoUsed;
     gun.getAllAmmoUsed(ammoUsed);
     
 	nlohmann::json trackedAmmoArray = nlohmann::json::array();
-	for (const auto& pair : ammoUsed){
-        json trackedAmmoJson { pair.ammoType, pair.amount };       
+	for (const auto& ta : ammoUsed){
+        json trackedAmmoJson { *ta };       
         trackedAmmoArray.emplace_back(trackedAmmoJson);
     }
     
@@ -117,12 +116,11 @@ void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
     // Add for each element
 	for (auto& trackedAmmoListElement : trackedAmmoList.items()) {
 		nlohmann::json pair = trackedAmmoListElement.value();
-
-        uint64_t amountBuf { 0 };
-		AmmoType ammoTypeBuf {pair.at(0).template get<ShooterCentral::AmmoType>()};
-		pair.at(1).get_to(amountBuf);
+        int amountBuf { 0 };
         
-        gunBuf.addToRoundCount(amountBuf, ammoTypeBuf);
+        TrackedAmmo taBuf {pair.at(0).template get<ShooterCentral::AmmoType>(), pair.at(1).get_to(amountBuf)};
+        
+        gunBuf.addToRoundCount(taBuf);
 	}
 
     gun = gunBuf;
@@ -153,12 +151,58 @@ std::string GunTracker::getDirectory() const{
 GunPtr  GunTracker::createGun(const std::string& name, const WeaponType& weaponType, const Cartridge& cartridge){
     Gun gunBuf { name, weaponType, cartridge};
 
-    if(addGun(gunBuf))
+    if(addGun(gunBuf).second)
         return guns.at(gunBuf);
     else
         return nullptr;
 }
 
+// MARK: Add Items
+bool GunTracker::addWeaponType (const WeaponType& type){
+    if(weaponTypes.contains(type))
+        return false;
+
+    weaponTypes.try_emplace(type, type);
+    return weaponTypes.contains(type);
+}
+std::pair<GunPtr, bool> GunTracker::addGun(Gun& gun){
+    if(guns.contains(gun))
+        return std::pair(guns.at(gun), false);  // Return shared ptr to gun if it already exists, but false since item wasnt inserted
+
+    // Add to known weapon types
+    addWeaponType(gun.getWeaponType());
+
+    // Retrieve shared ptr to gun to return if successfully instered
+    GunPtr returnBuffer { nullptr };
+    if(guns.try_emplace(gun, std::make_shared<Gun>(gun)).second) {
+        returnBuffer = guns.at(gun);
+        return std::pair(returnBuffer, true);
+    }
+    else
+         return std::pair(nullptr, false);
+}
+std::pair<GunPtr, bool> GunTracker::addGun(GunPtr gun){
+    if(!gun)
+        return std::pair(nullptr, false);
+
+    if(guns.contains(*gun))
+        return std::pair(guns.at(*gun), false);
+
+    // Add to known weapon types
+    addWeaponType(gun->getWeaponType());
+
+    // Retrieve shared ptr to gun to return if successfully inserted
+    GunPtr returnBuffer { nullptr };
+
+    if(guns.try_emplace(*gun, gun).second) {
+        returnBuffer = guns.at(*gun);
+        return std::pair(returnBuffer, true);
+    }
+    else
+         return std::pair(nullptr, false);
+}
+
+// MARK: Remove Items
 bool GunTracker::removeGun(const Gun& gun){
     if(!guns.contains(gun))
         return true;
@@ -166,6 +210,16 @@ bool GunTracker::removeGun(const Gun& gun){
     guns.erase(gun);
     return !guns.contains(gun); // Return the inverse of contain()
 }
+
+// MARK: Get Gun
+GunPtr  GunTracker::getGun (const Gun& gun){
+    if(!guns.contains(gun))
+        return nullptr;
+
+    return guns.at(gun);
+}
+
+
 // MARK: Get Info
 void    GunTracker::getRoundsShotPerCartridge(std::unordered_map<std::string, uint64_t>& list) const{
     if(!list.empty())
@@ -193,14 +247,8 @@ void GunTracker::getAllWeaponTypeNames   (WeaponTypeList& names) const{
         names.emplace_back(wt);
     }
 }
-bool GunTracker::addWeaponType           (const WeaponType& type){
-    if(weaponTypes.contains(type))
-        return false;
 
-    weaponTypes.try_emplace(type, type);
-    return weaponTypes.contains(type);
-}
-// MARK: Write/Read
+// MARK: Write
 bool GunTracker::writeAllGuns() const{
     if(guns.empty()){
         logger->log("Saved all Guns", LAS::Logging::Tags{"ROUTINE", "SC"});
@@ -248,6 +296,7 @@ bool GunTracker::writeAllWeaponTypes () const {
         return false;
     }
 }
+// MARK: Read
 bool GunTracker::readGuns(){
     if(!std::filesystem::exists(saveDirectory))
         return false;
@@ -257,8 +306,8 @@ bool GunTracker::readGuns(){
 		try{
 			Gun gunBuf {GunHelper::readGun(dirEntry.path().string())};
 
-            if(!addGun(gunBuf))
-                logger->log("Gun object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
+            if(!addGun(gunBuf).first)
+                logger->log("Could not insert Gun from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
 		}
 		catch(std::exception& e){
             if(dirEntry.path().filename().string() != WEAPON_TYPES_FILENAME){  // Ignore the weaponTypes file
@@ -292,24 +341,6 @@ bool GunTracker::readWeaponTypes  () {
     }
 
     return true;
-}
-bool GunTracker::addGun(Gun& gun){
-    if(guns.contains(gun))
-        return false;
-
-    // Add to known weapon types
-    addWeaponType(gun.getWeaponType());
-
-    return guns.try_emplace(gun, std::make_shared<Gun>(gun)).second;
-}
-bool GunTracker::addGun(GunPtr gun){
-    if(guns.contains(*gun))
-        return false;
-
-    // Add to known weapon types
-    addWeaponType(gun->getWeaponType());
-
-    return guns.try_emplace(*gun, gun).second;
 }
 
 
