@@ -68,8 +68,8 @@ namespace ShooterCentral{
         std::string printDate()     const;
 
         bool    addGun          (Gun gun, TrackedAmmo ammoUsed);
-        void    getAllGunsUsed  (std::vector<std::pair<Gun, TrackedAmmo>>& list) const;
-        uint8_t getNumGunsUsed  () const;
+        void    getAllGunsUsed  (std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list) const; // Clears vector before adding elements 
+        int     getNumGunsUsed  () const;
 
         bool operator==(const Event& other) const;
 
