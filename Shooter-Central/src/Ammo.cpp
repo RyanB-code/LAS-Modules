@@ -104,7 +104,7 @@ void ShooterCentral::to_json (LAS::json& j, const TrackedAmmo& ammo){
         { "manufacturer",   ammo.ammoType.manufacturer },
         { "cartridge",      ammo.ammoType.cartridge },
         { "grain",          int{ammo.ammoType.grainWeight}},
-        { "amountOnHand",   ammo.amount }
+        { "amount",   ammo.amount }
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
@@ -114,7 +114,7 @@ void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
     j.at("manufacturer").get_to(manufacturerBuf);
     j.at("cartridge").get_to(cartridgeBuf);
     j.at("grain").get_to(ammo.ammoType.grainWeight);
-    j.at("amountOnHand").get_to(ammo.amount);
+    j.at("amount").get_to(ammo.amount);
 
     ammo.ammoType.manufacturer   = Manufacturer{manufacturerBuf};
     ammo.ammoType.cartridge      = Cartridge{cartridgeBuf};
