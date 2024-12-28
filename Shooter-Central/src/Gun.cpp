@@ -79,7 +79,7 @@ bool Gun::operator==(const Gun& other) const{
     else
         return false;
 }
-
+// MARK: To/From JSON
 void ShooterCentral::to_json(LAS::json& j, const Gun& gun){
     using LAS::json;
 
@@ -115,10 +115,8 @@ void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
 	
     // Add for each element
 	for (auto& trackedAmmoListElement : trackedAmmoList.items()) {
-		nlohmann::json pair = trackedAmmoListElement.value();
-        int amountBuf { 0 };
-        
-        TrackedAmmo taBuf {pair.at(0).template get<ShooterCentral::AmmoType>(), pair.at(1).get_to(amountBuf)};
+		nlohmann::json pair = trackedAmmoListElement.value();        
+        TrackedAmmo taBuf {pair.at(0).template get<ShooterCentral::TrackedAmmo>()};
         
         gunBuf.addToRoundCount(taBuf);
 	}
