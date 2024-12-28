@@ -266,7 +266,7 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
                         ImGui::Text("%s", gun.getName().c_str());
                         break;
                     case 3:
-                        ImGui::Text("%lu", gun.getRoundCount());
+                        ImGui::Text("%d", gun.getRoundCount());
                         break;
                     default:
                         ImGui::TextDisabled("Broken table");
@@ -634,6 +634,27 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         ImGui::Indent(20);
         ImGui::Checkbox("Show only a single cartridge", &detailedView);
         ImGui::Unindent(20);
+
+        if(detailedView){
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::Text("Cartridge Shown");
+            ImGui::SameLine (150);
+            if (ImGui::BeginCombo("##Cartridge Shown Combo", cartridgeComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
+                for (const auto& cart : cartridges) {
+                    const bool isSelected = (selectedCartridge == cart);
+
+                    if (ImGui::Selectable(cart.getName().c_str(), isSelected))
+                        selectedCartridge = cart;
+
+                    if (isSelected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+            ammoTracker->getAllAmmoByCartridge(selectedCatridgeAmmoList, selectedCartridge);  // Populates list of ammo with selected cartridge for use in combo dropdown
+        }
     }
     ImGui::EndChild();
 
@@ -689,24 +710,6 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
             UIHelper::centerTextDisabled("(There are unsaved changes)");
     }
     ImGui::EndChild();
-
-    if(detailedView){
-        ImGui::Text("Cartridge Shown");
-        ImGui::SameLine (150);
-        if (ImGui::BeginCombo("##Cartridge Shown Combo", cartridgeComboPreview.c_str(), ImGuiComboFlags_HeightSmall)) {
-            for (const auto& cart : cartridges) {
-                const bool isSelected = (selectedCartridge == cart);
-
-                if (ImGui::Selectable(cart.getName().c_str(), isSelected))
-                    selectedCartridge = cart;
-
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-        ammoTracker->getAllAmmoByCartridge(selectedCatridgeAmmoList, selectedCartridge);  // Populates list of ammo with selected cartridge for use in combo dropdown
-    }
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -808,7 +811,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
     if(ImGui::BeginTabBar("Stockpile Tabs",     ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton |
                                                 ImGuiTabBarFlags_DrawSelectedOverline | ImGuiTabBarFlags_FittingPolicyResizeDown
     )){
-        if(ImGui::BeginTabItem("Add to Existing Ammo")){
+        if(ImGui::BeginTabItem("Add to Existing Ammo")){        
             TrackedAmmo ammoToAddTo {addToExistingAmmoType(unsavedChanges, ammoList)};
 
             if(ammoToAddTo != TrackedAmmo { })
@@ -1601,107 +1604,124 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
     ImGui::SameLine();
 
     if(ImGui::BeginChild("Add Event Options", ImVec2{ImGui::GetContentRegionAvail().x, 120})){
+
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if(UIHelper::centerButton("Add Event", ImVec2{200,50})){
-            // Reset flags 
-            invalidLocation         = false;
-            invalidEventType        = false;
-            invalidDate             = false;
-            incompatibleCartridge   = false;
-            invalidGunOrAmmo        = false;
-            invalidAmmoAmount       = false;
+        if(ImGui::BeginChild("Apply Amounts", ImVec2{ImGui::GetContentRegionAvail().x/2, 110})) {
+            ImGui::Text("Apply to Stockpile");
+            ImGui::SameLine(135);
+            ImGui::Checkbox("##Apply To Stockpile", &applyToStockpile);
 
-            // Verify buffers
-            using namespace std::chrono;
-            std::string     notesStr    { notesBuf };
-            year_month_day  dateBuf     { year{yearBuf}, month{monthBuf}, day{dayBuf}};
+            ImGui::Text("Apply to Armory");
+            ImGui::SameLine(135);
+            ImGui::Checkbox("##Apply To Guns", &applyToGuns);
+        }
+        ImGui::EndChild();
 
-            if(selectedLocation == EMPTY_LOCATION) 
-                invalidLocation = true;
-            if(selectedEventType == EMPTY_EVENTTYPE) 
-                invalidEventType = true;
-            if(!dateBuf.ok())
-                invalidDate = true;
+        ImGui::SameLine();
 
-            
-            // Check cartridges of selected ammo and respective gun for valid input
-            switch (numGuns){
-                case 3:
-                    if(selectedGun3 == EMPTY_GUN|| selectedTA3 == EMPTY_AMMO)
-                        invalidGunOrAmmo = true;
-                    else{
-                        if(selectedGun3.getCartridge() != selectedTA3.ammoType.cartridge)
-                            incompatibleCartridge = true;
-                        if(selectedTA3.amount == 0)
-                            invalidAmmoAmount = true;
-                    }
-                case 2:
-                    if(selectedGun2 == EMPTY_GUN || selectedTA2 == EMPTY_AMMO)
-                        invalidGunOrAmmo = true;
-                    else{
-                        if(selectedGun2.getCartridge() != selectedTA2.ammoType.cartridge)
-                            incompatibleCartridge = true;
-                        if(selectedTA2.amount == 0)
-                            invalidAmmoAmount = true;
-                    }
-                case 1:
-                    if(selectedGun1 == EMPTY_GUN || selectedTA1== EMPTY_AMMO)
-                        invalidGunOrAmmo = true;
-                    else{
-                        if(selectedGun1.getCartridge() != selectedTA1.ammoType.cartridge)
-                            incompatibleCartridge = true;
-                        if(selectedTA1.amount == 0)
-                            invalidAmmoAmount = true;
-                    }
-                    break;
-                default:
-                    break;
-            }
+        if(ImGui::BeginChild("Add Event Button", ImVec2{ImGui::GetContentRegionAvail().x, 110})) {
+            if(UIHelper::centerButton("Add Event", ImVec2{200,50})){
+                // Reset flags 
+                invalidLocation         = false;
+                invalidEventType        = false;
+                invalidDate             = false;
+                incompatibleCartridge   = false;
+                invalidGunOrAmmo        = false;
+                invalidAmmoAmount       = false;
 
-            // If all information is good, create event
-            if(!invalidLocation && !invalidEventType && !invalidDate && !incompatibleCartridge && !invalidGunOrAmmo && !invalidAmmoAmount){
-                Event eventBuf { selectedLocation, selectedEventType, notesStr, dateBuf};
+                // Verify buffers
+                using namespace std::chrono;
+                std::string     notesStr    { notesBuf };
+                year_month_day  dateBuf     { year{yearBuf}, month{monthBuf}, day{dayBuf}};
+
+                if(selectedLocation == EMPTY_LOCATION) 
+                    invalidLocation = true;
+                if(selectedEventType == EMPTY_EVENTTYPE) 
+                    invalidEventType = true;
+                if(!dateBuf.ok())
+                    invalidDate = true;
+
+                
+                // Check cartridges of selected ammo and respective gun for valid input
                 switch (numGuns){
                     case 3:
-                        eventBuf.addGun(selectedGun3, selectedTA3);
+                        if(selectedGun3 == EMPTY_GUN|| selectedTA3 == EMPTY_AMMO)
+                            invalidGunOrAmmo = true;
+                        else{
+                            if(selectedGun3.getCartridge() != selectedTA3.ammoType.cartridge)
+                                incompatibleCartridge = true;
+                            if(selectedTA3.amount == 0)
+                                invalidAmmoAmount = true;
+                        }
                     case 2:
-                        eventBuf.addGun(selectedGun2, selectedTA2);
+                        if(selectedGun2 == EMPTY_GUN || selectedTA2 == EMPTY_AMMO)
+                            invalidGunOrAmmo = true;
+                        else{
+                            if(selectedGun2.getCartridge() != selectedTA2.ammoType.cartridge)
+                                incompatibleCartridge = true;
+                            if(selectedTA2.amount == 0)
+                                invalidAmmoAmount = true;
+                        }
                     case 1:
-                        eventBuf.addGun(selectedGun1, selectedTA1);
+                        if(selectedGun1 == EMPTY_GUN || selectedTA1== EMPTY_AMMO)
+                            invalidGunOrAmmo = true;
+                        else{
+                            if(selectedGun1.getCartridge() != selectedTA1.ammoType.cartridge)
+                                incompatibleCartridge = true;
+                            if(selectedTA1.amount == 0)
+                                invalidAmmoAmount = true;
+                        }
                         break;
                     default:
                         break;
                 }
 
+                // If all information is good, create event
+                if(!invalidLocation && !invalidEventType && !invalidDate && !incompatibleCartridge && !invalidGunOrAmmo && !invalidAmmoAmount){
+                    Event eventBuf { selectedLocation, selectedEventType, notesStr, dateBuf};
+                    switch (numGuns){
+                        case 3:
+                            eventBuf.addGun(selectedGun3, selectedTA3);
+                        case 2:
+                            eventBuf.addGun(selectedGun2, selectedTA2);
+                        case 1:
+                            eventBuf.addGun(selectedGun1, selectedTA1);
+                            break;
+                        default:
+                            break;
+                    }
 
-                
-                returnVal = std::make_shared<Event>(eventBuf);
-                unsavedChanges = true; // Set flag
 
-                // Reset buffers
-                strcpy(notesBuf,    "");
+                    
+                    returnVal = std::make_shared<Event>(eventBuf);
+                    unsavedChanges = true; // Set flag
 
-                selectedLocation    = EMPTY_LOCATION;
-                selectedEventType   = EMPTY_EVENTTYPE;
-                dayBuf              = 0;
-                monthBuf            = 0;
-                yearBuf             = 2024;
+                    // Reset buffers
+                    strcpy(notesBuf,    "");
 
-                selectedGun1    = EMPTY_GUN;
-                selectedGun2    = EMPTY_GUN;
-                selectedGun3    = EMPTY_GUN;
-                selectedTA1     = EMPTY_AMMO;
-                selectedTA2     = EMPTY_AMMO;
-                selectedTA3     = EMPTY_AMMO;
+                    selectedLocation    = EMPTY_LOCATION;
+                    selectedEventType   = EMPTY_EVENTTYPE;
+                    dayBuf              = 0;
+                    monthBuf            = 0;
+                    yearBuf             = 2024;
+
+                    selectedGun1    = EMPTY_GUN;
+                    selectedGun2    = EMPTY_GUN;
+                    selectedGun3    = EMPTY_GUN;
+                    selectedTA1     = EMPTY_AMMO;
+                    selectedTA2     = EMPTY_AMMO;
+                    selectedTA3     = EMPTY_AMMO;
+                }
+
+                // Make popup modal if there was an error
+                if(invalidLocation || invalidEventType || invalidDate || incompatibleCartridge || invalidAmmoAmount || invalidGunOrAmmo)
+                    ImGui::OpenPopup("Event Not Created");
             }
-
-            // Make popup modal if there was an error
-            if(invalidLocation || invalidEventType || invalidDate || incompatibleCartridge || invalidAmmoAmount || invalidGunOrAmmo)
-                ImGui::OpenPopup("Event Not Created");
+            // End Add Event Button
         }
-        // End Add Event Button
+        ImGui::EndChild();
 
         if(ImGui::BeginPopupModal("Event Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
             UIHelper::centerText("This Event could not be created.");
@@ -1728,18 +1748,6 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
         }
         ImGui::Spacing();
         ImGui::Spacing();
-
-        // Checkboxes for options
-        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - (ImGui::CalcTextSize(std::string{checkboxText}.c_str()).x + 20)) * 0.5f); // Add 10 for checkbox size. This centers the items
-        ImGui::Text("%s", std::string{checkboxText}.c_str());
-        ImGui::SameLine();
-        ImGui::Checkbox("##Apply To Stockpile", &applyToStockpile);
-
-        ImGui::Text("Apply to guns");
-        ImGui::SameLine();
-        ImGui::Checkbox("##Apply To Guns", &applyToGuns);
-
-        UIHelper::centerTextDisabled("(Applied regardless of the event being saved)");
     }
     ImGui::EndChild();
 
