@@ -29,8 +29,7 @@ namespace ShooterCentral{
 
     class Gun final {
     public:
-        Gun();
-        Gun(std::string setName, WeaponType setWeaponType, Cartridge setCartridge);
+        Gun(std::string setName="N/A", WeaponType setWeaponType=WeaponType{ }, Cartridge setCartridge=Cartridge{ });
         ~Gun();
 
         std::string getName         () const;
