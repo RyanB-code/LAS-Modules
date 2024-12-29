@@ -52,9 +52,7 @@ void ShooterCentralWindow::draw() {
 
     if(ImGui::BeginChild("Armory Quick View", childWindowSizes, ImGuiChildFlags_Border) && showArmory){
         static CartridgeList cartridges;
-
         ammoTracker->getAllCartridges(cartridges);
-
         ArmoryUI::home(gunTracker, unsavedChanges.armory, cartridges);
     }
     ImGui::EndChild();
@@ -128,9 +126,6 @@ bool UIHelper::centerButton(std::string text, ImVec2 buttonSize){
 
 // MARK: ARMORY UI
 void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const CartridgeList& cartridges){
-
-    static const Gun EMPTY_GUN { };
-
     static WeaponTypeList                               wpnTypes;
     static std::vector<ConstGunPtr>                     gunList;
     static std::unordered_map<std::string, uint64_t>    roundsPerCartridge;
@@ -226,8 +221,7 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
     }
     ImGui::EndChild();
 
-    // Display guns tracked
-
+    // Armory table
     ImGui::SeparatorText( "Guns" );
     ImGui::Spacing();
     int row { 0 };
@@ -379,27 +373,24 @@ GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, c
         return nullptr;
     }
 
-    static const Cartridge  EMPTY_CARTRIDGE { };
-    static const WeaponType EMPTY_WT        { };
+    static Cartridge    selectedCartridge   { };
+    static WeaponType   selectedWT          { };
+    static int          verifyGunReturn     { -1 };
 
-    static Cartridge   selectedCartridge    { };
-    static WeaponType  selectedWT           { };
 
     static char nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
-
-    static bool invalidName { false }, invalidWeaponType { false }, invalidCartridge { false }; // Flags to let user know bad options when saving
 
     GunPtr      returnVal           { nullptr };
     std::string cartComboPreview    { };
     std::string wtComboPreview      { };
 
     // Apply correct text to display in combo boxes
-    if(selectedCartridge != EMPTY_CARTRIDGE)
+    if(selectedCartridge != EMPTY_OBJECTS.CARTRIDGE)
         cartComboPreview = selectedCartridge.getName().c_str();
     else
         cartComboPreview = "CHOOSE CARTRIDGE";
     
-    if(selectedWT != EMPTY_WT)
+    if(selectedWT != EMPTY_OBJECTS.WEAPON_TYPE)
         wtComboPreview = selectedWT.getName().c_str();
     else
         wtComboPreview = "CHOOSE WEAPON TYPE";
@@ -455,46 +446,64 @@ GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, c
     ImGui::Spacing();
 
 
+    // Attempt to make new Gun
     if(UIHelper::centerButton("Add New Gun", ImVec2{200,50})){
-        // Reset flags
-        invalidName         = false;
-        invalidWeaponType   = false;
-        invalidCartridge    = false;
-
-        // Verify input buffers
         std::string name { nameBuf };
-        if(selectedWT == EMPTY_WT)
-            invalidWeaponType = true;
-        if(selectedCartridge == EMPTY_CARTRIDGE)
-            invalidCartridge = true;
-        if(name == "Enter Name")
-            invalidName = true;
 
-        // All checks passed, create new Gun
-        if(!invalidName && !invalidWeaponType &&! invalidWeaponType){
-
+        verifyGunReturn = verifyGun(name, selectedWT, selectedCartridge);
+      
+        // Check return value
+        if(verifyGunReturn == 0){
             returnVal = std::make_shared<Gun>(name, selectedWT, selectedCartridge);
             unsavedChanges = true;
 
             // Reset buffers
             strcpy(nameBuf, "Enter Name");
-            selectedWT = EMPTY_WT;
-            selectedCartridge = EMPTY_CARTRIDGE;
+            selectedWT = EMPTY_OBJECTS.WEAPON_TYPE;
+            selectedCartridge = EMPTY_OBJECTS.CARTRIDGE;
+            verifyGunReturn = -1;
         }
         else
             ImGui::OpenPopup("Gun Not Created");
     }
 
+    
     // Display error popup
     if(ImGui::BeginPopupModal("Gun Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
         UIHelper::centerText("This gun could not be created.");
 
-        if(invalidName)
-            ImGui::BulletText("Invalid name");
-        if(invalidWeaponType)
-            ImGui::BulletText("Invalid weapon type");
-        if(invalidCartridge)
-            ImGui::BulletText("Invalid cartridge");
+        // Display proper message using chmod like handling
+        switch(verifyGunReturn){
+            case 1:
+                ImGui::BulletText("Invalid cartridge");
+                break;
+            case 2:
+                ImGui::BulletText("Invalid weapon type");
+                break;
+            case 3:
+                ImGui::BulletText("Invalid cartridge");
+                ImGui::BulletText("Invalid weapon type");
+                break;
+            case 4:
+                ImGui::BulletText("Invalid name");
+                break;
+            case 5:
+                ImGui::BulletText("Invalid name");
+                ImGui::BulletText("Invalid cartridge");
+                break;
+            case 6:
+                ImGui::BulletText("Invalid name");
+                ImGui::BulletText("Invalid weapon type");
+                break;
+            case 7:
+                ImGui::BulletText("Invalid name");
+                ImGui::BulletText("Invalid weapon type");
+                ImGui::BulletText("Invalid cartridge");
+                break;
+            default:
+                UIHelper::centerTextDisabled("INVALID RETURN");
+                break;
+        }
 
         ImGui::Spacing();
         ImGui::Spacing();
@@ -508,6 +517,7 @@ GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, c
 
     return returnVal;
 }
+
 // MARK: Add Wpn Type
 WeaponType ArmoryUI::addWeaponType(bool& unsavedChanges) {
     WeaponType returnVal { };
@@ -534,20 +544,15 @@ WeaponType ArmoryUI::addWeaponType(bool& unsavedChanges) {
     ImGui::Spacing();
 
     if(UIHelper::centerButton("Add New Weapon Type", ImVec2{200,50})){
-        bool nameRejected { false };
-        std::string wt { wtBuf };
+        std::string wtName { wtBuf };
 
-        // Verify no invalid characters & make upper case
-        for(auto& c : wt){
-            if(!isalnum(c) && c != ' '){
-                nameRejected = true;
-                break;
-            }
+        // Make upper case
+        for(auto& c : wtName)
             c = toupper(c);
-        }
 
-        if(wt != "New Weapon Type" && !nameRejected){
-            returnVal = WeaponType{wt};         // Set return buffer
+        // Compared to uppercase since already toupper() the string
+        if(wtName != "NEW WEAPON TYPE" && verifyWeaponTypeName(wtName)){      
+            returnVal = WeaponType{wtName};     // Set return buffer
             strcpy(wtBuf, "New Weapon Type");   // Reset input buffers
             unsavedChanges = true;              // Set flag
         }
@@ -571,12 +576,42 @@ WeaponType ArmoryUI::addWeaponType(bool& unsavedChanges) {
 
     return returnVal;
 }
+// MARK: Verify Gun
+int ArmoryUI::verifyGun(const std::string& name, const WeaponType& wt, const Cartridge& cartridge){
+    int     returnVal           { 0 };
+    bool    invalidName         { false };  // 4
+    bool    invalidWeaponType   { false };  // 2
+    bool    invalidCartridge    { false };  // 1
+
+    if(wt == EMPTY_OBJECTS.WEAPON_TYPE)
+        invalidWeaponType = true;
+    if(cartridge == EMPTY_OBJECTS.CARTRIDGE)
+        invalidCartridge = true;
+    if(name.empty() || name == "Enter Name")
+        invalidName = true;
+
+    if(invalidName)
+        returnVal += 4;
+    if(invalidWeaponType)
+        returnVal += 2;
+    if(invalidCartridge)
+        returnVal += 1;
+    
+    return returnVal;
+}
+// MARK: Verify WT Name
+bool ArmoryUI::verifyWeaponTypeName(const std::string& name){
+    // Verify no invalid characters & make upper case
+    for(auto& c : name){
+        if(!isalnum(c) && c != ' ')
+            return false;
+    }
+
+    return true;
+}
 
 // MARK: STOCKPILE UI
 void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
-
-    static const Cartridge EMPTY_CARTRIDGE { };
-
     static StringVector                     ammoNames;
     static CartridgeList                    cartridges;
     static ManufacturerList                 manufacturers;
@@ -600,13 +635,13 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
 
 
     // Apply proper prompt text
-    if(selectedCartridge != EMPTY_CARTRIDGE)
+    if(selectedCartridge != EMPTY_OBJECTS.CARTRIDGE)
         cartridgeComboPreview = selectedCartridge.getName().c_str();
     else
         cartridgeComboPreview = "CHOOSE CARTRIDGE";
 
     if(!detailedView)
-        selectedCartridge = EMPTY_CARTRIDGE;
+        selectedCartridge = EMPTY_OBJECTS.CARTRIDGE;
 
     // Calculate HUD View measurements
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -715,7 +750,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
     ImGui::Spacing();
 
     // Show ammo only for selected cartridge
-    if(detailedView && selectedCartridge != EMPTY_CARTRIDGE){
+    if(detailedView && selectedCartridge != EMPTY_OBJECTS.CARTRIDGE){
 
         // Title appropriately
         std::ostringstream titleText;
@@ -731,7 +766,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
             ImGui::TableSetupColumn("Amount",       0);
             ImGui::TableHeadersRow();
 
-            if (selectedCartridge != EMPTY_CARTRIDGE) {
+            if (selectedCartridge != EMPTY_OBJECTS.CARTRIDGE) {
                 for(const auto& ta : selectedCatridgeAmmoList){
                     ImGui::TableNextRow();
 
@@ -874,19 +909,11 @@ Cartridge StockpileUI::addCartridge (bool& unsavedChanges) {
     ImGui::Spacing();
 
     if(UIHelper::centerButton("Add New Cartridge", ImVec2{200,50})){
-        bool        nameRejected    { false };
         std::string cartridgeName   { cartridgeBuf };
 
-        // Verify characters are valid
-        for(const auto& c : cartridgeName){
-            if(!isalnum(c) && c != ' ' && c != '.'){
-                nameRejected = true;
-                break;
-            }
-        }
 
         // Perform Checks and set return value if passed
-        if(cartridgeName != "New Cartridge" && !nameRejected){
+        if(cartridgeName != "New Cartridge" && verifyCartridgeName(cartridgeName)){
             returnVal = Cartridge {cartridgeName};
             strcpy(cartridgeBuf, "New Cartridge");   // Reset buffers
             unsavedChanges = true;              // Set flag
@@ -917,28 +944,23 @@ TrackedAmmo StockpileUI::addAmmoType (bool& unsavedChanges, const CartridgeList&
         ImGui::EndChild();
         return TrackedAmmo{ };
     }
-    
-    static const Cartridge      EMPTY_CARTRIDGE     { };
-    static const Manufacturer   EMPTY_MANUFACTURER  { };
-
     static char         nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
-    static int          grainWeightBuf                              { 0 };
     static Cartridge    selectedCartridge                           { };
     static Manufacturer selectedManufacturer                        { };
-
-    static bool invalidName { false }, invalidManufacturer { false }, invalidCartridge { false }, invalidGrainWeight { false }; // Flags to alert user what went wrong
+    static int          grainWeightBuf                              { 0 };
+    static int          verifyReturnVal                             { -1 };
 
     std::string cartridgeComboPreview       { };
     std::string manufacturerComboPreview    { };
     TrackedAmmo returnVal                   { };
 
     // Apply proper prompt text
-    if(selectedCartridge != EMPTY_CARTRIDGE)
+    if(selectedCartridge != EMPTY_OBJECTS.CARTRIDGE)
         cartridgeComboPreview = selectedCartridge.getName();
     else
         cartridgeComboPreview = "CHOOSE CARTRIDGE";
     
-    if(selectedManufacturer != EMPTY_MANUFACTURER)
+    if(selectedManufacturer != EMPTY_OBJECTS.MANUFACTURER)
         manufacturerComboPreview = selectedManufacturer.getName();
     else
         manufacturerComboPreview = "CHOOSE MANUFACTURER";
@@ -997,54 +1019,32 @@ TrackedAmmo StockpileUI::addAmmoType (bool& unsavedChanges, const CartridgeList&
 
 
     if(UIHelper::centerButton("Add New Ammo Type", ImVec2{200,50})){
-        // Ensure buffers are valid
-        invalidName             = false;
-        invalidManufacturer     = false;
-        invalidCartridge        = false;
-        invalidGrainWeight      = false;
-
-        
-        // Verify buffers are valid 
         std::string name { nameBuf };
-        if(selectedManufacturer == EMPTY_MANUFACTURER) 
-            invalidManufacturer = true;
-        if(selectedCartridge == EMPTY_CARTRIDGE) 
-            invalidCartridge = true;
-        if(grainWeightBuf <= 0 || grainWeightBuf > 255) 
-            invalidGrainWeight = true;
-        if(name == "Enter Name")
-            invalidName = true;
+        
+        verifyReturnVal = verifyAmmoType(name, selectedManufacturer, selectedCartridge, grainWeightBuf);
         
         // All checks passed, set return val and reset buffers
-        if(!invalidName && !invalidManufacturer && !invalidCartridge && !invalidGrainWeight){
+        if(verifyReturnVal == 0){
 
             returnVal = TrackedAmmo {AmmoType{ name, selectedManufacturer, selectedCartridge, grainWeightBuf}, 0};
 
             // Reset buffers
             strcpy(nameBuf, "Enter Name");
 
-            selectedManufacturer    = EMPTY_MANUFACTURER;
-            selectedCartridge       = EMPTY_CARTRIDGE;
+            selectedManufacturer    = EMPTY_OBJECTS.MANUFACTURER;
+            selectedCartridge       = EMPTY_OBJECTS.CARTRIDGE;
             grainWeightBuf          = 0;
+            verifyReturnVal         = -1;
 
-            unsavedChanges = true; // Set flag
 
+            unsavedChanges = true;  // Set flag
         }
-        if(invalidName || invalidManufacturer || invalidCartridge || invalidGrainWeight)
+        else
             ImGui::OpenPopup("Ammo Type Not Created");
     }
 
     if(ImGui::BeginPopupModal("Ammo Type Not Created", NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-        UIHelper::centerText("This ammo type could not be created.");
-
-        if(invalidName)
-            ImGui::BulletText("Invalid name");
-        if(invalidManufacturer)
-            ImGui::BulletText("Invalid manufacturer");
-        if(invalidCartridge)
-            ImGui::BulletText("Invalid cartridge");
-        if(invalidGrainWeight)
-            ImGui::BulletText("Invalid grain weight");
+        errorMakingAmmoTypePopupText(verifyReturnVal);
 
         ImGui::Spacing();
         ImGui::Spacing();
@@ -1084,18 +1084,9 @@ Manufacturer StockpileUI::addManufacturer (bool& unsavedChanges){
     ImGui::Spacing();
 
     if(UIHelper::centerButton("Add New Manufacturer", ImVec2{200,50})){
-        bool        nameRejected    { false };
         std::string manName         { manBuf };
 
-        // Verify characters are valid
-        for(const auto& c : manName){
-            if(!isalnum(c) && c != ' '){
-                nameRejected = true;
-                break;
-            }
-        }
-
-        if(manName != "New Manufacturer" && !nameRejected){
+        if(manName != "New Manufacturer" && verifyManufacturerName(manName)){
             returnVal = Manufacturer{manName};
             strcpy(manBuf, "New Manufacturer");     // Reset buffers
             unsavedChanges = true;                  // Set flag
@@ -1127,7 +1118,6 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
         return TrackedAmmo { };
     }
 
-    static const TrackedAmmo    EMPTY_AMMO  { };
     static TrackedAmmo          selectedAmmo{  };
     static int                  amountToAdd { 0 };
 
@@ -1138,7 +1128,7 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
     std::string     ammoNamePreview     { };
 
     // Apply proper prompt text
-    if(selectedAmmo != EMPTY_AMMO)
+    if(selectedAmmo != EMPTY_OBJECTS.TRACKED_AMMO)
         ammoNamePreview = selectedAmmo.ammoType.name;
     else
         ammoNamePreview = "CHOOSE AMMO TYPE";
@@ -1184,7 +1174,7 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
             // Verify buffers are valid
             if(amountToAdd <= 0)
                 amountRejected = true;
-            if(selectedAmmo == EMPTY_AMMO)
+            if(selectedAmmo == EMPTY_OBJECTS.TRACKED_AMMO)
                 ammoRejected = true;
 
             // All checks passed, set flag to signal to return correct object
@@ -1222,7 +1212,7 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
     if(ImGui::BeginChild("Selected Ammo Detailed Information", ImGui::GetContentRegionAvail())){
         UIHelper::centerText("Detailed Ammo Information");
         ImGui::Separator();
-        if(selectedAmmo != EMPTY_AMMO){
+        if(selectedAmmo != EMPTY_OBJECTS.TRACKED_AMMO){
             ImGui::Text("Name: ");
             ImGui::SameLine(150);
             ImGui::Text("%s", selectedAmmo.ammoType.name.c_str());
@@ -1252,12 +1242,131 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
 
     if(submitAmmo){
         TrackedAmmo ammoBuf { selectedAmmo };   // Need this buffer to reset selected Ammo before returning
-        selectedAmmo = EMPTY_AMMO;
+        selectedAmmo = EMPTY_OBJECTS.TRACKED_AMMO;
         return ammoBuf;
     }
     else
-        return EMPTY_AMMO;
+        return EMPTY_OBJECTS.TRACKED_AMMO;
 }
+// MARK: Verify Items
+bool StockpileUI::verifyCartridgeName(const std::string& name){
+    // Verify characters are valid
+    for(const auto& c : name){
+        if(!isalnum(c) && c != ' ' && c != '.')
+            return false;
+    }
+
+    return true;
+}
+bool StockpileUI::verifyManufacturerName(const std::string& name){
+    // Verify characters are valid
+    for(const auto& c : name){
+        if(!isalnum(c) && c != ' ')
+            return false;
+    }
+
+    return true;
+}
+int StockpileUI::verifyAmmoType(const std::string& name, const Manufacturer& manufacturer, const Cartridge& cartridge, int grainWeight){
+    int     returnVal           { 0 };
+    bool    invalidName         { false };  // 8
+    bool    invalidManufacturer { false };  // 4
+    bool    invalidCartridge    { false };  // 2
+    bool    invalidGrainWeight  { false };  // 1
+
+     // Verify buffers are valid 
+    if(manufacturer == EMPTY_OBJECTS.MANUFACTURER) 
+        invalidManufacturer = true;
+    if(cartridge == EMPTY_OBJECTS.CARTRIDGE) 
+        invalidCartridge = true;
+    if(grainWeight <= 0 || grainWeight > 500) 
+        invalidGrainWeight = true;
+    if(name == "Enter Name" || name.empty())
+        invalidName = true;
+    
+    if(invalidName)
+        returnVal += 8;
+    if(invalidManufacturer)
+        returnVal += 4;
+    if(invalidCartridge)
+        returnVal += 2;
+    if(invalidGrainWeight)
+        returnVal += 1;
+    
+    return returnVal;
+}
+void StockpileUI::errorMakingAmmoTypePopupText(int verifyAmmoReturnVal){
+    UIHelper::centerText("This ammo type could not be created.");
+
+    switch(verifyAmmoReturnVal){
+        case 1:
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        case 2:
+            ImGui::BulletText("Invalid cartridge");
+            break;
+        case 3:
+            ImGui::BulletText("Invalid cartridge");
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        case 4:
+            ImGui::BulletText("Invalid manufacturer");
+            break;
+        case 5:
+            ImGui::BulletText("Invalid manufacturer");
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        case 6:
+            ImGui::BulletText("Invalid manufacturer");
+            ImGui::BulletText("Invalid cartridge");
+            break;
+        case 7:
+            ImGui::BulletText("Invalid manufacturer");
+            ImGui::BulletText("Invalid cartridge");
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        case 8:
+            ImGui::BulletText("Invalid name");
+            break;
+        case 9:
+            ImGui::BulletText("Invalid name");
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        case 10:
+            ImGui::BulletText("Invalid name");
+            ImGui::BulletText("Invalid cartridge");
+            break;
+        case 11:
+            ImGui::BulletText("Invalid name");
+            ImGui::BulletText("Invalid cartridge");
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        case 12:
+            ImGui::BulletText("Invalid name");
+            ImGui::BulletText("Invalid manufacturer");
+            break;
+        case 13:
+            ImGui::BulletText("Invalid name");
+            ImGui::BulletText("Invalid manufacturer");
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        case 14:
+            ImGui::BulletText("Invalid name");
+            ImGui::BulletText("Invalid manufacturer");
+            ImGui::BulletText("Invalid cartridge");
+            break;
+        case 15:
+            ImGui::BulletText("Invalid name");
+            ImGui::BulletText("Invalid manufacturer");
+            ImGui::BulletText("Invalid cartridge");
+            ImGui::BulletText("Invalid grain weight");
+            break;
+        default:
+
+            break;
+    }
+}
+
 
 // MARK: EVENTS UI
 void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, GunTrackerPtr gunTracker, ShooterCentralWindow::UnsavedChanges& unsavedChanges) {
@@ -1551,11 +1660,6 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
 
     static ConstGunPtrList guns { };
 
-    static const Location       EMPTY_LOCATION  { };
-    static const EventType      EMPTY_EVENTTYPE { };
-    static const Gun            EMPTY_GUN       { };
-    static const TrackedAmmo    EMPTY_AMMO      { };
-
     static char notesBuf [UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES];
     static int  numGuns { 1 };
 
@@ -1580,12 +1684,12 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
 
 
     // Apply proper text to prompt
-    if(selectedLocation != EMPTY_LOCATION)
+    if(selectedLocation != EMPTY_OBJECTS.LOCATION)
         locationComboPreview = selectedLocation.getName();
     else
         locationComboPreview = "CHOOSE LOCATION";
     
-    if(selectedEventType != EMPTY_EVENTTYPE)
+    if(selectedEventType != EMPTY_OBJECTS.EVENT_TYPE)
         eventTypeComboPreview = selectedEventType.getName().c_str();
     else
         eventTypeComboPreview = "CHOOSE EVENT TYPE";
@@ -1636,9 +1740,9 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                 std::string     notesStr    { notesBuf };
                 year_month_day  dateBuf     { year{yearBuf}, month{monthBuf}, day{dayBuf}};
 
-                if(selectedLocation == EMPTY_LOCATION) 
+                if(selectedLocation == EMPTY_OBJECTS.LOCATION) 
                     invalidLocation = true;
-                if(selectedEventType == EMPTY_EVENTTYPE) 
+                if(selectedEventType == EMPTY_OBJECTS.EVENT_TYPE) 
                     invalidEventType = true;
                 if(!dateBuf.ok())
                     invalidDate = true;
@@ -1647,7 +1751,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                 // Check cartridges of selected ammo and respective gun for valid input
                 switch (numGuns){
                     case 3:
-                        if(selectedGun3 == EMPTY_GUN|| selectedTA3 == EMPTY_AMMO)
+                        if(selectedGun3 == EMPTY_OBJECTS.GUN|| selectedTA3 == EMPTY_OBJECTS.TRACKED_AMMO)
                             invalidGunOrAmmo = true;
                         else{
                             if(selectedGun3.getCartridge() != selectedTA3.ammoType.cartridge)
@@ -1656,7 +1760,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                                 invalidAmmoAmount = true;
                         }
                     case 2:
-                        if(selectedGun2 == EMPTY_GUN || selectedTA2 == EMPTY_AMMO)
+                        if(selectedGun2 == EMPTY_OBJECTS.GUN || selectedTA2 == EMPTY_OBJECTS.TRACKED_AMMO)
                             invalidGunOrAmmo = true;
                         else{
                             if(selectedGun2.getCartridge() != selectedTA2.ammoType.cartridge)
@@ -1665,7 +1769,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                                 invalidAmmoAmount = true;
                         }
                     case 1:
-                        if(selectedGun1 == EMPTY_GUN || selectedTA1== EMPTY_AMMO)
+                        if(selectedGun1 == EMPTY_OBJECTS.GUN || selectedTA1== EMPTY_OBJECTS.TRACKED_AMMO)
                             invalidGunOrAmmo = true;
                         else{
                             if(selectedGun1.getCartridge() != selectedTA1.ammoType.cartridge)
@@ -1701,18 +1805,18 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                     // Reset buffers
                     strcpy(notesBuf,    "");
 
-                    selectedLocation    = EMPTY_LOCATION;
-                    selectedEventType   = EMPTY_EVENTTYPE;
+                    selectedLocation    = EMPTY_OBJECTS.LOCATION;
+                    selectedEventType   = EMPTY_OBJECTS.EVENT_TYPE;
                     dayBuf              = 0;
                     monthBuf            = 0;
                     yearBuf             = 2024;
 
-                    selectedGun1    = EMPTY_GUN;
-                    selectedGun2    = EMPTY_GUN;
-                    selectedGun3    = EMPTY_GUN;
-                    selectedTA1     = EMPTY_AMMO;
-                    selectedTA2     = EMPTY_AMMO;
-                    selectedTA3     = EMPTY_AMMO;
+                    selectedGun1    = EMPTY_OBJECTS.GUN;
+                    selectedGun2    = EMPTY_OBJECTS.GUN;
+                    selectedGun3    = EMPTY_OBJECTS.GUN;
+                    selectedTA1     = EMPTY_OBJECTS.TRACKED_AMMO;
+                    selectedTA2     = EMPTY_OBJECTS.TRACKED_AMMO;
+                    selectedTA3     = EMPTY_OBJECTS.TRACKED_AMMO;
                 }
 
                 // Make popup modal if there was an error
@@ -1855,7 +1959,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
 
         switch(numGuns){
             case 3:
-                if(selectedGun3 != EMPTY_GUN){
+                if(selectedGun3 != EMPTY_OBJECTS.GUN){
                     ImGui::PushID("Select Ammo 3");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun3.getName() + "\"");
@@ -1872,7 +1976,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                     ImGui::PopID();
                 }
             case 2:
-                if(selectedGun2 != EMPTY_GUN){
+                if(selectedGun2 != EMPTY_OBJECTS.GUN){
                     ImGui::PushID("Select Ammo 2");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun2.getName() + "\"");
@@ -1889,7 +1993,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                     ImGui::PopID();
                 }
             case 1:
-                if(selectedGun1 != EMPTY_GUN){
+                if(selectedGun1 != EMPTY_OBJECTS.GUN){
                     ImGui::PushID("Select Ammo 1");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun1.getName() + "\"");
@@ -1944,19 +2048,12 @@ EventType EventsUI::addEventType (bool& unsavedChanges) {
     ImGui::Spacing();
 
     if(UIHelper::centerButton("Add Event Type", ImVec2{200,50})){
-        bool        nameRejected    { false };
         std::string eventTypeStrBuf { eventTypeBuf };
 
-        // Verify characters are valid
-        for(auto& c : eventTypeStrBuf){
-            if(!isalnum(c) && c != ' '){
-                nameRejected = true;
-                break;
-            }
+        for(auto& c : eventTypeStrBuf)
             c = toupper(c);
-        }
 
-        if(eventTypeStrBuf != "New Event Type" && !nameRejected){
+        if(eventTypeStrBuf != "NEW EVENT TYPE" && verifyEventType(eventTypeStrBuf)){
             returnVal = EventType {eventTypeStrBuf};    // Set return value
             strcpy(eventTypeBuf, "New Event Type");     // Reset buffers
             unsavedChanges = true;                      // Set flag
@@ -2007,18 +2104,9 @@ Location EventsUI::addLocation (bool& unsavedChanges) {
     ImGui::Spacing();
 
     if(UIHelper::centerButton("Add Location", ImVec2{200,50})){
-        bool        nameRejected    { false };
         std::string locationStrBuf  { locationBuf };
 
-        // Verify characters are valid
-        for(const auto& c : locationStrBuf){
-            if(!isalnum(c) && c != ' '){
-                nameRejected = true;
-                break;
-            }
-        }
-
-        if(locationStrBuf != "New Location" && !nameRejected){
+        if(locationStrBuf != "New Location" && verifyLocation(locationStrBuf)){
             returnVal = Location{locationStrBuf};   // Set return value
             strcpy(locationBuf, "New Location");    // Reset buffers
             unsavedChanges = true;                  // Set flag
@@ -2042,6 +2130,25 @@ Location EventsUI::addLocation (bool& unsavedChanges) {
     ImGui::EndChild();
 
     return returnVal;
+}
+// MARK: Verify Items
+bool    EventsUI::verifyEventType     (const std::string& name){
+    // Verify characters are valid
+    for(auto& c : name){
+        if(!isalnum(c) && c != ' ')
+            return false;
+    }
+
+    return true;
+}
+bool    EventsUI::verifyLocation      (const std::string& name){
+    // Verify characters are valid
+    for(const auto& c : name){
+        if(!isalnum(c) && c != ' ')
+            return false;
+    }
+
+    return false;
 }
 // MARK: Event Gun Table
 void EventsUI::eventGunTable(const std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list, bool showAmmoUsed) {
