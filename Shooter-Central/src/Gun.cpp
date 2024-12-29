@@ -28,10 +28,6 @@ std::ostream& ShooterCentral::operator<<(std::ostream& os, const WeaponType& wea
 }
 
 // MARK: Gun
-Gun::Gun() : name {"N/A"}, weaponType {"N/A"}, cartridge {"N/A"}
-{
-
-}
 Gun::Gun(std::string setName, WeaponType setWeaponType, Cartridge setCartridge)
         :   name        { setName },
             weaponType  { setWeaponType },
