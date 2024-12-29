@@ -54,9 +54,9 @@ std::ostream& ShooterCentral::operator<<(std::ostream& os, const EventType& even
 
 // MARK: Event
 Event::Event() 
-    :   location {"N/A"},  
-        eventType{"N/A"},  
-        notes{"N/A"}, 
+    :   location {Location { }},  
+        eventType{EventType{ }},  
+        notes{""}, 
         date {std::chrono::sys_days{std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{0}, std::chrono::day{0}}}}
 {
 
