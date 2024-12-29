@@ -2148,7 +2148,7 @@ bool    EventsUI::verifyLocation      (const std::string& name){
             return false;
     }
 
-    return false;
+    return true;
 }
 // MARK: Event Gun Table
 void EventsUI::eventGunTable(const std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list, bool showAmmoUsed) {
