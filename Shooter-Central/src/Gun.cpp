@@ -58,6 +58,8 @@ Cartridge Gun::getCartridge () const{
 bool Gun::addToRoundCount(TrackedAmmo trackedAmmo){
     if(!ammoTracker.contains(trackedAmmo.ammoType))
         return ammoTracker.try_emplace(trackedAmmo.ammoType, trackedAmmo).second;
+    else
+        ammoTracker.at(trackedAmmo.ammoType).amount += trackedAmmo.amount;
     
     return true;
 }
