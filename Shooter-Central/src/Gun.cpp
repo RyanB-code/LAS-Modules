@@ -85,10 +85,9 @@ void ShooterCentral::to_json(LAS::json& j, const Gun& gun){
     ConstTrackedAmmoPtrList ammoUsed;
     gun.getAllAmmoUsed(ammoUsed);
     
-	nlohmann::json trackedAmmoArray = nlohmann::json::array();
+	json trackedAmmoArray = json::array();
 	for (const auto& ta : ammoUsed){
-        json trackedAmmoJson { *ta };       
-        trackedAmmoArray.emplace_back(trackedAmmoJson);
+        trackedAmmoArray.emplace_back(*ta);
     }
     
     // Make JSON
@@ -100,6 +99,8 @@ void ShooterCentral::to_json(LAS::json& j, const Gun& gun){
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
+    using LAS::json;
+
     std::string nameBuf, weaponTypeBuf, cartBuf; 
 
     j.at("name").get_to(nameBuf);
@@ -108,13 +109,13 @@ void ShooterCentral::from_json(const LAS::json& j, Gun& gun){
 
     Gun gunBuf {nameBuf, WeaponType{weaponTypeBuf}, Cartridge{cartBuf} };
     
-    nlohmann::json trackedAmmoList;
+    json trackedAmmoList;
 	j.at("trackedAmmo").get_to(trackedAmmoList);
 	
     // Add for each element
 	for (auto& trackedAmmoListElement : trackedAmmoList.items()) {
-		nlohmann::json pair = trackedAmmoListElement.value();        
-        TrackedAmmo taBuf {pair.at(0).template get<ShooterCentral::TrackedAmmo>()};
+		json pair = trackedAmmoListElement.value();        
+        TrackedAmmo taBuf {pair.template get<ShooterCentral::TrackedAmmo>()};
         
         gunBuf.addToRoundCount(taBuf);
 	}
