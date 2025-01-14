@@ -433,24 +433,34 @@ bool EventHelper::writeEvent(std::string directory, const Event& event){
     if(!std::filesystem::exists(directory))
 		return false;
 
-    // Make JSON
-    json j = event;
+    // Output for final types used in filename
+    std::string eventTypeBuf;
+    std::string locationBuf;
+
+    for(const auto& c : std::string{event.getEventType()}){     // Remove spaces, make sure alnum
+        if(c == ' ' || c == '\t')
+            eventTypeBuf += '-';
+        else if(isalnum(c))
+            eventTypeBuf += c;
+    }
+
+    for(const auto& c : std::string{event.getLocation()}){     // Remove spaces, make sure alnum
+        if(c == ' ' || c == '\t')
+            locationBuf += '-';
+        else if(isalnum(c))
+            locationBuf += c;
+    }
 
     // Create JSON file name
-    std::string fileName;
-    for(const auto& c : event.getName()){     // Remove spaces and make lowercase
-        if(isalpha(c))
-            fileName += tolower(c);
-        else if(c == ' ' || c == '\t')
-            fileName += '_';
-        else if(isalnum(c))
-            fileName += c;
-    }
-    fileName += ".json";
+    std::ostringstream fileName;
+    fileName << std::format("{:%Y-%m-%d}", event.getDate()) << '_' << eventTypeBuf << '_' << locationBuf << ".json";
 
-    // Make fully qualified path
-    std::string filePath;
-    filePath = directory + fileName;
+
+    std::string filePath { directory + fileName.str() };  // Make fully qualified path
+
+
+    // Make JSON
+    json j = event;
 
     // Write to file
     std::ofstream file{filePath};
