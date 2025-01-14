@@ -1638,7 +1638,7 @@ void EventsUI::viewEvent(std::shared_ptr<const Event> event){
     ImGui::Spacing();
     ImGui::Spacing();
     if(event)
-        ImGui::Text("%s", event->getNotes().c_str());
+        ImGui::TextWrapped("%s", event->getNotes().c_str());
     ImGui::Spacing();
     ImGui::Spacing();
 
@@ -1891,7 +1891,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
 
         ImGui::Text("Notes");
         ImGui::SameLine(100);
-        ImGui::InputTextMultiline("##Input Notes", notesBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES, ImVec2{ImGui::GetContentRegionAvail().x, 100});
+        ImGui::InputTextMultiline("##Input Notes", notesBuf, UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES, ImVec2{ImGui::GetContentRegionAvail().x, 100}, ImGuiInputTextFlags_CtrlEnterForNewLine);
         ImGui::SameLine();
         ImGui::TextDisabled("(May be left blank)");
 
