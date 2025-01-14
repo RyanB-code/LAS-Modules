@@ -1663,7 +1663,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
     static char notesBuf [UI_SETTINGS.MAX_TEXT_INPUT_CHARS_NOTES];
     static int  numGuns { 1 };
 
-    static int          dayBuf          { 0 },  monthBuf        { 0 }, yearBuf         { 2024 };
+    static int          dayBuf          { 0 },  monthBuf        { 0 }, yearBuf         { 2025 };
     static Gun          selectedGun1    {  },   selectedGun2    {  },  selectedGun3    {  };
     static TrackedAmmo  selectedTA1     {  },   selectedTA2     {  },  selectedTA3     {  };
 
