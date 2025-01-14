@@ -77,7 +77,7 @@ bool TrackedAmmo::operator==(const TrackedAmmo& other) const{
         return false;
 }
 
-
+// MARK: To/From JSON Ammo Type
 void ShooterCentral::to_json (LAS::json& j, const AmmoType& ammoType){
     j = LAS::json {
         { "name",           ammoType.name },
@@ -98,13 +98,15 @@ void ShooterCentral::from_json(const LAS::json& j, AmmoType& ammoType){
     ammoType.cartridge      = Cartridge{cartridgeBuf};
 
 }
+
+// MARK: To/From JSON Tracked Ammo
 void ShooterCentral::to_json (LAS::json& j, const TrackedAmmo& ammo){
     j = LAS::json {
         { "name",           ammo.ammoType.name },
         { "manufacturer",   ammo.ammoType.manufacturer },
         { "cartridge",      ammo.ammoType.cartridge },
         { "grain",          int{ammo.ammoType.grainWeight}},
-        { "amount",   ammo.amount }
+        { "amount",         ammo.amount }
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
