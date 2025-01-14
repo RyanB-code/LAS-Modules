@@ -150,11 +150,27 @@ void ShooterCentral::to_json(LAS::json& j, const Event& event){
     // Write every ammo type used and amount
     std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>> gunsUsed;
     event.getAllGunsUsed(gunsUsed);
+
+    // BROKEN - need to add multiple tracked ammo per gun
     
-	nlohmann::json gunsArray = nlohmann::json::array();
+	json gunsArray = json::array();
 	for (const auto& [gun, ammo] : gunsUsed){
         if(*gun != Gun { }){
-            json gunsJson { *gun, *ammo }; 
+            //json gunsJson { *gun, *ammo };
+
+            // Make array for all ammo used
+            // Allows for using normal from_json(Gun) function
+            json ammoArrayJson = json::array();
+            ammoArrayJson.emplace_back(*ammo);
+
+            json gunsJson;            
+            gunsJson = LAS::json{
+                { "name",           gun->getName()      },
+                { "weaponType",     gun->getWeaponType()},
+                { "cartridge",      gun->getCartridge() },
+                { "trackedAmmo",    ammoArrayJson       }
+            };
+
             gunsArray.emplace_back(gunsJson);
         }
     }
@@ -172,6 +188,8 @@ void ShooterCentral::to_json(LAS::json& j, const Event& event){
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, Event& event){
+    using LAS::json;
+
     std::string nameBuf, locBuf, notesBuf, eventTypeBuf, dateStringBuf;
 
     j.at("location").get_to(locBuf);
@@ -183,18 +201,26 @@ void ShooterCentral::from_json(const LAS::json& j, Event& event){
 
     Event eventBuf {Location{locBuf}, EventType{eventTypeBuf}, notesBuf, dateBuf};
     
-    nlohmann::json gunList;
+    json gunList;
 	j.at("gunsUsed").get_to(gunList);
 	
     // Add for each element
 	for (auto& gun : gunList.items()) {
 		nlohmann::json  gunJson = gun.value();
 
-        Gun         gunBuf  { gunJson.at(0).template get<ShooterCentral::Gun>() };
-        TrackedAmmo taBuf   { gunJson.at(1).template get<ShooterCentral::TrackedAmmo>() };
+        Gun         gunBuf  { gunJson.template get<ShooterCentral::Gun>() };
+        //TrackedAmmo taBuf   { gunJson.at(1).template get<ShooterCentral::TrackedAmmo>() };
 
-        eventBuf.addGun(gunBuf, taBuf );
+        ConstTrackedAmmoPtrList ammoUsedList;
+        gunBuf.getAllAmmoUsed(ammoUsedList);
+
+        for (const auto& ammo : ammoUsedList){
+            eventBuf.addGun(gunBuf, *ammo );
+        }
 	}
+
+
+
     event = eventBuf;
 }
 
