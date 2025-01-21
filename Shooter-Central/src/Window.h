@@ -65,7 +65,7 @@ namespace ShooterCentral{
     namespace ArmoryUI{
         void        home            (GunTrackerPtr gunTracker, bool& unsavedChanges,  const CartridgeList& cartridgeNames);
         void        viewGun         (std::shared_ptr<const Gun> gun);
-        GunPtr      addGun          (bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes);
+        Gun         addGun          (bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes);
         WeaponType  addWeaponType   (bool& unsavedChanges);
 
         int     verifyGun               (const std::string& name, const WeaponType& wt, const Cartridge& cartridge);    // Return is like Linux chmod numbering 4,2,1. 0 = passed
@@ -93,7 +93,7 @@ namespace ShooterCentral{
         EventType                   addEventType    (bool& unsavedChanges);
         Location                    addLocation     (bool& unsavedChanges);
 
-        // Apply to stockpile, apply to guns. event
+        // Apply to stockpile, apply to guns, event
         // Need to add separate verification function for this
         std::tuple<bool, bool, EventPtr>   addEvent        (GunTrackerPtr gunTracker,                  const EventTypeList& eventTypes,    const LocationList& locations, 
                                                             const ConstTrackedAmmoPtrList& ammoList,    bool& unsavedChanges);
