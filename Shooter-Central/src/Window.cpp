@@ -285,10 +285,27 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Gun")){
-            GunPtr newGun { addGun(unsavedChanges, cartridges, wpnTypes)};
+            Gun newGun { addGun(unsavedChanges, cartridges, wpnTypes)};
 
-            if(newGun)
-                gunTracker->addGun(newGun);
+            if(newGun != EMPTY_OBJECTS.GUN ){
+                if(gunTracker->contains(newGun)){
+                    unsavedChanges = false;                 // Reset flag
+                    ImGui::OpenPopup("Gun Already Exists");
+                }
+                else
+                    gunTracker->addGun(newGun);
+            }
+
+            if(ImGui::BeginPopupModal("Gun Already Exists",  NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+                UIHelper::centerText("Gun not created, it already exists.");
+
+                ImGui::Spacing();
+                ImGui::Spacing();
+
+                if (UIHelper::centerButton("Close", ImVec2{120, 0}))
+                    ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+            }
 
             ImGui::EndTabItem();
         }
@@ -367,10 +384,10 @@ void ArmoryUI::viewGun(std::shared_ptr<const Gun> gun){
 }
 
 // MARK: Add Gun
-GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes) {
+Gun ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, const WeaponTypeList& wpnTypes) {
     if(!ImGui::BeginChild("Add Gun")){
         ImGui::EndChild();
-        return nullptr;
+        return Gun { };
     }
 
     static Cartridge    selectedCartridge   { };
@@ -380,7 +397,7 @@ GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, c
 
     static char nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
 
-    GunPtr      returnVal           { nullptr };
+    Gun      returnVal              { };
     std::string cartComboPreview    { };
     std::string wtComboPreview      { };
 
@@ -454,7 +471,7 @@ GunPtr ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, c
       
         // Check return value
         if(verifyGunReturn == 0){
-            returnVal = std::make_shared<Gun>(name, selectedWT, selectedCartridge);
+            returnVal = name, selectedWT, selectedCartridge;
             unsavedChanges = true;
 
             // Reset buffers
