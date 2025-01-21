@@ -126,11 +126,13 @@ namespace ShooterCentral{
         ~AmmoTracker();
 
         bool    addAmmoToStockpile          (const TrackedAmmo& trackedAmmo);
-        bool    addCartridge            (const std::string& cartridge);
-        bool    addManufacturer         (const std::string& manufacturer);
+        bool    addCartridge                (const std::string& cartridge);
+        bool    addManufacturer             (const std::string& manufacturer);
 
         bool    removeAmmoFromStockpile     (const TrackedAmmo& trackedAmmo);
         void    removeAllAmmoFromStockpile  ();
+
+        bool    contains                (const AmmoType& ammoType) const;
 
         void    getAllAmmoNames         (StringVector&                      names)                              const;  // Clears vector before adding elements
         void    getAllAmmo              (std::vector<ConstTrackedAmmoPtr>&  list)                               const;  // Clears vector before adding elements

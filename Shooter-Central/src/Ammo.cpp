@@ -183,6 +183,10 @@ void AmmoTracker::removeAllAmmoFromStockpile  (){
 }
 
 // MARK: Get Info
+bool AmmoTracker::contains(const AmmoType& ammoType) const {
+    return ammoStockpile.contains(ammoType);
+}
+
 void AmmoTracker::getAllAmmoNames(StringVector& names) const{
     if(!names.empty())
         names.erase(names.begin(), names.end());
