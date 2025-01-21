@@ -130,10 +130,12 @@ namespace ShooterCentral{
         bool addEventType       (const EventType& type);
         bool addLocation        (const Location& location);
 
-        void getAllEvents        (std::vector<EventPtr>& list)       const;  // Clears vector before adding elements
-        void getAllEventTypes    (EventTypeList& list)               const;  // Clears vector before adding elements
-        void getAllLocations     (LocationList& list)                const;  // Clears vector before adding elements
-        int  getTotalEvents      ()                                  const;
+        bool contains           (const Event& event) const;
+
+        void getAllEvents       (std::vector<EventPtr>& list)       const;  // Clears vector before adding elements
+        void getAllEventTypes   (EventTypeList& list)               const;  // Clears vector before adding elements
+        void getAllLocations    (LocationList& list)                const;  // Clears vector before adding elements
+        int  getTotalEvents     ()                                  const;
 
 
         bool writeAllEvents     () const;
