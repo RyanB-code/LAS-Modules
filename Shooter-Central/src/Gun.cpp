@@ -216,6 +216,9 @@ GunPtr  GunTracker::getGun (const Gun& gun){
     return guns.at(gun);
 }
 
+bool GunTracker::contains(const Gun& gun) const {
+    return guns.contains(gun);
+}
 
 // MARK: Get Info
 void    GunTracker::getRoundsShotPerCartridge(std::unordered_map<std::string, uint64_t>& list) const{
