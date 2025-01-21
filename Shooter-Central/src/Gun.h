@@ -88,20 +88,19 @@ namespace ShooterCentral{
         bool        setDirectory    (std::string directory);
         std::string getDirectory    () const;
 
-        GunPtr  createGun       (const std::string& name, const WeaponType& weaponType, const Cartridge& cartridge);
-        bool    addWeaponType   (const WeaponType& type);
-
-        std::pair<GunPtr, bool>    addGun (Gun& gun);       // Return a pair, first is ptr to possibly inserted item, second is whether the item was inserted
-        std::pair<GunPtr, bool>    addGun (GunPtr gun);     // Return a pair, first is ptr to possibly inserted item, second is whether the item was inserted
+        GunPtr                      createGun       (const std::string& name, const WeaponType& weaponType, const Cartridge& cartridge);
+        bool                        addWeaponType   (const WeaponType& type);
+        std::pair<GunPtr, bool>     addGun          (Gun& gun);       // Return a pair, first is ptr to possibly inserted item, second is whether the item was inserted
 
         bool    removeGun       (const Gun& gun);
 
-        GunPtr  getGun (const Gun& gun);
+        bool    contains                    (const Gun& gun) const;
 
+        GunPtr  getGun                      (const Gun& gun);
         void    getRoundsShotPerCartridge   (std::unordered_map<std::string, uint64_t>& list)   const;  // Clears vector before adding elements
         void    getAllWeaponTypeNames       (WeaponTypeList& names)                             const;  // Clears vector before adding elements
-        int     getGunTotal                 ()                                                  const;
         void    getAllGuns                  (std::vector<ConstGunPtr>& list)                    const;  // Clears vector before adding elements 
+        int     getGunTotal                 ()                                                  const;
 
         bool writeAllGuns           () const;
         bool writeAllWeaponTypes    () const;
