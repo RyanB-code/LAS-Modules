@@ -276,7 +276,9 @@ bool EventTracker::addLocation (const Location& location){
     locations.try_emplace(location, location);
     return locations.contains(location);
 }
-
+bool EventTracker::contains(const Event& event) const {
+    return events.contains(event);
+}
 
 // MARK: Get Info
 void EventTracker::getAllEvents(std::vector<EventPtr>& list) const {
