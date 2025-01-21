@@ -339,10 +339,9 @@ void ArmoryUI::viewGun(std::shared_ptr<const Gun> gun){
         tableSize = ImVec2{400, 200};
 
     int row { 0 };
-    if(ImGui::BeginTable("Detailed Gun View Table", 5, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
-        ImGui::TableSetupColumn("Cartridge",    0);
-        ImGui::TableSetupColumn("Name",         0);
+    if(ImGui::BeginTable("Detailed Gun View Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
         ImGui::TableSetupColumn("Manufacturer", 0);
+        ImGui::TableSetupColumn("Name",         0);
         ImGui::TableSetupColumn("Grain Weight", 0);
         ImGui::TableSetupColumn("Rounds Shot",  0);
         ImGui::TableHeadersRow();            
@@ -352,23 +351,20 @@ void ArmoryUI::viewGun(std::shared_ptr<const Gun> gun){
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
 
-            for (int column{0}; column < 5; ++column) {
+            for (int column{0}; column < 4; ++column) {
                 ImGui::TableSetColumnIndex(column);
 
                 switch( column ){
                     case 0:
-                        ImGui::Text("%s", ta->ammoType.cartridge.getName().c_str());
+                        ImGui::Text("%s", ta->ammoType.manufacturer.getName().c_str());
                         break;
                     case 1:
                         ImGui::Text("%s", ta->ammoType.name.c_str());
                         break;
                     case 2:
-                        ImGui::Text("%s", ta->ammoType.manufacturer.getName().c_str());
-                        break;
-                    case 3:
                         ImGui::Text("%d", ta->ammoType.grainWeight);
                         break;
-                    case 4:
+                    case 3:
                         ImGui::Text("%d", ta->amount);
                         break;
                     default:
@@ -777,8 +773,8 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         if(ImGui::BeginTable("Detailed Cartridge Breakdown", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders |
                             ImGuiTableRowFlags_Headers | ImGuiTableFlags_Resizable | ImGuiTableFlags_HighlightHoveredColumn, tableSize ))
         {
-            ImGui::TableSetupColumn("Name",         0);
             ImGui::TableSetupColumn("Manufacturer", 0);
+            ImGui::TableSetupColumn("Name",         0);
             ImGui::TableSetupColumn("Grain Weight", 0);
             ImGui::TableSetupColumn("Amount",       0);
             ImGui::TableHeadersRow();
@@ -791,10 +787,10 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
                         ImGui::TableSetColumnIndex(column);
                         switch( column ){
                             case 0:
-                                ImGui::Text("%s", ta.ammoType.name.c_str());
+                                ImGui::Text("%s", ta.ammoType.manufacturer.getName().c_str());
                                 break;
                             case 1:
-                                ImGui::Text("%s", ta.ammoType.manufacturer.getName().c_str());
+                                ImGui::Text("%s", ta.ammoType.name.c_str());
                                 break;
                             case 2:
                                 ImGui::Text("%d", ta.ammoType.grainWeight);
@@ -874,8 +870,25 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         if(ImGui::BeginTabItem("Add New Ammo Type")){
             TrackedAmmo newAmmoType {addAmmoType(unsavedChanges, cartridges, manufacturers)};
 
-            if(newAmmoType != TrackedAmmo { })
-                ammoTracker->addAmmoToStockpile(newAmmoType);
+            if(newAmmoType != TrackedAmmo { }){
+                if(ammoTracker->contains(newAmmoType.ammoType)){
+                    unsavedChanges = false;
+                    ImGui::OpenPopup("Ammo Type Already Exists");
+                }
+                else
+                    ammoTracker->addAmmoToStockpile(newAmmoType);
+            }
+
+            if(ImGui::BeginPopupModal("Ammo Type Already Exists",  NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+                UIHelper::centerText("Ammo Type not created, it already exists.");
+
+                ImGui::Spacing();
+                ImGui::Spacing();
+
+                if (UIHelper::centerButton("Close", ImVec2{120, 0}))
+                    ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+            }
 
             ImGui::EndTabItem();
         }
@@ -897,6 +910,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         }
         ImGui::EndTabBar();
     }
+
 }
 // MARK: Add Cartrigde
 Cartridge StockpileUI::addCartridge (bool& unsavedChanges) {
@@ -1484,8 +1498,8 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, Gu
                                     ImGuiTableFlags_HighlightHoveredColumn,
                                     tableSize )){
         ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None);
 
         ImGui::TableHeadersRow();
@@ -1512,10 +1526,10 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, Gu
                             selectedEvent = e;
                         break;
                     case 1:
-                        ImGui::Text("%s", event.getLocation().getName().c_str());
+                        ImGui::Text("%s", event.getEventType().getName().c_str());
                         break;
                     case 2:
-                        ImGui::Text("%s", event.getEventType().getName().c_str());
+                        ImGui::Text("%s", event.getLocation().getName().c_str());
                         break;
                     case 3:
                         ImGui::Text("%d", event.getNumGunsUsed());
@@ -1544,35 +1558,53 @@ void EventsUI::home(EventTrackerPtr eventTracker, AmmoTrackerPtr ammoTracker, Gu
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Add New Event")){
-            auto newEventBuf { addEvent(gunTracker, eventTypes, locations, ammo, unsavedChanges.events) };
+            auto [applyToStockpile, applyToArmory, eventPtr] { addEvent(gunTracker, eventTypes, locations, ammo, unsavedChanges.events) };
 
             // Check should make new event
-            if(std::get<2>(newEventBuf) && *std::get<2>(newEventBuf) != Event { }){
-                Event& event { *std::get<2>(newEventBuf) };
-                eventTracker->addEvent(event);
+            if(eventPtr && *eventPtr != Event { }){
+                Event& event { *eventPtr };
 
-                // Check if supposed to apply subtraction of ammo OR to guns
-                if(std::get<0>(newEventBuf) || std::get<1>(newEventBuf)){
-                    std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>> gunsUsed { };
-                    event.getAllGunsUsed(gunsUsed);                         // Get all guns used
-
-                    for(const auto& [gun, ammo] : gunsUsed){
-
-                        // Apply Stockpile changes
-                        if(std::get<0>(newEventBuf)){
-                            ammoTracker->removeAmmoFromStockpile(*ammo);
-                            unsavedChanges.stockpile = true; 
-                        }
-                        
-                        // Apply Gun history changes
-                        if(std::get<1>(newEventBuf)){
-                            GunPtr gunBuf { gunTracker->getGun(*gun) };
-                            gunBuf->addToRoundCount(*ammo);
-                            unsavedChanges.armory = true; 
-                        }
-                    } 
+                if(eventTracker->contains(event)){
+                    unsavedChanges.events = false;
+                    ImGui::OpenPopup("Event Already Exists");
                 }
-            }
+                else
+                    if(eventTracker->addEvent(event)){
+                        // Check if supposed to apply subtraction of ammo OR to guns
+                        if(applyToStockpile || applyToArmory){
+                            std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>> gunsUsed { };
+                            event.getAllGunsUsed(gunsUsed);                         // Get all guns used
+
+                            for(const auto& [gun, ammo] : gunsUsed){
+
+                                // Apply Stockpile changes
+                                if(applyToStockpile){
+                                    ammoTracker->removeAmmoFromStockpile(*ammo);
+                                    unsavedChanges.stockpile = true; 
+                                }
+                                
+                                // Apply Gun history changes
+                                if(applyToArmory){
+                                    GunPtr gunBuf { gunTracker->getGun(*gun) };
+                                    gunBuf->addToRoundCount(*ammo);
+                                    unsavedChanges.armory = true; 
+                                }
+                            } 
+                        }
+                    }
+                }
+
+                // If event type already exists popup
+                if(ImGui::BeginPopupModal("Event Already Exists",  NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+                    UIHelper::centerText("Event not created, it already exists.");
+
+                    ImGui::Spacing();
+                    ImGui::Spacing();
+
+                    if (UIHelper::centerButton("Close", ImVec2{120, 0}))
+                        ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                }
 
             ImGui::EndTabItem();
         }
@@ -1814,8 +1846,6 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                             break;
                     }
 
-
-                    
                     returnVal = std::make_shared<Event>(eventBuf);
                     unsavedChanges = true; // Set flag
 
@@ -1827,6 +1857,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                     dayBuf              = 0;
                     monthBuf            = 0;
                     yearBuf             = 2024;
+                    numGuns             = 1;
 
                     selectedGun1    = EMPTY_OBJECTS.GUN;
                     selectedGun2    = EMPTY_OBJECTS.GUN;
