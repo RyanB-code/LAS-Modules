@@ -172,34 +172,15 @@ std::pair<GunPtr, bool> GunTracker::addGun(Gun& gun){
     if(guns.contains(gun))
         return std::pair(guns.at(gun), false);  // Return shared ptr to gun if it already exists, but false since item wasnt inserted
 
-    // Add to known weapon types
-    addWeaponType(gun.getWeaponType());
-
     // Retrieve shared ptr to gun to return if successfully instered
-    GunPtr returnBuffer { nullptr };
-    if(guns.try_emplace(gun, std::make_shared<Gun>(gun)).second) {
-        returnBuffer = guns.at(gun);
-        return std::pair(returnBuffer, true);
-    }
-    else
-         return std::pair(nullptr, false);
-}
-std::pair<GunPtr, bool> GunTracker::addGun(GunPtr gun){
-    if(!gun)
-        return std::pair(nullptr, false);
+    std::pair  returnBuffer { guns.try_emplace(gun, std::make_shared<Gun>(gun)) };
+    
+    
+    if(returnBuffer.second){
+        // Add to known weapon types
+        addWeaponType(gun.getWeaponType());
 
-    if(guns.contains(*gun))
-        return std::pair(guns.at(*gun), false);
-
-    // Add to known weapon types
-    addWeaponType(gun->getWeaponType());
-
-    // Retrieve shared ptr to gun to return if successfully inserted
-    GunPtr returnBuffer { nullptr };
-
-    if(guns.try_emplace(*gun, gun).second) {
-        returnBuffer = guns.at(*gun);
-        return std::pair(returnBuffer, true);
+        return std::pair(guns.at(gun), true);
     }
     else
          return std::pair(nullptr, false);
