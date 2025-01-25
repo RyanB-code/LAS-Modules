@@ -132,6 +132,8 @@ namespace ShooterCentral{
     using AmmoTrackerPtr = std::shared_ptr<AmmoTracker>;
 
     namespace AmmoHelper{
+        std::string makeFileName            (std::string directory, const AmmoType& ammo);       // Makes proper file name for an ammo type
+
         bool        writeTrackedAmmo        (std::string directory, const TrackedAmmo& ammo);
         bool        writeAllCartridges      (std::string path, const StringVector& cartridges);
         bool        writeAllManufacturers   (std::string path, const StringVector& manufacturers);

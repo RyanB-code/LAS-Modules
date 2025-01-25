@@ -23,7 +23,7 @@ bool Manufacturer::operator==(const Manufacturer& other) const{
         return false;
 }
 
-std::ostream& operator<<(std::ostream& os, const Manufacturer& manufactuerer){
+std::ostream& ShooterCentral::operator<<(std::ostream& os, const Manufacturer& manufactuerer){
     os << manufactuerer.getName();
     return os;
 }
@@ -47,12 +47,12 @@ bool Cartridge::operator==(const Cartridge& other) const{
     else
         return false;
 }
-std::ostream& operator<<(std::ostream& os, const Cartridge& cartridge){
+std::ostream& ShooterCentral::operator<<(std::ostream& os, const Cartridge& cartridge){
     os << cartridge.getName();
     return os;
 }
 
-// MARK: Ammo Type
+// MARK: Ammo Type (Operators)
 bool AmmoType::operator==(const AmmoType& other) const {
     if(this->name == other.name && this->manufacturer == other.manufacturer && this->cartridge == other.cartridge && this->grainWeight == other.grainWeight)
         return true;
@@ -81,7 +81,7 @@ bool TrackedAmmo::operator==(const TrackedAmmo& other) const{
         return false;
 }
 
-// MARK: To/From JSON Ammo Type
+// MARK:JSON Ammo Type
 void ShooterCentral::to_json (LAS::json& j, const AmmoType& ammoType){
     j = LAS::json {
         { "name",           ammoType.name },
@@ -103,7 +103,7 @@ void ShooterCentral::from_json(const LAS::json& j, AmmoType& ammoType){
 
 }
 
-// MARK: To/From JSON Tracked Ammo
+// MARK: JSON Tracked Ammo
 void ShooterCentral::to_json (LAS::json& j, const TrackedAmmo& ammo){
     j = LAS::json {
         { "name",           ammo.ammoType.name },
@@ -422,6 +422,33 @@ std::string AmmoTracker::getDirectory() const{
 }
 
 // MARK: AMMO HELPER
+std::string AmmoHelper::makeFileName (std::string directory, const AmmoType& ammo){
+    // Create JSON file name
+    std::ostringstream fileName;
+    fileName << directory;
+
+    for(const auto& c : ammo.manufacturer.getName()){     // Remove spaces and make lowercase
+        if(isalnum(c))
+            fileName << c;
+        else if(c == ' ' || c == '\t')
+            fileName << '-';
+    }
+
+    fileName << '_';
+
+    for(const auto& c : ammo.name){     // Remove spaces and make lowercase
+        if(isalnum(c))
+            fileName << c;
+        else if(c == ' ' || c == '\t')
+            fileName << '-';
+    }
+
+    fileName << '_' << ammo.grainWeight;
+
+    fileName << ".json";
+
+    return fileName.str();
+}
 
 
 
@@ -441,24 +468,8 @@ bool AmmoHelper::writeTrackedAmmo(std::string directory, const TrackedAmmo& ammo
     // Make JSON
     json j = ammo;
 
-    // Create JSON file name
-    std::string fileName;
-    for(const auto& c : ammo.ammoType.name){     // Remove spaces and make lowercase
-        if(isalpha(c))
-            fileName += tolower(c);
-        else if(c == ' ' || c == '\t')
-            fileName += '-';
-        else if(isalnum(c))
-            fileName += c;
-    }
-    fileName += ".json";
-
-    // Make fully qualified path
-    std::string filePath;
-    filePath = directory + fileName;
-
     // Write to file
-    std::ofstream file{filePath};
+    std::ofstream file{makeFileName(directory, ammo.ammoType)};
     file << std::setw(1) << std::setfill('\t') << j;
     file.close();
    
