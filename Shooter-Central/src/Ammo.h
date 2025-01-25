@@ -8,9 +8,8 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <tuple>
 #include <vector>
-
-#include <iostream>
 
 
 namespace ShooterCentral{
