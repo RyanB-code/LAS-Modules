@@ -59,6 +59,9 @@ bool AmmoType::operator==(const AmmoType& other) const {
     else
         return false;
 }
+bool AmmoType::operator<(const AmmoType& other) const{
+    return std::tuple{manufacturer.getName(), cartridge.getName(), grainWeight} < std::tuple(other.manufacturer.getName(), other.cartridge.getName(), other.grainWeight);
+}
 
 // MARK: AMMO TRACKER
 AmmoTracker::AmmoTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger }
@@ -68,6 +71,7 @@ AmmoTracker::AmmoTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger 
 AmmoTracker::~AmmoTracker(){
     
 }
+
 
 // MARK: Tracked Ammo
 bool TrackedAmmo::operator==(const TrackedAmmo& other) const{

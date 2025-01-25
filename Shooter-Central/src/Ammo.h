@@ -52,7 +52,8 @@ namespace ShooterCentral{
         Cartridge       cartridge       { };     
         int             grainWeight     { 0 };
 
-        bool operator==(const AmmoType& other) const;
+        bool operator== (const AmmoType& other) const;
+        bool operator<  (const AmmoType& other) const;
     };
 
 
@@ -79,44 +80,6 @@ namespace ShooterCentral{
     using ConstTrackedAmmoPtr       = std::shared_ptr<const TrackedAmmo>;
     using ConstTrackedAmmoPtrList   = std::vector<ConstTrackedAmmoPtr>;
 
-}
-
-namespace std{
-    template <>
-    struct hash<ShooterCentral::Manufacturer> {
-        size_t operator()(const ShooterCentral::Manufacturer& manufacturer) const{
-            return std::hash<std::string>()(manufacturer.getName());
-        }
-    };
-    template<>
-    struct hash<ShooterCentral::Cartridge> {
-        size_t operator()(const ShooterCentral::Cartridge& cartridge) const{
-            return std::hash<std::string>()(cartridge.getName());
-        }
-    };
-
-    template <class T>
-    inline void hash_combine(std::size_t& seed, const T& v)
-    {
-        std::hash<T> hasher;
-        seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    }
-    template <>
-    struct hash<ShooterCentral::AmmoType> {
-        size_t operator()(const ShooterCentral::AmmoType& ammo) const{
-            std::size_t seed { 0 };
-
-            std::hash_combine(seed, ammo.name);
-            std::hash_combine(seed, ammo.manufacturer);
-            std::hash_combine(seed, ammo.cartridge);
-            std::hash_combine(seed, ammo.grainWeight);
-
-            return seed;
-        }
-    };
-}
-
-namespace ShooterCentral{
 
     class AmmoTracker{
     public:
@@ -153,9 +116,9 @@ namespace ShooterCentral{
         std::string getDirectory        () const;
 
     private:
-        std::unordered_map<AmmoType, TrackedAmmoPtr>    ammoStockpile;
-        std::map<std::string, Cartridge>                cartridges;
-        std::map<std::string, Manufacturer>             manufacturers;
+        std::map<AmmoType, TrackedAmmoPtr>  ammoStockpile;
+        std::map<std::string, Cartridge>    cartridges;
+        std::map<std::string, Manufacturer> manufacturers;
 
 
         std::string             saveDirectory;
