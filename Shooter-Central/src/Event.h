@@ -6,9 +6,10 @@
 #include <stdint.h>
 #include <string>
 #include <memory>
-#include <unordered_map>
+#include <map>
 #include <array>
 #include <chrono>
+#include <tuple>
 
 using ymd       = std::chrono::year_month_day;
 using timepoint = std::chrono::system_clock::time_point;
@@ -71,7 +72,9 @@ namespace ShooterCentral{
         void    getAllGunsUsed  (std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list) const; // Clears vector before adding elements 
         int     getNumGunsUsed  () const;
 
-        bool operator==(const Event& other) const;
+        bool operator== (const Event& other) const;
+        bool operator<  (const Event& other) const;
+
 
     private:
         static constexpr int MAX_GUNS_PER_EVENT  { 5 };
@@ -87,37 +90,9 @@ namespace ShooterCentral{
 
     void to_json    (LAS::json& j, const Event& event);
     void from_json  (const LAS::json& j, Event& event); 
-}
 
-namespace std{
-    template <>
-    struct hash<ShooterCentral::Location> {
-        size_t operator()(const ShooterCentral::Location& location) const{
-            return std::hash<std::string>()(location.getName());
-        }
-    };
-    template <>
-    struct hash<ShooterCentral::EventType> {
-        size_t operator()(const ShooterCentral::EventType& eventType) const{
-            return std::hash<std::string>()(eventType.getName());
-        }
-    };
-    template <>
-    struct hash<ShooterCentral::Event> {
-        size_t operator()(const ShooterCentral::Event& event) const{
-            std::size_t seed { 0 };
 
-            std::hash_combine(seed, event.getLocation());
-            std::hash_combine(seed, event.printDate());
-            std::hash_combine(seed, event.getEventType());
-
-            return seed;
-        }
-    };
-}
-
-namespace ShooterCentral{
-
+    
     class EventTracker {
     public:
         EventTracker(LAS::Logging::LoggerPtr setLogger);
@@ -147,7 +122,7 @@ namespace ShooterCentral{
         bool readLocations      ();
 
     private:
-        std::unordered_map<Event, EventPtr> events;
+        std::map<Event, EventPtr> events;
         std::map<std::string, EventType>  eventTypes;
         std::map<std::string, Location>  locations;
 
