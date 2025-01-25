@@ -136,13 +136,20 @@ int Event::getNumGunsUsed() const{
     }
     return retVal;
 }
-
+// MARK: Operators
 bool Event::operator==(const Event& other) const{
     if(this->getLocation() == other.getLocation() && this->printDate() == other.printDate())
         return true;
 
-    return false;
+bool Event::operator<(const Event& other) const{
+    // This orders with recent events first
+    return std::tuple{other.getDate(), other.getEventType().getName(), other.getLocation().getName()} < std::tuple{getDate(), getEventType().getName(), getLocation().getName()};
 }
+
+
+
+
+
 // MARK: To/from JSON
 void ShooterCentral::to_json(LAS::json& j, const Event& event){
     using LAS::json;
@@ -150,14 +157,10 @@ void ShooterCentral::to_json(LAS::json& j, const Event& event){
     // Write every ammo type used and amount
     std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>> gunsUsed;
     event.getAllGunsUsed(gunsUsed);
-
-    // BROKEN - need to add multiple tracked ammo per gun
     
 	json gunsArray = json::array();
 	for (const auto& [gun, ammo] : gunsUsed){
         if(*gun != Gun { }){
-            //json gunsJson { *gun, *ammo };
-
             // Make array for all ammo used
             // Allows for using normal from_json(Gun) function
             json ammoArrayJson = json::array();
