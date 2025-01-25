@@ -466,7 +466,7 @@ Gun ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, cons
       
         // Check return value
         if(verifyGunReturn == 0){
-            returnVal = name, selectedWT, selectedCartridge;
+            returnVal = Gun {name, selectedWT, selectedCartridge};
             unsavedChanges = true;
 
             // Reset buffers
