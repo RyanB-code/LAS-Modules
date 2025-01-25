@@ -153,8 +153,7 @@ bool AmmoTracker::addAmmoToStockpile (const TrackedAmmo& trackedAmmo){
         return true;
     }
     
-    TrackedAmmoPtr ammoBuf { std::make_shared<TrackedAmmo>(trackedAmmo) };
-    ammoStockpile.try_emplace(trackedAmmo.ammoType, ammoBuf);
+    ammoStockpile.try_emplace(trackedAmmo.ammoType, std::make_shared<TrackedAmmo>(trackedAmmo));
 
     if(ammoStockpile.contains(trackedAmmo.ammoType)){
         addCartridge(trackedAmmo.ammoType.cartridge);           // Add to cartridges, does not matter return
