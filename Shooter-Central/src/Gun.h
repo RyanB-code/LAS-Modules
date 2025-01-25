@@ -117,6 +117,9 @@ namespace ShooterCentral{
 
         static constexpr std::string_view WEAPON_TYPES_FILENAME {"WeaponTypes.json"};
     };
+    using GunTrackerPtr = std::shared_ptr<GunTracker>;
+
+
 
     namespace GunHelper{
         bool    writeGun            (std::string directory, const Gun& gun);                // Creates a file for the gun
@@ -126,6 +129,4 @@ namespace ShooterCentral{
         Gun     readGun             (const std::string& path);
 
     }
-
-    using GunTrackerPtr = std::shared_ptr<GunTracker>;
 }
