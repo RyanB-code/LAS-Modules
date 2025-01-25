@@ -30,8 +30,6 @@ namespace ShooterCentral{
 
     std::ostream& operator<<(std::ostream& os, const Manufacturer& manufactuerer);
 
-    using ManufacturerList = std::vector<Manufacturer>;
-
     class Cartridge{
     public:
         explicit Cartridge(std::string setName="NULL");
@@ -47,11 +45,6 @@ namespace ShooterCentral{
 
     std::ostream& operator<<(std::ostream& os, const Cartridge& cartridge);
 
-    using CartridgeList             = std::vector<Cartridge>;
-    using AmountPerCartridgeList    = std::vector<std::pair<Cartridge, int>>;
-
-
-
 
     struct AmmoType {
         std::string     name            { };
@@ -62,10 +55,9 @@ namespace ShooterCentral{
         bool operator==(const AmmoType& other) const;
     };
 
+
     void to_json    (LAS::json& j, const AmmoType& ammoType);
     void from_json  (const LAS::json& j, AmmoType& ammoType);
-
-    using AmmoTypePtr   = std::shared_ptr<AmmoType>;
 
     struct TrackedAmmo {
         AmmoType    ammoType    { };
@@ -76,6 +68,12 @@ namespace ShooterCentral{
 
     void to_json    (LAS::json& j, const TrackedAmmo& ammo);
     void from_json  (const LAS::json& j, TrackedAmmo& ammo);
+
+
+    using ManufacturerList          = std::vector<Manufacturer>;
+    using CartridgeList             = std::vector<Cartridge>;
+    using AmountPerCartridgeList    = std::vector<std::pair<Cartridge, int>>;
+    using AmmoTypePtr               = std::shared_ptr<AmmoType>;
 
     using TrackedAmmoPtr            = std::shared_ptr<TrackedAmmo>;
     using ConstTrackedAmmoPtr       = std::shared_ptr<const TrackedAmmo>;
