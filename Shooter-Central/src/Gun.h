@@ -111,6 +111,8 @@ namespace ShooterCentral{
 
 
     namespace GunHelper{
+        std::string makeFileName    (std::string directory, const Gun& gun);
+
         bool    writeGun            (std::string directory, const Gun& gun);                // Creates a file for the gun
         bool    writeAllWeaponTypes (std::string path,      const WeaponTypeList& list);    // Takes a list because they are all saved in the same file
 

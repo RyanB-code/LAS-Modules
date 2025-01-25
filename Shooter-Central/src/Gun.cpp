@@ -351,6 +351,40 @@ bool GunTracker::readWeaponTypes  () {
 
 
 // MARK: GUN HELPER
+std::string GunHelper::makeFileName    (std::string directory, const Gun& gun){
+
+    std::ostringstream fileName;
+    fileName << directory;
+
+    for(const auto& c : gun.getWeaponType().getName()){     // Remove spaces
+        if(isalnum(c))
+            fileName << c;
+        else if(c == ' ' || c == '\t')
+            fileName << '-';
+    }
+
+    fileName << '_';
+
+    for(const auto& c : gun.getCartridge().getName()){     // Remove spaces
+        if(isalnum(c))
+            fileName << c;
+        else if(c == ' ' || c == '\t')
+            fileName << '-';
+    }
+
+    fileName << '_';
+
+    for(const auto& c : gun.getName()){     // Remove spaces
+        if(isalnum(c))
+            fileName << c;
+        else if(c == ' ' || c == '\t')
+            fileName << '-';
+    }
+
+    fileName << ".json";
+
+    return fileName.str();
+}
 
 
 // MARK: R/W Gun
@@ -368,24 +402,8 @@ bool GunHelper::writeGun(std::string directory, const Gun& gun){
     // Make JSON
     json j = gun;
 
-    // Create JSON file name
-    std::string fileName;
-    for(const auto& c : gun.getName()){     // Remove spaces and make lowercase
-        if(isalpha(c))
-            fileName += tolower(c);
-        else if(c == ' ' || c == '\t')
-            fileName += '_';
-        else if(isalnum(c))
-            fileName += c;
-    }
-    fileName += ".json";
-
-    // Make fully qualified path
-    std::string filePath;
-    filePath = directory + fileName;
-
     // Write to file
-    std::ofstream file{filePath};
+    std::ofstream file{makeFileName(directory, gun)};
     file << std::setw(1) << std::setfill('\t') << j;
     file.close();
    
