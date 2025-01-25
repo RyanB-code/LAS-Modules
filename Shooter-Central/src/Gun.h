@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <memory>
 #include <map>
+#include <tuple>
 
 //MARK: GUN
 namespace ShooterCentral{
