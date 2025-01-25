@@ -225,7 +225,7 @@ void ArmoryUI::home(GunTrackerPtr gunTracker, bool& unsavedChanges, const Cartri
     ImGui::SeparatorText( "Guns" );
     ImGui::Spacing();
     int row { 0 };
-    if(ImGui::BeginTable("View Gun Table", 4, ImGuiTableFlags_Borders  | ImGuiTableRowFlags_Headers | ImGuiTableFlags_HighlightHoveredColumn, tableSize)) {
+    if(ImGui::BeginTable("View Gun Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize)) {
         ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
@@ -390,10 +390,9 @@ Gun ArmoryUI::addGun(bool& unsavedChanges, const CartridgeList& cartridges, cons
     static WeaponType   selectedWT          { };
     static int          verifyGunReturn     { -1 };
 
-
     static char nameBuf[UI_SETTINGS.MAX_TEXT_INPUT_CHARS] = "Enter Name";
 
-    Gun      returnVal              { };
+    Gun         returnVal           { };
     std::string cartComboPreview    { };
     std::string wtComboPreview      { };
 
