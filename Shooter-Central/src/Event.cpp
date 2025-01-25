@@ -16,7 +16,7 @@ Location::operator std::string() const {
     return name;
 }
 bool Location::operator==(const Location& other) const{
-    if(this->name == other.getName())
+    if(this->getName() == other.getName())
         return true;
     else
         return false;
@@ -41,7 +41,7 @@ EventType::operator std::string() const {
     return name;
 }
 bool EventType::operator==(const EventType& other) const{
-    if(this->name == other.getName())
+    if(this->getName() == other.getName())
         return true;
     else
         return false;
@@ -138,8 +138,19 @@ int Event::getNumGunsUsed() const{
 }
 // MARK: Operators
 bool Event::operator==(const Event& other) const{
-    if(this->getLocation() == other.getLocation() && this->printDate() == other.printDate())
-        return true;
+    if(this->getDate() != other.getDate())
+        return false;
+
+    if(this->getEventType() != other.getEventType())
+        return false;
+
+    if(this->getLocation() != other.getLocation())
+        return false;
+    
+    return true;
+}
+
+
 
 bool Event::operator<(const Event& other) const{
     // This orders with recent events first
@@ -255,11 +266,10 @@ bool EventTracker::addEvent (Event& event){
     if(events.contains(event))
         return false;
 
-    events.try_emplace(event, std::make_shared<Event>(event));
-
-    if(events.contains(event)){
+    if(events.try_emplace(event, std::make_shared<Event>(event)).second){
         addEventType(event.getEventType());
         addLocation(event.getLocation());
+
         return true;
     }
     else
@@ -453,6 +463,32 @@ bool EventTracker::readLocations(){
 }
 
 // MARK: EVENT HELPER
+std::string EventHelper::makeFileName(std::string directory, const Event& event){
+    // Output fileName
+    std::ostringstream fileName;
+    fileName << directory << std::format("{:%Y-%m-%d}", event.getDate()) << '_';
+
+    for(const auto& c : event.getEventType().getName()){     // Remove spaces, make sure alnum
+        if(c == ' ' || c == '\t')
+            fileName << '-';
+        else if(isalnum(c))
+            fileName << c;
+    }
+
+    fileName << '_';
+
+    for(const auto& c : event.getLocation().getName()){     // Remove spaces, make sure alnum
+        if(c == ' ' || c == '\t')
+            fileName << '-';
+        else if(isalnum(c))
+            fileName << c;
+    }
+
+    fileName << ".json";
+
+    return fileName.str();
+}
+
 bool EventHelper::writeEvent(std::string directory, const Event& event){
     using LAS::json;
 
@@ -464,37 +500,11 @@ bool EventHelper::writeEvent(std::string directory, const Event& event){
     if(!std::filesystem::exists(directory))
 		return false;
 
-    // Output for final types used in filename
-    std::string eventTypeBuf;
-    std::string locationBuf;
-
-    for(const auto& c : std::string{event.getEventType()}){     // Remove spaces, make sure alnum
-        if(c == ' ' || c == '\t')
-            eventTypeBuf += '-';
-        else if(isalnum(c))
-            eventTypeBuf += c;
-    }
-
-    for(const auto& c : std::string{event.getLocation()}){     // Remove spaces, make sure alnum
-        if(c == ' ' || c == '\t')
-            locationBuf += '-';
-        else if(isalnum(c))
-            locationBuf += c;
-    }
-
-    // Create JSON file name
-    std::ostringstream fileName;
-    fileName << std::format("{:%Y-%m-%d}", event.getDate()) << '_' << eventTypeBuf << '_' << locationBuf << ".json";
-
-
-    std::string filePath { directory + fileName.str() };  // Make fully qualified path
-
-
     // Make JSON
     json j = event;
 
     // Write to file
-    std::ofstream file{filePath};
+    std::ofstream file{makeFileName(directory, event)};
     file << std::setw(1) << std::setfill('\t') << j;
     file.close();
    

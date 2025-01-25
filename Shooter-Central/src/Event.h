@@ -137,6 +137,8 @@ namespace ShooterCentral{
     using EventTrackerPtr = std::shared_ptr<EventTracker>;
 
     namespace EventHelper{
+        std::string makeFileName     (std::string directory, const Event& event);           // Makes proper file name for an Event
+
         bool    writeEvent          (std::string directory, const Event&            event);
         bool    writeAllLocations   (std::string path,      const LocationList&     list);
         bool    writeAllEventTypes  (std::string path,      const EventTypeList&    list);
