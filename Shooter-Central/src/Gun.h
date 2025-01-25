@@ -5,7 +5,7 @@
 #include <string>
 #include <stdint.h>
 #include <memory>
-#include <unordered_map>
+#include <map>
 
 //MARK: GUN
 namespace ShooterCentral{
@@ -27,6 +27,10 @@ namespace ShooterCentral{
 
     using WeaponTypeList = std::vector<WeaponType>;
 
+
+
+
+
     class Gun final {
     public:
         Gun(std::string setName="N/A", WeaponType setWeaponType=WeaponType{ }, Cartridge setCartridge=Cartridge{ });
@@ -41,45 +45,30 @@ namespace ShooterCentral{
 
         void getAllAmmoUsed (ConstTrackedAmmoPtrList& ammoUsed) const; // Clears vector before adding elements
 
-        bool operator==(const Gun& other) const;
+        bool operator== (const Gun& other) const;
+        bool operator<  (const Gun& other) const;
+
 
     private:
         std::string name;
         WeaponType  weaponType;
         Cartridge   cartridge;
 
-        std::unordered_map<AmmoType, TrackedAmmo> ammoTracker;
+        std::map<AmmoType, TrackedAmmo> ammoTracker;
     };
+
 
     void to_json    (LAS::json& j, const Gun& gun);
     void from_json  (const LAS::json& j, Gun& gun); 
-}
-namespace std{
-    template <>
-    struct hash<ShooterCentral::WeaponType> {
-        size_t operator()(const ShooterCentral::WeaponType& wt) const{
-            return std::hash<std::string>()(wt.getName());
-        }
-    };
-    template <>
-    struct hash<ShooterCentral::Gun> {
-        size_t operator()(const ShooterCentral::Gun& gun) const{
-            std::size_t seed { 0 };
-
-            std::hash_combine(seed, gun.getName());
-            std::hash_combine(seed, gun.getWeaponType());
-            std::hash_combine(seed, gun.getCartridge());
-
-            return seed;
-        }
-    };
-}
-
-namespace ShooterCentral{
 
     using GunPtr            = std::shared_ptr<Gun>;
     using ConstGunPtr       = std::shared_ptr<const Gun>;
     using ConstGunPtrList   = std::vector<ConstGunPtr>;
+
+
+
+
+
     class GunTracker{
     public:
         GunTracker(LAS::Logging::LoggerPtr setLogger);
@@ -110,7 +99,7 @@ namespace ShooterCentral{
 
     private:
         LAS::Logging::LoggerPtr             logger;
-        std::unordered_map<Gun, GunPtr>     guns;
+        std::map<Gun, GunPtr>               guns;
         std::map<std::string, WeaponType>   weaponTypes;
 
         std::string saveDirectory;

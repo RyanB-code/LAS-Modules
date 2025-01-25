@@ -71,12 +71,18 @@ void Gun::getAllAmmoUsed(ConstTrackedAmmoPtrList& ammoUsed) const{
         ammoUsed.emplace_back(std::make_shared<const TrackedAmmo>(trackedAmmo));
     }
 }
+// MARK: Operators
 bool Gun::operator==(const Gun& other) const{
     if(this->name == other.name && this->weaponType == other.weaponType && this->cartridge == other.cartridge)
         return true;
     else
         return false;
 }
+bool Gun::operator<(const Gun& other) const{
+    return std::tuple{getWeaponType().getName(), getCartridge().getName(), getName()} < std::tuple{other.getWeaponType().getName(), other.getCartridge().getName(), other.getName()};
+}
+
+
 // MARK: To/From JSON
 void ShooterCentral::to_json(LAS::json& j, const Gun& gun){
     using LAS::json;
