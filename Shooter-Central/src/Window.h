@@ -10,7 +10,7 @@
 
 namespace ShooterCentral{
     struct UISettings{
-        const int MAX_LIST_NUM               { 10 };
+        const int MAX_LIST_NUM               { 32 };
         const int MAX_TEXT_INPUT_CHARS       { 32 };
         const int MAX_TEXT_INPUT_CHARS_NOTES { 256 };
     };
