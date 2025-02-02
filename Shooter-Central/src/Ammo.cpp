@@ -52,25 +52,20 @@ std::ostream& ShooterCentral::operator<<(std::ostream& os, const Cartridge& cart
     return os;
 }
 
-// MARK: Ammo Type (Operators)
+// MARK: Ammo Type Operators
 bool AmmoType::operator==(const AmmoType& other) const {
-    if(this->name == other.name && this->manufacturer == other.manufacturer && this->cartridge == other.cartridge && this->grainWeight == other.grainWeight)
+    if(name == other.name && manufacturer == other.manufacturer && cartridge == other.cartridge && grainWeight == other.grainWeight)
         return true;
     else
         return false;
 }
 bool AmmoType::operator<(const AmmoType& other) const{
-    return std::tuple{manufacturer.getName(), cartridge.getName(), grainWeight} < std::tuple(other.manufacturer.getName(), other.cartridge.getName(), other.grainWeight);
+   std::tuple<std::string, std::string, std::string, int> lhs {cartridge.getName(), manufacturer.getName(), name, grainWeight};
+   std::tuple<std::string, std::string, std::string, int> rhs {other.cartridge.getName(), other.manufacturer.getName(), other.name, other.grainWeight};
+
+   return lhs < rhs;
 }
 
-// MARK: AMMO TRACKER
-AmmoTracker::AmmoTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger }
-{
-
-}
-AmmoTracker::~AmmoTracker(){
-    
-}
 
 
 // MARK: Tracked Ammo
@@ -127,8 +122,14 @@ void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
 
 }
 
-// MARK: STOCKPILE
+// MARK: AMMO TRACKER
+AmmoTracker::AmmoTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger }
+{
 
+}
+AmmoTracker::~AmmoTracker(){
+    
+}
 
 
 
@@ -153,11 +154,11 @@ bool AmmoTracker::addAmmoToStockpile (const TrackedAmmo& trackedAmmo){
         return true;
     }
     
-    ammoStockpile.try_emplace(trackedAmmo.ammoType, std::make_shared<TrackedAmmo>(trackedAmmo));
 
-    if(ammoStockpile.contains(trackedAmmo.ammoType)){
+    if(ammoStockpile.try_emplace(trackedAmmo.ammoType, std::make_shared<TrackedAmmo>(trackedAmmo)).second){
         addCartridge(trackedAmmo.ammoType.cartridge);           // Add to cartridges, does not matter return
         addManufacturer(trackedAmmo.ammoType.manufacturer);
+
         return true;
     }
     else
