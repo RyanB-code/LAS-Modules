@@ -101,6 +101,7 @@ namespace ShooterCentral{
         void    getAmmoCountByCartridge (AmountPerCartridgeList&            list)                               const;  // Clears vector before adding elements
         void    getAllAmmoByCartridge   (std::vector<TrackedAmmo>&          list, const Cartridge& cartridge)   const;  // Clears vector before adding elements, gives copies of ammo objects, adds if cartridge name is equal
 
+        int     getAmountForCartridge   (const Cartridge& cartridge)    const;
 
         bool    writeAllAmmo            () const;
         bool    writeAllCartridges      () const;
