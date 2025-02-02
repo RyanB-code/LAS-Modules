@@ -41,7 +41,6 @@ bool Framework::setup(LAS::Logging::LoggerPtr setLoggerPtr, const std::string& d
         logger->log("Failed to setup window", Tags{"FATAL", "SC"});
         return false;
     }
-
    
     logger->log("Setup sucessful", Tags{"ROUTINE", "SC"});
     return true;
@@ -124,13 +123,17 @@ bool Framework::setupGunTracker    (std::string directory){
     if(!gunTracker->readWeaponTypes())
         return false;
 
-    // Add gun cartridges to ammo tracker
+    // Add all ammo types to AmmoTracker
     std::vector<ConstGunPtr> gunList;
     gunTracker->getAllGuns(gunList);
 
-    StringVector cartridges;
     for(const auto& gun : gunList){
-        ammoTracker->addCartridge(gun->getCartridge());
+        ConstTrackedAmmoPtrList ammoUsed;
+        gun->getAllAmmoUsed(ammoUsed);
+
+        for(const auto& trackedAmmo : ammoUsed)
+            ammoTracker->addAmmoToStockpile(TrackedAmmo{trackedAmmo->ammoType, 0 });
+            // 0 as amount since ammoUsed tracks rounds shot through gun and isn't what is in stockpile
     }
 
     return true;
