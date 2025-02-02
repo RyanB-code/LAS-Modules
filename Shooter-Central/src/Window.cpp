@@ -2218,7 +2218,7 @@ void EventsUI::eventGunTable(const std::vector<std::pair<ConstGunPtr, ConstTrack
     if(showAmmoUsed)
         tableColumns = 7;
     else
-        tableColumns = 3;
+        tableColumns = 4;
 
     ImGui::SeparatorText("Guns Used");
     ImGui::Spacing();
@@ -2231,12 +2231,12 @@ void EventsUI::eventGunTable(const std::vector<std::pair<ConstGunPtr, ConstTrack
         ImGui::TableSetupColumn("Weapon Type");
         ImGui::TableSetupColumn("Cartridge");
         ImGui::TableSetupColumn("Name");
+        ImGui::TableSetupColumn("Rounds Shot");
 
         if(showAmmoUsed){
             ImGui::TableSetupColumn("Ammo Used");
             ImGui::TableSetupColumn("Manufacturer");
             ImGui::TableSetupColumn("Grain Weight");
-            ImGui::TableSetupColumn("Rounds Shot");
         }
 
         ImGui::TableHeadersRow();
@@ -2257,16 +2257,16 @@ void EventsUI::eventGunTable(const std::vector<std::pair<ConstGunPtr, ConstTrack
                             ImGui::Text("%s", gun->getName().c_str());
                             break;
                         case 3:
-                            ImGui::Text("%s", ammo->ammoType.name.c_str());
+                            ImGui::Text("%d", ammo->amount);
                             break;
                         case 4:
-                            ImGui::Text("%s", ammo->ammoType.manufacturer.getName().c_str());
+                            ImGui::Text("%s", ammo->ammoType.name.c_str());
                             break;
                         case 5:
-                            ImGui::Text("%d", ammo->ammoType.grainWeight);
+                            ImGui::Text("%s", ammo->ammoType.manufacturer.getName().c_str());
                             break;
                         case 6:
-                            ImGui::Text("%d", ammo->amount);
+                            ImGui::Text("%d", ammo->ammoType.grainWeight);
                             break;
                         default:
                             ImGui::Text("Broken table");
