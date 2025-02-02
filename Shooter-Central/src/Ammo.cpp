@@ -253,6 +253,21 @@ void AmmoTracker::getAllManufacturers(ManufacturerList& list) const{
         list.emplace_back(manufacturer);
     }
 }
+int AmmoTracker::getAmountForCartridge   (const Cartridge& cartridge)    const{
+    if(!cartridges.contains(cartridge))
+        return -1;
+
+    int amountBuf { 0 };
+    std::vector<TrackedAmmo> sameCartridgeList;
+    getAllAmmoByCartridge(sameCartridgeList, cartridge);
+
+    // For the cartridge, add the amounts together
+    for(const auto& ammo : sameCartridgeList)
+        amountBuf += ammo.amount;
+
+    return amountBuf;
+}
+
 
 // MARK: Write
 bool AmmoTracker::writeAllAmmo() const{
