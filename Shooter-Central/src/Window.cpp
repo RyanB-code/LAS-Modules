@@ -861,7 +861,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         if(ImGui::BeginTabItem("Add to Existing Ammo")){        
             TrackedAmmo ammoToAddTo {addToExistingAmmoType(unsavedChanges, ammoList)};
 
-            if(ammoToAddTo != TrackedAmmo { })
+            if(ammoToAddTo != EMPTY_OBJECTS.TRACKED_AMMO)
                 ammoTracker->addAmmoToStockpile(ammoToAddTo);
 
             ImGui::EndTabItem();
@@ -869,7 +869,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         if(ImGui::BeginTabItem("Add New Ammo Type")){
             TrackedAmmo newAmmoType {addAmmoType(unsavedChanges, cartridges, manufacturers)};
 
-            if(newAmmoType != TrackedAmmo { }){
+            if(newAmmoType != EMPTY_OBJECTS.TRACKED_AMMO){
                 if(ammoTracker->contains(newAmmoType.ammoType)){
                     unsavedChanges = false;
                     ImGui::OpenPopup("Ammo Type Already Exists");
@@ -894,7 +894,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         if(ImGui::BeginTabItem("Add New Cartridge")){
             Cartridge newCartridge {addCartridge(unsavedChanges)};
 
-            if(newCartridge != Cartridge { })
+            if(newCartridge != EMPTY_OBJECTS.CARTRIDGE)
                 ammoTracker->addCartridge(newCartridge);
 
             ImGui::EndTabItem();
@@ -902,7 +902,7 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
         if(ImGui::BeginTabItem("Add New Manufacturer")){
             Manufacturer newManufacturer {addManufacturer(unsavedChanges)};
 
-            if(newManufacturer != Manufacturer { })
+            if(newManufacturer != EMPTY_OBJECTS.MANUFACTURER)
                 ammoTracker->addManufacturer(newManufacturer);
 
             ImGui::EndTabItem();
