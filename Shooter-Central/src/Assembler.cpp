@@ -10,7 +10,7 @@ bool LASM_loadModuleInfo(LAS::Information::ModuleInfo& moduleInfo){
     Information::Version sdkVersion { SDK::getVersionMajor(), SDK::getVersionMinor(), SDK::getVersionPatch()};
 
     moduleInfo.sdkVersion       = sdkVersion;
-    moduleInfo.moduleVersion    = Information::Version{0, 3 , 0};
+    moduleInfo.moduleVersion    = Information::Version{0, 3 , 2};
     moduleInfo.title            = application.getWindow()->getTitle();
     moduleInfo.commandGroupName = application.getCommandGroupName();
     moduleInfo.window           = application.getWindow();
