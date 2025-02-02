@@ -700,6 +700,17 @@ void StockpileUI::home (AmmoTrackerPtr ammoTracker, bool& unsavedChanges){
                 }
                 ImGui::EndCombo();
             }
+
+            ImGui::Spacing();
+            ImGui::Text("Total on Hand:");
+            ImGui::SameLine (150);
+
+            int amount {  ammoTracker->getAmountForCartridge(selectedCartridge) };
+            if(amount < 0)
+                ImGui::Text("N/A");
+            else
+                ImGui::Text("%d", ammoTracker->getAmountForCartridge(selectedCartridge));
+
             ammoTracker->getAllAmmoByCartridge(selectedCatridgeAmmoList, selectedCartridge);  // Populates list of ammo with selected cartridge for use in combo dropdown
         }
     }
