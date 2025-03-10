@@ -1964,6 +1964,16 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
         ImGui::SetNextItemWidth(100);
         ImGui::InputInt("##Input Year", &yearBuf);
 
+	// Button to auto fill today's date
+	ImGui::SameLine(0, 30);
+	if(ImGui::Button("Today", ImVec2(75, 20))){
+        const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
+
+        const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
+        dayBuf = static_cast<unsigned>(ymd.day());
+        monthBuf = static_cast<unsigned>(ymd.month());
+        yearBuf = static_cast<int>(ymd.year());
+	}
         // Grayed out details, approximate centers of text box did the trick
         ImGui::SetCursorPosX(125);
         ImGui::TextDisabled("(Day)");
