@@ -6,8 +6,6 @@
 
 #include <LAS/Window.h>
 
-#include <iostream> // FOR TESTING ONLY
-
 namespace ShooterCentral{
     struct UISettings{
         const int MAX_LIST_NUM               { 32 };
@@ -87,23 +85,23 @@ namespace ShooterCentral{
     }
 
     namespace EventsUI{
-        void    home                (EventTrackerPtr eventTracker,  AmmoTrackerPtr ammoTracker, GunTrackerPtr gunTracker, ShooterCentralWindow::UnsavedChanges& unsavedChanges);
-        void    viewEvent           (std::shared_ptr<const Event> event);
+        void        home            (EventTrackerPtr eventTracker,  AmmoTrackerPtr ammoTracker, GunTrackerPtr gunTracker, ShooterCentralWindow::UnsavedChanges& unsavedChanges);
+        void        viewEvent       (std::shared_ptr<const Event> event);
 
-        EventType                   addEventType    (bool& unsavedChanges);
-        Location                    addLocation     (bool& unsavedChanges);
+        EventType   addEventType    (bool& unsavedChanges);
+        Location    addLocation     (bool& unsavedChanges);
 
         // Apply to stockpile, apply to guns, event
         // Need to add separate verification function for this
-        std::tuple<bool, bool, EventPtr>   addEvent        (GunTrackerPtr gunTracker,                  const EventTypeList& eventTypes,    const LocationList& locations, 
-                                                            const ConstTrackedAmmoPtrList& ammoList,    bool& unsavedChanges);
+        std::tuple<bool, bool, EventPtr>   addEvent (GunTrackerPtr gunTracker,                  const EventTypeList& eventTypes,    const LocationList& locations, 
+                                                    const ConstTrackedAmmoPtrList& ammoList,    bool& unsavedChanges);
 
         bool    verifyEventType     (const std::string& name);
         bool    verifyLocation      (const std::string& name);
         
         void    eventGunTable       (const std::vector<std::pair<ConstGunPtr, ConstTrackedAmmoPtr>>& list, bool showAmmoUsed);
         void    selectGunTable      (const ConstGunPtrList&         list,   Gun&         selectedGun);
-        void    selectAmmoTable     (const ConstTrackedAmmoPtrList& list,   TrackedAmmo& selectedAmmo);
+        void    selectAmmoTable     (const ConstTrackedAmmoPtrList& list,   TrackedAmmo& selectedAmmo, const char* cartridgeFilter=nullptr);
     }
 }
 
