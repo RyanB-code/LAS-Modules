@@ -2031,7 +2031,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                     ImGui::PushID("Select Ammo 3");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun3.getName() + "\"");
-                    selectAmmoTable(ammoList, selectedTA3);
+                    selectAmmoTable(ammoList, selectedTA3, selectedGun3.getCartridge().getName().c_str());
 
                     // Select amount of ammo used
                     ImGui::Text("Amount Used");
@@ -2048,7 +2048,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                     ImGui::PushID("Select Ammo 2");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun2.getName() + "\"");
-                    selectAmmoTable(ammoList, selectedTA2);
+                    selectAmmoTable(ammoList, selectedTA2, selectedGun2.getCartridge().getName().c_str());
 
                     // Select amount of ammo used
                     ImGui::Text("Amount Used");
@@ -2065,7 +2065,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
                     ImGui::PushID("Select Ammo 1");
                     ImGui::Separator();
                     UIHelper::centerText("Select Ammo for \"" + selectedGun1.getName() + "\"");
-                    selectAmmoTable(ammoList, selectedTA1);
+                    selectAmmoTable(ammoList, selectedTA1, selectedGun1.getCartridge().getName().c_str());
 
                     // Select amount of ammo used
                     ImGui::Text("Amount Used");
@@ -2349,7 +2349,7 @@ void EventsUI::selectGunTable (const ConstGunPtrList& list, Gun& selectedGun){
 }
 
 // MARK: Select Ammo Table
-void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& list, TrackedAmmo& selectedAmmo){
+void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& list, TrackedAmmo& selectedAmmo, const char* cartridgeFilter){
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
     if(tableSize.x < 400)
         tableSize = ImVec2{400, 200};
@@ -2362,8 +2362,15 @@ void EventsUI::selectAmmoTable(const ConstTrackedAmmoPtrList& list, TrackedAmmo&
         ImGui::TableSetupColumn("Grain Weight", 0);
         ImGui::TableHeadersRow();            
 
-            for(const auto& ammoElement : list){
+        for(const auto& ammoElement : list){
             const AmmoType& ammoType {ammoElement->ammoType};           
+            
+            // If filter is given, only add to list if cartridge is the same as the element
+            if(cartridgeFilter){
+                if(ammoType.cartridge.getName().compare(cartridgeFilter) != 0)
+                    continue;
+            }
+            
             bool isAmmoSelected { false };
             
             if(ammoType == selectedAmmo.ammoType)
