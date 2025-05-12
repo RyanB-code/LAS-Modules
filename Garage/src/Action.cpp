@@ -34,6 +34,10 @@ std::string YMD::printAlpha() const {
 std::string YMD::printNumeric() const {
     return std::format("{:%Y %m %d}", date);
 }
+bool YMD::ok() const {
+    return date.ok();
+}
+
 
 // Cost
 Cost::Cost(long long setCost) : cost { setCost } {
