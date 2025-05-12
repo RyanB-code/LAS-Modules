@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Mileage.h"
 
 #include <stdexcept>
@@ -23,6 +22,8 @@ public:
 
     std::string printAlpha() const;     // Format: 2025 May 09
     std::string printNumeric() const;   // Format: 2025 05 09
+
+    bool ok() const;
 
 private:
     ymd date;
