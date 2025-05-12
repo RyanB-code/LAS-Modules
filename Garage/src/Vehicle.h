@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utilities.h"
+#include "Mileage.h"
 
 #include <stdexcept>
 #include <cstring>
@@ -25,24 +26,6 @@ namespace Garage {
     };
 
     std::ostream& operator<<(std::ostream& os, const ModelYear& my);
-
-    class Mileage {
-    public:
-        Mileage(uint64_t setMileage=0);
-        ~Mileage();
-
-        uint64_t    getMileage() const;
-        bool        setMileage(uint64_t setMileage);
-        void        add(uint64_t miles);
-
-        operator int() const;
-
-    private:
-        uint64_t mileage;
-    };
-
-    std::ostream& operator<<(std::ostream& os, const Mileage& miles);
-
     
     class Vehicle {
     public:
