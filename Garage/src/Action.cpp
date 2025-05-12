@@ -10,7 +10,7 @@ YMD::YMD(ymd setYMD) : date { setYMD } {
 YMD::~YMD(){
 
 }
-YMD::YMD() : date { std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{0}, std::chrono::day{0} } }{
+YMD::YMD() : date { std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{1}, std::chrono::day{1} } }{
 
 }
 void YMD::setDateToday() {
