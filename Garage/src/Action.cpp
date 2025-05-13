@@ -64,4 +64,103 @@ std::string Cost::printCost(bool dollarSign) const {
         return std::format("{:.2f}", val);
 }
 
+
+// Action Reminder
+ActionReminder::ActionReminder(YMD setTime, Mileage setMiles) : time { setTime }, miles { setMiles } {
+
+}
+ActionReminder::~ActionReminder(){
+
+}
+YMD ActionReminder::getDate() const {
+    return time;
+}
+Mileage ActionReminder::getMileage() const {
+    return miles;
+}
+bool ActionReminder::setDate(const YMD& setTime) {
+    if(!setTime.ok())
+        return false;
+
+    time = setTime;
+    return true;
+}
+void ActionReminder::setMileage(const Mileage& setMileage) {
+    miles = setMileage;
+}
+
+
+// Action
+Action::Action(
+            YMD             setTime,
+            Mileage         setMileage,
+            const char      setTags[][MAX_CHAR_TAG],
+            short           numTags,
+            const char      setNotesVar[MAX_CHAR_ACTION_NOTES],
+            Cost            setCost,
+            ActionReminder  setReminder
+    ) :
+            time        { setTime },
+            miles       { setMileage },
+            cost        { setCost },
+            reminder    { setReminder }
+{
+    clearTags();
+    if(!setAllTags(setTags, numTags) || !setNotes(setNotesVar) || numTags > MAX_TAGS )
+        throw std::out_of_range("Invalid tags");
+
+}
+Action::~Action() {
+
+}
+bool Action::setAllTags(const char setTags[][MAX_CHAR_TAG], short numTags) {
+    // Empty matrix or invalid tag amount
+    if(setTags[0][0] == 0 || numTags > MAX_TAGS || numTags <= 0)
+        return false;
+
+    for(int curRow { 0 }; curRow < numTags; ++curRow){
+        if(std::strlen(setTags[curRow]) > MAX_CHAR_TAG-1){ // If any of the tags are too long, return false
+            clearTags();
+            return false;
+        }
+        std::strcpy(tags[curRow], setTags[curRow]); // Set for that row
+    }
+
+    return true;
+}
+bool Action::setNotes(const char setNotes[MAX_CHAR_ACTION_NOTES]){
+    if(std::strlen(setNotes) > MAX_CHAR_ACTION_NOTES-1)
+        return false;
+    
+    std::strcpy(notes, setNotes);
+    
+    return true;
+}
+void Action::clearTags() {
+    for(int curRow { 0 }; curRow < MAX_TAGS; ++curRow)
+        std::memset(tags[curRow], 0, MAX_CHAR_TAG * sizeof(char));
+}
+void Action::getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG]) const{
+    for(int curRow { 0 }; curRow < MAX_TAGS; ++curRow)
+        std::strcpy(buffer[curRow], tags[curRow]); 
+}
+void Action::getNotes(char buffer[MAX_CHAR_ACTION_NOTES]) const{
+    std::strcpy(buffer, notes); 
+}
+
+YMD Action::getYMD() const {
+    return time;
+}
+Mileage Action::getMiles() const {
+    return miles;
+}
+Cost Action::getCost() const {
+    return cost;
+}
+ActionReminder Action::getReminder() const {
+    return reminder;
+}
+
+
+
 }
