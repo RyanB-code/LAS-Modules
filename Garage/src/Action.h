@@ -1,7 +1,9 @@
 #pragma once
 #include "Mileage.h"
+#include "Utilities.h"
 
 #include <stdexcept>
+#include <cstring>
 #include <format>
 #include <chrono>
 
@@ -47,18 +49,24 @@ private:
     static constexpr int    scale   { 100 };
 };
 
-/*
+
 class ActionReminder { 
 public:
-    ActionReminder(
-            YMD   time    = {std::chrono::sys_days{std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{0}, std::chrono::day{0}}}}
-            Mileage     miles);
+    ActionReminder( YMD time=YMD{}, Mileage setMiles=Mileage{} ); 
     ~ActionReminder();
 
+    YMD     getDate()       const;
+    Mileage getMileage()    const;
+
+    bool    setDate     (const YMD& setTime);
+    void    setMileage  (const Mileage& setMileage);
+
 private:
-    Timepoint time;
+    YMD     time; 
     Mileage miles;
+
 };
+
 
 class Action {
 public:
@@ -74,6 +82,6 @@ public:
 private:
 
 };
-*/
+
 
 }
