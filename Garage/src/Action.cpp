@@ -181,41 +181,43 @@ bool Tags::contains(const char* key) const {
 Action::Action(
             YMD             setTime,
             Mileage         setMileage,
-            const char      setTags[][MAX_CHAR_TAG],
-            short           numTags,
-            const char      setNotesVar[MAX_CHAR_ACTION_NOTES],
+            Tags            setTags,
+            const char*     setNotesVar,
             Cost            setCost,
             ActionReminder  setReminder
     ) :
             time        { setTime },
             miles       { setMileage },
+            tags        { setTags },
             cost        { setCost },
             reminder    { setReminder }
 {
-    clearTags();
-    if(!setAllTags(setTags, numTags) || !setNotes(setNotesVar) || numTags > MAX_TAGS )
-        throw std::out_of_range("Invalid tags");
+    if(!setNotes(setNotesVar))
+        throw std::out_of_range("Invalid notes");
 
 }
 Action::~Action() {
 
 }
-bool Action::setAllTags(const char setTags[][MAX_CHAR_TAG], short numTags) {
-    // Empty matrix or invalid tag amount
-    if(setTags[0][0] == 0 || numTags > MAX_TAGS || numTags <= 0)
+bool Action::setYMD(const YMD& setYMD) {
+    if(!setYMD.ok())
         return false;
 
-    for(int curRow { 0 }; curRow < numTags; ++curRow){
-        if(std::strlen(setTags[curRow]) > MAX_CHAR_TAG-1){ // If any of the tags are too long, return false
-            clearTags();
-            return false;
-        }
-        std::strcpy(tags[curRow], setTags[curRow]); // Set for that row
-    }
-
+    time = setYMD;
     return true;
 }
-bool Action::setNotes(const char setNotes[MAX_CHAR_ACTION_NOTES]){
+void Action::setMileage(const Mileage& setMileage){
+    miles = setMileage;
+}
+void Action::setTags(const Tags& setTags) {
+    tags = setTags;
+}
+bool Action::setNotes(const char* setNotes){
+    if(!setNotes){
+        notes == nullptr;
+        return true;
+    }
+
     if(std::strlen(setNotes) > MAX_CHAR_ACTION_NOTES-1)
         return false;
     
@@ -223,22 +225,27 @@ bool Action::setNotes(const char setNotes[MAX_CHAR_ACTION_NOTES]){
     
     return true;
 }
-void Action::clearTags() {
-    for(int curRow { 0 }; curRow < MAX_TAGS; ++curRow)
-        std::memset(tags[curRow], 0, MAX_CHAR_TAG * sizeof(char));
+void Action::setCost(const Cost& setCost) {
+    cost = setCost;
 }
-void Action::getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG]) const{
-    for(int curRow { 0 }; curRow < MAX_TAGS; ++curRow)
-        std::strcpy(buffer[curRow], tags[curRow]); 
+bool Action::setReminder(const ActionReminder& setReminder) {
+    if(!setReminder.getDate().ok())
+        return false;
+
+    reminder = setReminder;
+    return true;
 }
-void Action::getNotes(char buffer[MAX_CHAR_ACTION_NOTES]) const{
-    std::strcpy(buffer, notes); 
+const Tags& Action::getTags() const{
+    return tags;
+}
+const char* Action::getNotes() const{
+    return notes;
 }
 
 YMD Action::getYMD() const {
     return time;
 }
-Mileage Action::getMiles() const {
+Mileage Action::getMileage() const {
     return miles;
 }
 Cost Action::getCost() const {
