@@ -91,6 +91,10 @@ void ActionReminder::setMileage(const Mileage& setMileage) {
 
 
 // Tags
+Tags::Tags(const char* tag) {
+    if(!addTag(tag))
+        throw std::invalid_argument("Invalid tag");
+}
 Tags::Tags(const char setTagsBuffer[][MAX_CHAR_TAG], short numTags) {
     clearTags();
     if(!setTags(setTagsBuffer, numTags))
@@ -99,6 +103,15 @@ Tags::Tags(const char setTagsBuffer[][MAX_CHAR_TAG], short numTags) {
 Tags::Tags() {
     clearTags();
 }
+Tags::Tags(const Tags& other){
+    char buffer[MAX_TAGS][MAX_CHAR_TAG] = { };
+    short numTags { };
+    other.getAllTags(buffer, &numTags);
+
+    if(!setTags(buffer, numTags))
+        throw std::out_of_range("Invalid Tags");
+}
+
 Tags::~Tags(){
 
 }
@@ -128,9 +141,12 @@ void Tags::clearTags() {
     for(int curRow { 0 }; curRow < MAX_TAGS; ++curRow)
         std::memset(tags[curRow], 0, MAX_CHAR_TAG * sizeof(char));
 }
-void Tags::getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG]) const{
+void Tags::getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG], short* numTags) const{
     for(int curRow { 0 }; curRow < nextTag; ++curRow)
         std::strcpy(buffer[curRow], tags[curRow]); 
+
+    if(numTags)
+        *numTags = nextTag;
 }
 bool Tags::contains(const char* key) const {
     if(nextTag == 0)
