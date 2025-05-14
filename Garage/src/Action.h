@@ -93,16 +93,37 @@ private:
 class Action {
 public:
     Action(
-            Timepoint                               time,
-            Mileage                                 mileage,
-            const char[MAX_TAGS, MAX_CHAR_TAG]      tags,
-            Cost                                    cost    =Cost { },
-            ActionReminder                          reminder=ActionReminder{ }
-    );
+            YMD             setTime,
+            Mileage         setMileage,
+            Tags            setTags,
+            const char*     setNotes    =nullptr,
+            Cost            setCost     =Cost{ },
+            ActionReminder  setReminder =ActionReminder{ }
+          );
     ~Action();
+    
+    bool setYMD         (const YMD& setYMD);
+    void setMileage     (const Mileage& setMileage);
+    void setTags        (const Tags& tags);
+    bool setNotes       (const char* setNotes);
+    void setCost        (const Cost& setCost);
+    bool setReminder    (const ActionReminder& setReminder);
+
+    YMD             getYMD()        const;
+    Mileage         getMileage()    const;
+    const Tags&     getTags()       const;
+    const char*     getNotes()      const;
+    Cost            getCost()       const;
+    ActionReminder  getReminder()   const;
+
 
 private:
-
+    YMD                 time;
+    Mileage             miles;
+    Tags                tags;
+    char                notes[MAX_CHAR_ACTION_NOTES] = { };
+    Cost                cost;
+    ActionReminder      reminder;
 };
 
 
