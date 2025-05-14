@@ -74,13 +74,13 @@ public:
     Tags();
     ~Tags();
 
-    bool setTags (const char setTags[][MAX_CHAR_TAG], short numTags);   // Rewrites from beginning
+    bool setTags (const char setTags[][MAX_CHAR_TAG], short numTags);   // Overwrites from beginning
     bool addTag(const char* tag);
 
     void clearTags();
 
     void getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG]) const;
-    bool contains(const char* key) const;                            // Ignores casing, Throws invalid_arg if key == nullptr
+    bool contains(const char* key) const;                               // Ignores casing, Throws invalid_arg if key == nullptr
 
 private:
     short nextTag { 0 };
