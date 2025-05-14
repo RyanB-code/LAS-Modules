@@ -90,6 +90,77 @@ void ActionReminder::setMileage(const Mileage& setMileage) {
 }
 
 
+// Tags
+Tags::Tags(const char setTagsBuffer[][MAX_CHAR_TAG], short numTags) {
+    clearTags();
+    if(!setTags(setTagsBuffer, numTags))
+        throw std::out_of_range("Invalid Tags");
+}
+Tags::Tags() {
+    clearTags();
+}
+Tags::~Tags(){
+
+}
+bool Tags::setTags(const char setTags[][MAX_CHAR_TAG], short numTags) {
+    // Empty matrix or invalid tag amount
+    if(setTags[0][0] == 0 || numTags > MAX_TAGS || numTags <= 0)
+        return false;
+
+    for(int curRow { 0 }; curRow < numTags; ++curRow){
+        if(!addTag(setTags[curRow])){
+            clearTags();
+            return false;
+        }
+    }
+
+    return true;
+}
+bool Tags::addTag(const char* tag){
+    if(tag == nullptr || nextTag >= MAX_TAGS || tag == 0 || std::strlen(tag) > MAX_CHAR_TAG-1)
+        return false;
+
+    std::strcpy(tags[nextTag], tag); 
+    ++nextTag;
+    return true;
+}
+void Tags::clearTags() {
+    for(int curRow { 0 }; curRow < MAX_TAGS; ++curRow)
+        std::memset(tags[curRow], 0, MAX_CHAR_TAG * sizeof(char));
+}
+void Tags::getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG]) const{
+    for(int curRow { 0 }; curRow < nextTag; ++curRow)
+        std::strcpy(buffer[curRow], tags[curRow]); 
+}
+bool Tags::contains(const char* key) const {
+    if(nextTag == 0)
+        return false;
+
+    if(key == nullptr)
+        throw std::invalid_argument("Key cannot be null");
+
+    char keyBuffer[MAX_CHAR_TAG] = { };
+
+    for(size_t i { 0 }; i < std::strlen(key); ++i)
+        keyBuffer[i] = std::toupper(key[i]);
+
+
+    // Compare against all tags
+    for(int curRow { 0 }; curRow < nextTag; ++curRow){
+        char tagBuffer[MAX_CHAR_TAG] = { };
+
+        for(size_t i { 0 }; i < std::strlen(tags[curRow]); ++i)
+            tagBuffer[i] = std::toupper(tags[curRow][i]);
+
+        if(std::strcmp(keyBuffer, tagBuffer) == 0)
+            return true;
+    }
+
+    return false;
+}
+
+
+
 // Action
 Action::Action(
             YMD             setTime,
