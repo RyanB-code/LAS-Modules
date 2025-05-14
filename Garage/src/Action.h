@@ -70,8 +70,10 @@ private:
 
 class Tags {
 public:
+    Tags(const char* tag);                                              // Throws out_of_range if Tags are invalid
     Tags(const char setTags[][MAX_CHAR_TAG], short numTags);            // Throws out_of_range if Tags are invalid
     Tags();
+    Tags(const Tags& other);
     ~Tags();
 
     bool setTags (const char setTags[][MAX_CHAR_TAG], short numTags);   // Overwrites from beginning
@@ -79,7 +81,7 @@ public:
 
     void clearTags();
 
-    void getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG]) const;
+    void getAllTags(char buffer[MAX_TAGS][MAX_CHAR_TAG], short* numTags=nullptr) const;
     bool contains(const char* key) const;                               // Ignores casing, Throws invalid_arg if key == nullptr
 
 private:
