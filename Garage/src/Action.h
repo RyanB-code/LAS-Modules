@@ -33,17 +33,22 @@ private:
 };
 
 
+enum class MoneyUnit {
+    DOLLAR,
+    CENTS
+};
+
 class Cost {
 public:
-    Cost(long long int setCost=0);
+    Cost(long long int setCost=0, MoneyUnit unit=MoneyUnit::DOLLAR);
     ~Cost();
 
     int getScale() const;
     
     std::pair<long long, int> getCost() const;
-    void setCost(long long setAmount);
+    void setCost(long long setAmount, MoneyUnit unit);      // Throws domain_error if MoneyUnit case isnt handled
 
-    std::string printCost(bool dollarSign=false) const; // Prints 1234.56 or $1234.56
+    std::string printDollar(bool dollarSign=false) const;   // Prints 1234.56 or $1234.56
 
 private:
     long long               cost    { 0 };

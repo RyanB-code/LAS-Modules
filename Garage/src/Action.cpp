@@ -40,8 +40,8 @@ bool YMD::ok() const {
 
 
 // Cost
-Cost::Cost(long long setCost) : cost { setCost } {
-
+Cost::Cost(long long setAmount, MoneyUnit unit) {
+    setCost(setAmount, unit);
 }
 Cost::~Cost(){
 
@@ -52,10 +52,20 @@ int Cost::getScale() const {
 std::pair<long long, int> Cost::getCost() const {
     return std::pair(cost, scale);
 }
-void Cost::setCost(long long setAmount) {
-    cost = setAmount;
+void Cost::setCost(long long setAmount, MoneyUnit unit) {
+    switch(unit){
+    case MoneyUnit::DOLLAR:
+        cost = setAmount * 100;
+        break;
+    case MoneyUnit::CENTS:
+        cost = setAmount; // No conversion since already in cents
+        break;
+    default:
+        throw std::domain_error("MoneyUnit not case not handled");
+        break;
+    }
 }
-std::string Cost::printCost(bool dollarSign) const {
+std::string Cost::printDollar(bool dollarSign) const {
     double val { static_cast<double>(cost) / scale };
 
     if(dollarSign) 
