@@ -248,10 +248,6 @@ bool Action::setReminder(const ActionReminder& setReminder) {
 const Tags& Action::getTags() const{
     return tags;
 }
-const char* Action::getNotes() const{
-    return notes;
-}
-
 YMD Action::getYMD() const {
     return time;
 }
@@ -264,6 +260,15 @@ Cost Action::getCost() const {
 ActionReminder Action::getReminder() const {
     return reminder;
 }
+bool Action::getNotes(char* destination, size_t destSize) const{
+    if(!destination || destSize < std::strlen(notes) )
+        return false;
+
+    std::strcpy(destination, notes);
+    return true;
+}
+
+
 
 
 

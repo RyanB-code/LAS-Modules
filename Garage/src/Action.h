@@ -117,9 +117,9 @@ public:
     YMD             getYMD()        const;
     Mileage         getMileage()    const;
     const Tags&     getTags()       const;
-    const char*     getNotes()      const;
     Cost            getCost()       const;
     ActionReminder  getReminder()   const;
+    bool            getNotes(char* destination, size_t destSize) const;
 
 
 private:
