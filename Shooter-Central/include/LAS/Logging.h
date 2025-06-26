@@ -2,90 +2,82 @@
 
 #include "HelperFunctions.h"
 
-#include <memory>
-#include <cstdint>
-#include <string>
-#include <source_location>
-#include <chrono>
-#include <cstdarg>
-#include <filesystem>
-#include <fstream>
 #include <format>
+#include <map>
+#include <source_location>
 
 
 namespace LAS::Logging {
 
-    std::string printTime       (const std::chrono::system_clock::time_point& time)     noexcept;   // HH:MM:SS
-    std::string printLocation   (const std::source_location& location)                  noexcept;   // <File Name> | <Function Name> | <Line> 
-
-    class LogSettings;
-    class Logger;
-
-    using LoggerPtr         = std::shared_ptr<Logger>;
-    using LogSettingsPtr    = std::shared_ptr<LogSettings>;
-    using Timepoint         = std::chrono::time_point<std::chrono::system_clock>;
-    using Tags              = std::vector<std::string>;
-    class LogSettings {     // Made a class to inherit type usage abilities
-    public:
+    struct LogSettings {     
         bool showTime               { true };
         bool showTags               { true };
         bool showMsg                { true };
         bool showLocation           { true };
 
-        uint8_t textBoxWidth_tag    { 5 };   
-        uint8_t textBoxWidth_msg    { 30 };
+        int textBoxWidth_tag    { 5 };   
+        int textBoxWidth_msg   { 30 };
     };
+    
+    struct Log {
+        const std::string           msg;
+        const std::string           tag;
+        const std::source_location  location;
 
-    class Log {
-    public:
-        Log (std::string setMsg, std::string setTag,    std::source_location setLocation, Timepoint setTimestamp);
-        Log (std::string setMsg, Tags setTags,          std::source_location setLocation, Timepoint setTimestamp);
-        ~Log();
-
-        std::string             getMsg()        const;
-        std::source_location    getLocation()   const;
-        Timepoint               getTimestamp () const;
-        const StringVector&     getTags()       const;
-
-        Log& addTag(std::string tag);
-
-    private:
-        std::string 			msg;
-        StringVector            tags;
-        std::source_location    location;
-        Timepoint          	    timestamp;
+        const std::chrono::time_point<std::chrono::system_clock> timestamp;
     };
-
 
     class LogOutput {
     public:
-        LogOutput ();
-        virtual ~LogOutput ();
+        LogOutput(const LogSettings& setSettings=LogSettings{ }); // No more than 50 outputs allowed. Throws out of range if exceeded
+        virtual ~LogOutput();
 
-        virtual void log (const Log& log, const LogSettings& logSettings) const = 0;
-        uint8_t getID() const;
+        void        setSettings (const LogSettings& setSettings);
+        LogSettings getSettings () const;
+        int         getID       () const;
 
+        bool        isEnabled   () const;
+        void        enable      ();
+        void        disable     ();
+
+        virtual void log(const Log& log) = 0;
+
+    protected:
+        LogSettings settings { };
     private:
-        uint8_t ID; // Should not even be protected to not allow derived classes access to edit
+        int ID;
+        bool enabled { true };
     };
 
-    class Logger {
-    public:
-        Logger(LogSettingsPtr setLogSettings);
-        ~Logger();
+    using LogOutputPtr      = std::shared_ptr<LogOutput>;
 
-        void log(std::string setMsg, const Tags& setTag, std::source_location setLocation = std::source_location::current()) const;
 
-        bool addOutput (std::shared_ptr<LogOutput> output);
-        bool removeOutput (uint8_t ID);
+    // For Modules to use to interact with logger
+    bool addOutput      (LogOutputPtr output);
+    bool removeOutput   (int outputID);
 
-        LogSettingsPtr getLogSettings ();
+    void        setGlobalSettings   (const LogSettings& setSettings);
+    bool        setOutputSettings   (int ID, const LogSettings& setSettings);
 
-    private:
-        LogSettingsPtr logSettings;
-        std::vector<std::shared_ptr<LogOutput>> outputs;
+    LogSettings getGlobalSettings   ();
+    LogSettings getOutputSettings   (int ID); // Throws out_of_range if not there
+        
+    bool enableOutput(int ID);
+    bool disableOutput(int ID);
 
-    };
+
+    // Helper Functions
+    std::string printTime       (const std::chrono::system_clock::time_point& time)     noexcept;   // HH:MM:SS
+    std::string printLocation   (const std::source_location& location)                  noexcept;   // <File Name> | <Function Name> | <Line> 
+
 }
 
+namespace LAS {
+    void log            (const std::string& msg, const std::string& tag, const std::source_location& location=std::source_location::current());
+    void log_info       (const std::string& msg, const std::source_location& location=std::source_location::current());
+    void log_warn       (const std::string& msg, const std::source_location& location=std::source_location::current());
+    void log_error      (const std::string& msg, const std::source_location& location=std::source_location::current());
+    void log_critical   (const std::string& msg, const std::source_location& location=std::source_location::current());
 
+    
+}
