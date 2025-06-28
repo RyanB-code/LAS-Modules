@@ -1748,7 +1748,7 @@ std::tuple<bool, bool, EventPtr> EventsUI::addEvent(   GunTrackerPtr gunTracker,
     static bool invalidLocation         { false }, invalidEventType { false },  invalidDate         { false },   
                 incompatibleCartridge   { false }, invalidGunOrAmmo { false },  invalidAmmoAmount   { false };
 
-    static bool applyToStockpile { false }, applyToGuns { false };  // Flag to apply items to other parts of SC
+    static bool applyToStockpile { true }, applyToGuns { true };  // Flag to apply items to other parts of SC
 
     EventPtr    returnVal               { };
     std::string locationComboPreview    { };
