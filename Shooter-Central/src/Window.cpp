@@ -1193,8 +1193,10 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
         ImGui::Text("Ammo Name");
         ImGui::SameLine(100);
         
+        int numItems { 0 };
         if (ImGui::BeginCombo("##Choose Ammo Name Combo", ammoNamePreview.c_str(), ImGuiComboFlags_HeightSmall)){
             for (const auto& ammo : ammoList){
+                ImGui::PushID(numItems);
                 const bool isSelected = (selectedAmmo == *ammo);
 
                 if (ImGui::Selectable(ammo->ammoType.name.c_str(), isSelected))
@@ -1202,6 +1204,9 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
 
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
+
+                ++numItems;
+                ImGui::PopID();
             }
             ImGui::EndCombo();
         }
