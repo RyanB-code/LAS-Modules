@@ -990,6 +990,7 @@ TrackedAmmo StockpileUI::addAmmoType (bool& unsavedChanges, const CartridgeList&
     static Manufacturer selectedManufacturer                        { };
     static int          grainWeightBuf                              { 0 };
     static int          verifyReturnVal                             { -1 };
+    static int          amount                                      { 0 };
 
     std::string cartridgeComboPreview       { };
     std::string manufacturerComboPreview    { };
@@ -1054,6 +1055,11 @@ TrackedAmmo StockpileUI::addAmmoType (bool& unsavedChanges, const CartridgeList&
     ImGui::Text("Grain Weight");
     ImGui::SameLine(100);
     ImGui::InputInt("##Input Grain Weight", &grainWeightBuf, 1, 0, 0);
+    
+    ImGui::Spacing();
+    ImGui::Text("Amount");
+    ImGui::SameLine(100);
+    ImGui::InputInt("##Input Amount", &amount, 1, 50, 0);
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -1065,9 +1071,9 @@ TrackedAmmo StockpileUI::addAmmoType (bool& unsavedChanges, const CartridgeList&
         verifyReturnVal = verifyAmmoType(name, selectedManufacturer, selectedCartridge, grainWeightBuf);
         
         // All checks passed, set return val and reset buffers
-        if(verifyReturnVal == 0){
+        if(verifyReturnVal == 0 && amount >= 0){
 
-            returnVal = TrackedAmmo {AmmoType{ name, selectedManufacturer, selectedCartridge, grainWeightBuf}, 0};
+            returnVal = TrackedAmmo {AmmoType{ name, selectedManufacturer, selectedCartridge, grainWeightBuf}, amount};
 
             // Reset buffers
             strcpy(nameBuf, "Enter Name");
@@ -1076,6 +1082,7 @@ TrackedAmmo StockpileUI::addAmmoType (bool& unsavedChanges, const CartridgeList&
             selectedCartridge       = EMPTY_OBJECTS.CARTRIDGE;
             grainWeightBuf          = 0;
             verifyReturnVal         = -1;
+            amount                  = 0;
 
 
             unsavedChanges = true;  // Set flag
@@ -1340,6 +1347,9 @@ void StockpileUI::errorMakingAmmoTypePopupText(int verifyAmmoReturnVal){
     UIHelper::centerText("This ammo type could not be created.");
 
     switch(verifyAmmoReturnVal){
+        case 0:
+            ImGui::BulletText("Amount cannot be less than 0");
+            break;
         case 1:
             ImGui::BulletText("Invalid grain weight");
             break;
