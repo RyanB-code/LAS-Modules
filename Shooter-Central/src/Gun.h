@@ -29,9 +29,6 @@ namespace ShooterCentral{
     using WeaponTypeList = std::vector<WeaponType>;
 
 
-
-
-
     class Gun final {
     public:
         Gun(std::string setName="N/A", WeaponType setWeaponType=WeaponType{ }, Cartridge setCartridge=Cartridge{ });
@@ -67,12 +64,9 @@ namespace ShooterCentral{
     using ConstGunPtrList   = std::vector<ConstGunPtr>;
 
 
-
-
-
     class GunTracker{
     public:
-        GunTracker(LAS::Logging::LoggerPtr setLogger);
+        GunTracker();
         ~GunTracker();
 
         bool        setDirectory    (std::string directory);
@@ -99,7 +93,6 @@ namespace ShooterCentral{
         bool readWeaponTypes    ();
 
     private:
-        LAS::Logging::LoggerPtr             logger;
         std::map<Gun, GunPtr>               guns;
         std::map<std::string, WeaponType>   weaponTypes;
 

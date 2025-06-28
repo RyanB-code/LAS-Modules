@@ -82,7 +82,7 @@ namespace ShooterCentral{
 
     class AmmoTracker{
     public:
-        AmmoTracker(LAS::Logging::LoggerPtr setLogger);
+        AmmoTracker();
         ~AmmoTracker();
 
         bool    addAmmoToStockpile          (const TrackedAmmo& trackedAmmo);
@@ -122,7 +122,6 @@ namespace ShooterCentral{
 
 
         std::string             saveDirectory;
-        LAS::Logging::LoggerPtr logger;
 
         static constexpr std::string_view CARTRIDGES_FILENAME    {"Cartridges.json"};
         static constexpr std::string_view MANUFACTURERS_FILENAME {"Manufacturers.json"};

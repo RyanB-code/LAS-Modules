@@ -1,4 +1,5 @@
 #include "Framework.h"
+#include <Config.h>
 
 #include <LAS/ModuleAPI.h>
 
@@ -10,7 +11,7 @@ bool LASM_loadModuleInfo(LAS::Information::ModuleInfo& moduleInfo){
     Information::Version sdkVersion { SDK::getVersionMajor(), SDK::getVersionMinor(), SDK::getVersionPatch()};
 
     moduleInfo.sdkVersion       = sdkVersion;
-    moduleInfo.moduleVersion    = Information::Version{0, 5 , 0};
+    moduleInfo.moduleVersion    = Information::Version{SC_VERSION_MAJOR, SC_VERSION_MINOR, SC_VERSION_PATCH};
     moduleInfo.title            = application.getWindow()->getTitle();
     moduleInfo.commandGroupName = application.getCommandGroupName();
     moduleInfo.window           = application.getWindow();
@@ -20,8 +21,8 @@ bool LASM_loadModuleInfo(LAS::Information::ModuleInfo& moduleInfo){
     return true;
 }
 bool LASM_init(const LAS::Information::EnvironmentInfo& envInfo){
-    return application.setup(envInfo.logger, envInfo.directory);
+    return application.setup(envInfo.directory);
 }
 void LASM_cleanup(){
-    application.getLogger()->log("Cleanup from lasm_cleanup()", LAS::Logging::Tags{"SC"});
+    LAS::log_info("Cleanup from Shooter Central lasm_cleanup()");
 }

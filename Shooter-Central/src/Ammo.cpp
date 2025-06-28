@@ -1,6 +1,7 @@
 #include "Ammo.h"
 
 using namespace ShooterCentral;
+using namespace LAS;
 
 
 // MARK: Manufacturer
@@ -123,8 +124,7 @@ void ShooterCentral::from_json(const LAS::json& j, TrackedAmmo& ammo){
 }
 
 // MARK: AMMO TRACKER
-AmmoTracker::AmmoTracker(LAS::Logging::LoggerPtr setLogger): logger { setLogger }
-{
+AmmoTracker::AmmoTracker(){
 
 }
 AmmoTracker::~AmmoTracker(){
@@ -275,7 +275,7 @@ bool AmmoTracker::writeAllAmmo() const{
         return true;
 
     if(!std::filesystem::exists(saveDirectory)){
-        logger->log("Directory [" + saveDirectory + "] was not found. Did not attempt to save any Ammo objects.", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Directory [" + saveDirectory + "] was not found. Did not attempt to save any Ammo objects.");
         return false;
     }
 
@@ -285,20 +285,20 @@ bool AmmoTracker::writeAllAmmo() const{
 
         try{
             if(!AmmoHelper::writeTrackedAmmo(saveDirectory, ammo)){
-                logger->log("Directory [" + saveDirectory + "] was not found. Ammo [" + ammo.ammoType.name + "] was not saved.", LAS::Logging::Tags{"ERROR", "SC"});
+                log_error("Directory [" + saveDirectory + "] was not found. Ammo [" + ammo.ammoType.name + "] was not saved.");
                 ++ammoNotSaved;
             }
         }
         catch(std::exception& e){
-            logger->log("Error creating JSON object. Code " + std::string{e.what()} + ". What: " + std::string{e.what()}, LAS::Logging::Tags{"ERROR", "SC"});
+            log_error("Error creating JSON object. Code " + std::string{e.what()} + ". What: " + std::string{e.what()});
             ++ammoNotSaved;
         }
 	}
 
     if(ammoNotSaved > 0)
-        logger->log("Could not save " + std::to_string(ammoNotSaved) + " ammo objects.", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Could not save " + std::to_string(ammoNotSaved) + " ammo objects.");
     else
-        logger->log("Saved all ammo", LAS::Logging::Tags{"ROUTINE", "SC"});
+        log_info("Saved all ammo");
 
     return true;
 }
@@ -316,11 +316,11 @@ bool AmmoTracker::writeAllCartridges() const{
     }
 
     if(AmmoHelper::writeAllCartridges(fullPath, rawCartridges)){
-        logger->log("Saved cartridges", LAS::Logging::Tags{"ROUTINE", "SC"});
+        log_info("Saved cartridges");
         return true;
     }
     else{
-        logger->log("Could not save cartridges", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Could not save cartridges");
         return false;
     }
 }
@@ -338,11 +338,11 @@ bool AmmoTracker::writeAllManufacturers() const{
     }
 
     if(AmmoHelper::writeAllManufacturers(fullPath, rawManufacturers)){
-        logger->log("Saved manufacturers", LAS::Logging::Tags{"ROUTINE", "SC"});
+        log_info("Saved manufacturers");
         return true;
     }
     else{
-        logger->log("Could not save manufacturers", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Could not save manufacturers");
         return false;
     }
 }
@@ -362,12 +362,11 @@ bool AmmoTracker::readAllAmmo(){
 
             // Attempt adding to stockpile
             if(!addAmmoToStockpile(ammoBuf))
-                logger->log("Ammo object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
+                log_warn("Ammo object already exists from file [" + dirEntry.path().string() + ']');
 		}
 		catch(std::exception& e){
             if(dirEntry.path().filename().string() != CARTRIDGES_FILENAME && dirEntry.path().filename().string() != MANUFACTURERS_FILENAME){  // Ignore the cartridges file
-			    logger->log("Failed to create Ammo object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
-                logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+                log_error("Failed to create Ammo object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
             }
 		}
 	}
@@ -386,13 +385,12 @@ bool AmmoTracker::readCartridges(){
         AmmoHelper::readCartridges(fullPath, cartridgeNames);
     }
     catch(std::exception& e){
-        logger->log("Error reading cartridges", LAS::Logging::Tags{"ERROR", "SC"});
-        logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+        log_error("Error reading cartridges. What: " + std::string{e.what()});
     }
 
     for(const auto& s : cartridgeNames){
         if(!addCartridge(s))
-            logger->log("Cartridge named [" + s + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+            log_warn("Cartridge named [" + s + "] already exists.");
     }
 
     return true;
@@ -409,13 +407,12 @@ bool AmmoTracker::readManufacturers(){
         AmmoHelper::readManufacturers(fullPath, rawManufacturers);
     }
     catch(std::exception& e){
-        logger->log("Error reading manufacturers", LAS::Logging::Tags{"ERROR", "SC"});
-        logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+        log_error("Error reading manufacturers. What: " + std::string{e.what()});
     }
 
     for(const auto& s : rawManufacturers){
         if(!addManufacturer(s))
-            logger->log("Manufacturer named [" + s + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+            log_warn("Manufacturer named [" + s + "] already exists.");
     }
 
     return true;

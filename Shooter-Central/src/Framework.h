@@ -27,13 +27,10 @@ namespace ShooterCentral{
             std::string gunsDir;
         };
 
-        bool setup(LAS::Logging::LoggerPtr setLoggerPtr, const std::string& directory);   // Call inside LASM_init
+        bool setup(const std::string& directory);   // Call inside LASM_init
         
         SCWindowPtr getWindow() const;
         std::string getCommandGroupName() const;
-
-        bool                    setLogger(LAS::Logging::LoggerPtr setLogger);
-        LAS::Logging::LoggerPtr getLogger() const;
 
     private:
         AmmoTrackerPtr  ammoTracker;
@@ -41,7 +38,6 @@ namespace ShooterCentral{
         EventTrackerPtr eventTracker;
 
         SCWindowPtr             window;
-        LAS::Logging::LoggerPtr logger;
 
         static constexpr  std::string commandGroupName { "sc" };
 

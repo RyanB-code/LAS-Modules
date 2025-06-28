@@ -1,6 +1,7 @@
 #include "Event.h"
 
 using namespace ShooterCentral;
+using namespace LAS;
 
 // MARK: Location
 Location::Location(std::string setName) : name { setName } {
@@ -239,8 +240,7 @@ void ShooterCentral::from_json(const LAS::json& j, Event& event){
 }
 
 // MARK: EVENT TRACKER
-EventTracker::EventTracker(LAS::Logging::LoggerPtr setLogger) : logger { setLogger }
-{
+EventTracker::EventTracker(){
 
 }
 EventTracker::~EventTracker()
@@ -329,22 +329,22 @@ bool EventTracker::writeAllEvents () const{
         return true;
 
     if(!std::filesystem::exists(saveDirectory)){
-        logger->log("Directory [" + saveDirectory + "] was not found. Did not attempt to save any Event objects.", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Directory [" + saveDirectory + "] was not found. Did not attempt to save any Event objects.");
         return false;
     }
 
     int eventsNotSaved { 0 };
 	for(const auto& [key, event] : events) {
         if(!EventHelper::writeEvent(saveDirectory, *event)){
-            logger->log("Failed to save Event [" + event->getName() + "]", LAS::Logging::Tags{"ERROR", "SC"});
+            log_error("Failed to save Event [" + event->getName() + "]");
             ++eventsNotSaved;
         }
 	}
 
     if(eventsNotSaved > 0)
-        logger->log("Could not save " + std::to_string(eventsNotSaved) + " events.", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Could not save " + std::to_string(eventsNotSaved) + " events.");
     else
-        logger->log("Saved events", LAS::Logging::Tags{"ROUTINE", "SC"});
+        log_info("Saved events");
 
     return true;
 }
@@ -362,11 +362,11 @@ bool EventTracker::writeAllEventTypes() const{
     }
 
     if(EventHelper::writeAllEventTypes(fullPath, rawEventTypes)){
-        logger->log("Saved event types", LAS::Logging::Tags{"ROUTINE", "SC"});
+        log_info("Saved event types");
         return true;
     }
     else{
-        logger->log("Could not save event types", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Could not save event types");
         return false;
     }
 }
@@ -384,11 +384,11 @@ bool EventTracker::writeAllLocations() const{
     }
 
     if(EventHelper::writeAllLocations(fullPath, rawLocations)){
-        logger->log("Saved event locations", LAS::Logging::Tags{"ROUTINE", "SC"});
+        log_info("Saved event locations");
         return true;
     }
     else{
-        logger->log("Could not save event locations", LAS::Logging::Tags{"ERROR", "SC"});
+        log_error("Could not save event locations");
         return false;
     }
 }
@@ -403,12 +403,11 @@ bool EventTracker::readEvents(){
 			Event eventBuf {EventHelper::readEvent(dirEntry.path().string())};
 
             if(!addEvent(eventBuf))
-                logger->log("Event object already exists from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ROUTINE", "SC"});
+                log_warn("Event object already exists from file [" + dirEntry.path().string() + ']');
 		}
 		catch(std::exception& e){
             if(dirEntry.path().filename().string() != EVENT_TYPES_FILENAME && dirEntry.path().filename().string() != LOCATIONS_FILENAME){  // Ignore the known files
-                logger->log("Failed to create Event object from file [" + dirEntry.path().string() + ']', LAS::Logging::Tags{"ERROR", "SC"});
-                logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+                log_error("Failed to create Event object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
             }
 		}
 	}
@@ -427,13 +426,12 @@ bool EventTracker::readEventTypes(){
         EventHelper::readEventTypes(fullPath, eventTypesBuf);
     }
     catch(std::exception& e){
-        logger->log("Error reading Event Types", LAS::Logging::Tags{"ERROR", "SC"});
-        logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+        log_error("Error reading event types. What: " + std::string{e.what()});
     }
 
     for(const auto& et : eventTypesBuf){
         if(!addEventType(et))
-            logger->log("Event Type [" + et.getName() + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+            log_warn("Event Type [" + et.getName() + "] already exists.");
     }
 
     return true;
@@ -450,13 +448,12 @@ bool EventTracker::readLocations(){
         EventHelper::readLocations(fullPath, locationsBuf);
     }
     catch(std::exception& e){
-        logger->log("Error reading locations", LAS::Logging::Tags{"ERROR", "SC"});
-        logger->log("What: " + std::string{e.what()}, LAS::Logging::Tags{"CONTINUED"});
+        log_error("Error reading Event locations. What: " + std::string{e.what()});
     }
 
     for(const auto& location : locationsBuf){
         if(!addLocation(location))
-            logger->log("Location named [" + location.getName() + "] already exists.", LAS::Logging::Tags{"ROUTINE", "SC"});
+            log_warn("Location named [" + location.getName() + "] already exists.");
     }
 
     return true;

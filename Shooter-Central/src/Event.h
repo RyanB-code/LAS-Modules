@@ -95,7 +95,7 @@ namespace ShooterCentral{
     
     class EventTracker {
     public:
-        EventTracker(LAS::Logging::LoggerPtr setLogger);
+        EventTracker();
         ~EventTracker();
 
         bool        setDirectory    (std::string directory);
@@ -127,7 +127,6 @@ namespace ShooterCentral{
         std::map<std::string, Location>  locations;
 
         std::string             saveDirectory;
-        LAS::Logging::LoggerPtr logger;
 
         static constexpr std::string_view EVENT_TYPES_FILENAME  {"EventTypes.json"};
         static constexpr std::string_view LOCATIONS_FILENAME    {"Locations.json"};
