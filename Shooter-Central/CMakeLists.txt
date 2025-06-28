@@ -6,8 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED	True)
 set(PROJECT_NAME		"ShooterCentral")
 set(LIB_NAME			"${PROJECT_NAME}.lasm")
 
-project(${PROJECT_NAME} VERSION 0.6.0)
+project(${PROJECT_NAME} VERSION 0.6.1)
 
+# Setup config file with versioning
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/Config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/include/Config.h")
 
 # All CPP files
 file(GLOB sources CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp" )
@@ -24,6 +26,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/include"
 
 # Link to libLAS-SDK-dev.so libraries
 target_link_libraries(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/lib/libLAS-SDK-dev.so")
+
 
 # Post build commands
 add_custom_command( 
