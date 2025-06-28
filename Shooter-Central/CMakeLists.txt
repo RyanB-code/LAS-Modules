@@ -24,16 +24,36 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_NAME "name")    
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/src")
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/include")
 
-# Link to libLAS-SDK-dev.so libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/lib/libLAS-SDK-dev.so")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option(DEBUG "DEBUG" ON)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+if(DEBUG)
+    # Link to libLAS-SDK-dev.so libraries
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/lib/libLAS-SDK-dev.so")
+else()
+    # Link to libLAS-SDK-dev.so libraries
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/lib/libLAS-SDK.so")
+endif()
 
 
-# Post build commands
-add_custom_command( 
-    TARGET ${PROJECT_NAME}
-    POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_SOURCE_DIR}/bin/libname.so" "${CMAKE_SOURCE_DIR}/bin/${PROJECT_NAME}.lasm"     # Rename temporary file 
-    COMMENT "Renaming library file after build"
-    COMMAND ${CMAKE_COMMAND} -E rm -f   "${CMAKE_SOURCE_DIR}/include/Config.h"                                         # Remove temporary file 
-    COMMENT "Removed temporary Config.h file"
-)
+if(DEBUG)
+    add_custom_command( 
+        TARGET ${PROJECT_NAME}
+        POST_BUILD 
+        COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_SOURCE_DIR}/bin/libname.so" "${CMAKE_SOURCE_DIR}/bin/${PROJECT_NAME}-dev.lasm"     # Rename temporary file 
+        COMMENT "Renaming library file after build"
+        COMMAND ${CMAKE_COMMAND} -E rm -f   "${CMAKE_SOURCE_DIR}/include/Config.h"                                         # Remove temporary file 
+        COMMENT "Removed temporary Config.h file"
+    )
+else()
+    add_custom_command( 
+        TARGET ${PROJECT_NAME}
+        POST_BUILD 
+        COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_SOURCE_DIR}/bin/libname.so" "${CMAKE_SOURCE_DIR}/bin/${PROJECT_NAME}.lasm"     # Rename temporary file 
+        COMMENT "Renaming library file after build"
+        COMMAND ${CMAKE_COMMAND} -E rm -f   "${CMAKE_SOURCE_DIR}/include/Config.h"                                         # Remove temporary file 
+        COMMENT "Removed temporary Config.h file"
+    )
+endif()

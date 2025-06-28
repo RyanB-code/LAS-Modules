@@ -10,4 +10,5 @@ LAS_DIR=$(cat ${SCRIPT_DIR}/${LAS_LOCATION_FILE})                               
 
 cd ${SCRIPT_DIR}
 
-cp ../../bin/*-dev.lasm ${LAS_DIR}bin/Environment/Debug/Module\ Libraries/    # Copy the module file to LAS debug area
+cp -r ${LAS_DIR}bin/SDK/Release/include ../../           # Get header Files
+cp ${LAS_DIR}bin/SDK/Release/libLAS-SDK.so ../../lib/    # Get LAS-SDK.so for compilation
