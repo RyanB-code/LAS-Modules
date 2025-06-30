@@ -1169,17 +1169,23 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
     static TrackedAmmo          selectedAmmo{  };
     static int                  amountToAdd { 0 };
 
-    static bool amountRejected { false }, ammoRejected { false };   // Flags to alert user what went wrong
+    static bool amountRejected { false }, ammoRejected { false };       // Flags to alert user what went wrong
 
     bool            submitAmmo          { false };                      // Flag to return the proper selected ammo instead of empty ammo
     float           fullWindowWidth     { ImGui::GetWindowSize().x };   // Calculate center button add now (since cannot do inside child since middle will be skewed)
     std::string     ammoNamePreview     { };
+    //std::string     cartridgeNamePreview{ };
 
     // Apply proper prompt text
-    if(selectedAmmo != EMPTY_OBJECTS.TRACKED_AMMO)
-        ammoNamePreview = selectedAmmo.ammoType.name;
-    else
-        ammoNamePreview = "CHOOSE AMMO TYPE";
+    if(selectedAmmo != EMPTY_OBJECTS.TRACKED_AMMO){
+        ammoNamePreview         = selectedAmmo.ammoType.name;
+        //cartridgeNamePreview    = selectedAmmo.cartridge.getName();
+    }
+    else{
+        ammoNamePreview         = "CHOOSE AMMO TYPE";
+        //cartridgeNamePreview    = "CHOOSE CARTRIDGE";
+    }
+
 
     // UI Elements
     ImGui::Text("Directions");
@@ -1190,6 +1196,23 @@ TrackedAmmo StockpileUI::addToExistingAmmoType  (bool& unsavedChanges, const std
     ImGui::Spacing();
 
     if(ImGui::BeginChild("Enter Info", ImVec2{ImGui::GetContentRegionAvail().x-300, ImGui::GetContentRegionAvail().y})){
+        /*
+        ImGui::Text("Cartridge");
+        ImGui::SameLine(100);
+        if (ImGui::BeginCombo("##Choose Cartridge Combo", cartridgeNamePreview.c_str(), ImGuiComboFlags_HeightSmall)){
+            for (const auto& ammo : ammoList){
+                const bool isSelected = (selectedAmmo == *ammo);
+
+                if (ImGui::Selectable(ammo->ammoType.name.c_str(), isSelected))
+                    selectedAmmo = *ammo;
+
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        */
+
         ImGui::Text("Ammo Name");
         ImGui::SameLine(100);
         
