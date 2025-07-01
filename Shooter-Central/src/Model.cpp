@@ -2,13 +2,22 @@
 
 using namespace ShooterCentral;
 
-AssociatedAmmo::AssociatedAmmo(std::shared_ptr<AmountOfAmmo> setAmountOfAmmo) : amountOfAmmo {setAmountOfAmmo} {
+Event::Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate)
+    :   eventMetadata {setLocation, setEventType, setNotes, setDate} {
+
+}
+Event::~Event(){
+
+}
+
+
+AssociatedAmmo::AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountOfAmmo) : amountOfAmmo {setAmountOfAmmo} {
 
 }
 AssociatedAmmo::~AssociatedAmmo() {
 
 }
-bool AssociatedAmmo::addGun(std::shared_ptr<Gun> gun) {
+bool AssociatedAmmo::addGun(std::shared_ptr<const Gun> gun) {
     if(gunsAssociated.contains(*gun))
         return true;
 
@@ -30,15 +39,15 @@ int AssociatedAmmo::totalGuns() const {
 const AmountOfAmmo& AssociatedAmmo::getAmountOfAmmo() const {
     return *amountOfAmmo;
 }
-std::map<Gun, std::shared_ptr<Gun>>::const_iterator AssociatedAmmo::begin() const {
+std::map<Gun, std::shared_ptr<const Gun>>::const_iterator AssociatedAmmo::cbegin() const {
     return gunsAssociated.cbegin();
 }
-std::map<Gun, std::shared_ptr<Gun>>::const_iterator AssociatedAmmo::end() const {
+std::map<Gun, std::shared_ptr<const Gun>>::const_iterator AssociatedAmmo::cend() const {
     return gunsAssociated.cend();
 }
  
 
-AssociatedGun::AssociatedGun(std::shared_ptr<Gun> setGun) : gun {setGun} {
+AssociatedGun::AssociatedGun(std::shared_ptr<const Gun> setGun) : gun {setGun} {
 
 }
 AssociatedGun::~AssociatedGun(){
@@ -48,7 +57,7 @@ int AssociatedGun::getRoundCount() const {
     return totalRoundCount;
 }
 bool AssociatedGun::addAmmoUsed(const AmountOfAmmo& addAmmo) {
-    if(ammoUsedList.contains(addAmmo.ammo){
+    if(ammoUsedList.contains(addAmmo.ammo)){
         ammoUsedList.at(addAmmo.ammo).amount += addAmmo.amount;
         totalRoundCount += addAmmo.amount;
         return true;

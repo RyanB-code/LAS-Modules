@@ -9,14 +9,23 @@
 
 namespace ShooterCentral {
     // Forward declarations
-    class Event;
+    class Event {
+    public:
+        Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
+        ~Event();
+
+    private:
+        EventMetadata eventMetadata;
+
+
+    };
 
     class AssociatedAmmo {
     public:
-        AssociatedAmmo(std::shared_ptr<AmountOfAmmo> setAmountofAmmo);
+        AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountofAmmo);
         ~AssociatedAmmo();
 
-        bool addGun     (std::shared_ptr<Gun> gun); // If key already exists, returns false since data is not overwritten
+        bool addGun     (std::shared_ptr<const Gun> gun); // If key already exists, returns false since data is not overwritten
         bool removeGun  (const Gun& gun);
         bool hasGun     (const Gun& gun) const;
 
@@ -24,17 +33,17 @@ namespace ShooterCentral {
 
         const AmountOfAmmo& getAmountOfAmmo() const;
 
-        std::map<Gun, std::shared_ptr<Gun>>::const_iterator begin() const;     // Const itr to cbegin()
-        std::map<Gun, std::shared_ptr<Gun>>::const_iterator end() const;       // Const itr to cend()
+        std::map<Gun, std::shared_ptr<const Gun>>::const_iterator cbegin() const;     // Const itr to cbegin()
+        std::map<Gun, std::shared_ptr<const Gun>>::const_iterator cend() const;       // Const itr to cend()
    private:
-        std::shared_ptr<AmountOfAmmo>       amountOfAmmo      { };
-        std::map<Gun, std::shared_ptr<Gun>> gunsAssociated    { };
+        std::shared_ptr<const AmountOfAmmo>       amountOfAmmo      { };
+        std::map<Gun, std::shared_ptr<const Gun>> gunsAssociated    { };
     };
 
 
     class AssociatedGun {
     public:
-        AssociatedGun(std::shared_ptr<Gun> setGun);
+        AssociatedGun(std::shared_ptr<const Gun> setGun);
         ~AssociatedGun();
 
         int getRoundCount() const;
