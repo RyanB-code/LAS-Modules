@@ -1,8 +1,10 @@
 #pragma once
 
-#include <string>
-
 #include "Ammo.h" // Needs cartridge definition
+
+#include <array>
+#include <string>
+#include <memory>
 
 namespace ShooterCentral{
 
@@ -37,6 +39,27 @@ namespace ShooterCentral{
         WeaponType  weaponType  { };
         Cartridge   cartridge   { };
         bool        m_isActive    { false }; 
+    };
+
+    class GunAndAmmo {
+    private:
+        static constexpr int MAX_NUM_AMMO_USED { 10 };
+    public:
+        GunAndAmmo(std::shared_ptr<const Gun> setGun);
+        ~GunAndAmmo();
+
+        bool    addAmmoUsed     (const AmountOfAmmo& ammo);
+        bool    hasUsedAmmo     (const Ammo& ammo) const;
+        int     totalAmmoUsed   () const;
+
+        const Gun& getGun() const;
+
+        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cbegin() const;
+        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cend() const;
+    private:
+        std::shared_ptr<const Gun>                  gun;
+        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED> ammoUsedList;
+        int nextIndex { 0 };
     };
 
 }

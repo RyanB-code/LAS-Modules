@@ -54,3 +54,49 @@ bool Gun::operator==(const Gun& other) const{
 bool Gun::operator<(const Gun& other) const{
     return std::tuple{getWeaponType().getName(), getCartridge().getName(), getName()} < std::tuple{other.getWeaponType().getName(), other.getCartridge().getName(), other.getName()};
 }
+
+
+GunAndAmmo::GunAndAmmo(std::shared_ptr<const Gun> setGun) : gun {setGun} {
+
+}
+GunAndAmmo::~GunAndAmmo(){
+
+}
+bool GunAndAmmo::addAmmoUsed(const AmountOfAmmo& ammo) {
+    // Check if ammo already in list then add
+    for(auto& entry : ammoUsedList){
+        if(ammo.ammo == entry.ammo){
+            entry.amount += ammo.amount;
+            return true;
+        }
+    }
+
+    // If not already used, add new entry
+    if(nextIndex < MAX_NUM_AMMO_USED){
+        ammoUsedList[nextIndex] = ammo;
+        ++nextIndex;
+        return true;
+    }
+
+    return false;
+}
+bool GunAndAmmo::hasUsedAmmo(const Ammo& ammo) const {
+    for(const auto& entry : ammoUsedList){
+        if(ammo == entry.ammo)
+            return true;
+    }
+    
+    return false;
+}
+int GunAndAmmo::totalAmmoUsed() const {
+    return nextIndex;
+}
+const Gun& GunAndAmmo::getGun() const {
+    return *gun;
+}
+std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAmmo::cbegin() const{
+    return ammoUsedList.cbegin();
+}
+std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAmmo::cend() const {
+    return ammoUsedList.cend();
+}
