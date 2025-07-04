@@ -34,23 +34,14 @@ namespace ShooterCentral{
     };
 
 
-    class EventMetadata {
-    public:
-        EventMetadata();
-        EventMetadata(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
-        ~EventMetadata();
+    struct EventMetadata {
+        Location    location    { };
+        EventType   eventType   { };
+        std::string notes       { };
+        ymd         date        { std::chrono::sys_days{std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{0}, std::chrono::day{0}}}};
 
-        std::string getNotes()      const;
-        EventType   getEventType()  const;
-        Location    getLocation()   const;
-        const ymd&  getDate()       const;
-        timepoint   getTimepoint()  const;
-
-    private:
-        Location    location;
-        EventType   eventType;
-        std::string notes;
-        ymd         date;
-    };
+        bool operator== (const EventMetadata& other) const;
+        bool operator<  (const EventMetadata& other) const;
+   };
  
 }

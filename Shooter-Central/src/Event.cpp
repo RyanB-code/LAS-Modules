@@ -42,38 +42,19 @@ bool EventType::operator==(const EventType& other) const{
         return false;
 }
 
+bool EventMetadata::operator==(const EventMetadata& other) const{
+if(date != other.date)
+    return false;
 
-EventMetadata::EventMetadata() 
-    :   location {Location { }},  
-        eventType{EventType{ }},  
-        notes{""}, 
-        date {std::chrono::sys_days{std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{0}, std::chrono::day{0}}}}
-{
+if(eventType != other.eventType)
+    return false;
 
-}
-EventMetadata::EventMetadata(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate)
-    :   location    { setLocation },
-        eventType   { setEventType },
-        notes       { setNotes },
-        date        { setDate }
-{
+if(location != other.location)
+    return false;
 
+return true;
 }
-EventMetadata::~EventMetadata(){
-
-}
-std::string EventMetadata::getNotes() const{
-    return notes;
-}
-EventType EventMetadata::getEventType() const{
-    return eventType;
-}
-Location EventMetadata::getLocation() const{
-    return location;
-}
-const ymd& EventMetadata::getDate() const{
-    return date;
-}
-timepoint EventMetadata::getTimepoint()  const{
-    return std::chrono::system_clock::time_point{std::chrono::sys_days{date}};
+bool EventMetadata::operator<(const EventMetadata& other) const{
+    // This orders with recent events first
+    return std::tuple(other.date, std::string{other.eventType}, std::string{other.location}) < std::tuple(date, std::string{eventType}, std::string{location});
 }

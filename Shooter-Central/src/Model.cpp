@@ -26,7 +26,7 @@ bool Event::addGun(const GunAndAmmo& gun) {
 
     return false;
 }
-bool Event::hasUsedGun(const Gun& gun) const {
+bool Event::hasUsedGun(const GunMetadata& gun) const {
     for(const auto& entry : gunsUsedList){
         if(entry.getGun() == gun)
             return true;
@@ -38,22 +38,19 @@ int Event::totalGunsUsed() const {
     return nextIndex;
 }
 std::string Event::getNotes() const{
-    return eventMetadata.getNotes();
+    return eventMetadata.notes;
 }
 EventType Event::getEventType() const{
-    return eventMetadata.getEventType();
+    return eventMetadata.eventType;
 }
 Location Event::getLocation() const{
-    return eventMetadata.getLocation();
+    return eventMetadata.location;
 }
 const ymd& Event::getDate() const{
-    return eventMetadata.getDate();
-}
-timepoint Event::getTimepoint()  const{
-    return eventMetadata.getTimepoint();
+    return eventMetadata.date;
 }
 std::string Event::printDate() const{
-    return std::format("{:%Od %b %Y}", eventMetadata.getDate());
+    return std::format("{:%Od %b %Y}", eventMetadata.date);
 }
 std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cbegin() const{
     return gunsUsedList.cbegin();
@@ -65,24 +62,22 @@ std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cend() const 
         return gunsUsedList.cbegin();
 }
 bool Event::operator==(const Event& other) const{
-    if(this->eventMetadata.getDate() != other.getDate())
+    if(this->getDate() != other.getDate())
         return false;
 
-    if(this->eventMetadata.getEventType() != other.getEventType())
+    if(this->getEventType() != other.getEventType())
         return false;
 
-    if(this->eventMetadata.getLocation() != other.getLocation())
+    if(this->getLocation() != other.getLocation())
         return false;
     
     return true;
 }
-
-
-
 bool Event::operator<(const Event& other) const{
     // This orders with recent events first
-    return std::tuple{other.getDate(), other.getEventType().getName(), other.getLocation().getName()} < std::tuple{eventMetadata.getDate(), eventMetadata.getEventType().getName(), eventMetadata.getLocation().getName()};
+    return std::tuple{other.getDate(), other.getEventType().getName(), other.getLocation().getName()} < std::tuple{getDate(), getEventType().getName(), getLocation().getName()};
 }
+
 
 
 AssociatedAmmo::AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountOfAmmo) : amountOfAmmo {setAmountOfAmmo} {
@@ -91,20 +86,20 @@ AssociatedAmmo::AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountOfAm
 AssociatedAmmo::~AssociatedAmmo() {
 
 }
-bool AssociatedAmmo::addGun(std::shared_ptr<const Gun> gun) {
+bool AssociatedAmmo::addGun(std::shared_ptr<const GunMetadata> gun) {
     if(gunsAssociated.contains(*gun))
         return false;
 
     return gunsAssociated.try_emplace(*gun, gun).second;
 }
-bool AssociatedAmmo::removeGun(const Gun& gun){
+bool AssociatedAmmo::removeGun(const GunMetadata& gun){
     if(!gunsAssociated.contains(gun))
         return true;
 
     gunsAssociated.erase(gun);
     return !gunsAssociated.contains(gun); // Return the inverse of contains()
 }
-bool AssociatedAmmo::hasGun(const Gun& gun) const {
+bool AssociatedAmmo::hasGun(const GunMetadata& gun) const {
     return gunsAssociated.contains(gun);
 }
 int AssociatedAmmo::totalGuns() const {
@@ -113,22 +108,22 @@ int AssociatedAmmo::totalGuns() const {
 const AmountOfAmmo& AssociatedAmmo::getAmountOfAmmo() const {
     return *amountOfAmmo;
 }
-std::map<Gun, std::shared_ptr<const Gun>>::const_iterator AssociatedAmmo::cbegin() const {
+std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator AssociatedAmmo::cbegin() const {
     return gunsAssociated.cbegin();
 }
-std::map<Gun, std::shared_ptr<const Gun>>::const_iterator AssociatedAmmo::cend() const {
+std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator AssociatedAmmo::cend() const {
     return gunsAssociated.cend();
 }
  
 
 
-AssociatedGun::AssociatedGun(std::shared_ptr<const Gun> setGun) : gun {setGun} {
+AssociatedGun::AssociatedGun(std::shared_ptr<const GunMetadata> setGun) : gun {setGun} {
 
 }
 AssociatedGun::~AssociatedGun(){
 
 }
-const Gun& AssociatedGun::getGun() const {
+const GunMetadata& AssociatedGun::getGun() const {
     throwIfGunInvalid();
 
     return *gun;
@@ -145,27 +140,27 @@ int AssociatedGun::getRoundCount() const {
 bool AssociatedGun::addAmmoUsed(const AmountOfAmmo& addAmmo) {
     throwIfGunInvalid();
 
-    if(ammoUsedList.contains(addAmmo.ammo)){
-        ammoUsedList.at(addAmmo.ammo).amount += addAmmo.amount;
-        totalRoundCount += addAmmo.amount;
+    if(ammoUsedList.contains(addAmmo.getAmmo())){
+        ammoUsedList.at(addAmmo.getAmmo()).addAmount(addAmmo.getAmount());
+        totalRoundCount += addAmmo.getAmount();
         return true;
     }
 
-    if(ammoUsedList.try_emplace(addAmmo.ammo, addAmmo).second){
-        totalRoundCount += addAmmo.amount;
+    if(ammoUsedList.try_emplace(addAmmo.getAmmo(), addAmmo).second){
+        totalRoundCount += addAmmo.getAmount();
         return true;
     }
      
     return false;
 }
-bool AssociatedGun::removeAmmoUsed(const Ammo& ammo){
+bool AssociatedGun::removeAmmoUsed(const AmmoMetadata& ammo){
     if(!ammoUsedList.contains(ammo))
         return true;
 
     ammoUsedList.erase(ammo);
     return !ammoUsedList.contains(ammo); // Return the inverse of contains()
 }
-bool AssociatedGun::hasUsedAmmo(const Ammo& ammo) const {
+bool AssociatedGun::hasUsedAmmo(const AmmoMetadata& ammo) const {
     return ammoUsedList.contains(ammo);
 }
 bool AssociatedGun::addEvent(std::shared_ptr<const Event> event) {
@@ -225,10 +220,10 @@ void AssociatedGun::throwIfGunInvalid() const {
     if(!gun)
         throw std::invalid_argument("Associated gun cannot be null");
 }
-std::map<Ammo, AmountOfAmmo>::const_iterator AssociatedGun::ammoUsed_cbegin() const{
+std::map<AmmoMetadata, AmountOfAmmo>::const_iterator AssociatedGun::ammoUsed_cbegin() const{
     return ammoUsedList.cbegin();
 }
-std::map<Ammo, AmountOfAmmo>::const_iterator AssociatedGun::ammoUsed_cend() const {
+std::map<AmmoMetadata, AmountOfAmmo>::const_iterator AssociatedGun::ammoUsed_cend() const {
     return ammoUsedList.cend();
 }
 std::map<Event, std::shared_ptr<const Event>>::const_iterator AssociatedGun::eventsUsed_cbegin() const{

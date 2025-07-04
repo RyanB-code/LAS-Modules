@@ -21,46 +21,36 @@ namespace ShooterCentral{
         std::string name;
     };
 
-    class Gun final {
-    public:
-        Gun(std::string setName="N/A", WeaponType setWeaponType=WeaponType{ }, Cartridge setCartridge=Cartridge{ });
-        ~Gun();
-
-        std::string getName         () const;
-        WeaponType  getWeaponType   () const;
-        Cartridge   getCartridge    () const;
-        bool        isActive        () const;
-
-        bool operator== (const Gun& other) const;
-        bool operator<  (const Gun& other) const;
-
-    private:
-        std::string name        { };
+    struct GunMetadata {
+        std::string name        { "N/A" };
         WeaponType  weaponType  { };
         Cartridge   cartridge   { };
-        bool        m_isActive    { false }; 
+        bool        m_isActive  { false }; 
+
+        bool operator== (const GunMetadata& other) const;
+        bool operator<  (const GunMetadata& other) const;
     };
 
     class GunAndAmmo {
     private:
         static constexpr int MAX_NUM_AMMO_USED { 10 };
     public:
-        GunAndAmmo(std::shared_ptr<const Gun> setGun=nullptr);
+        GunAndAmmo(std::shared_ptr<const GunMetadata> setGun=nullptr);
         ~GunAndAmmo();
 
         bool    addAmmoUsed     (const AmountOfAmmo& ammo);
-        bool    hasUsedAmmo     (const Ammo& ammo) const;
+        bool    hasUsedAmmo     (const AmmoMetadata& ammo) const;
         int     totalAmmoUsed   () const;
 
-        const Gun& getGun() const;
+        const GunMetadata& getGun() const;
 
         operator bool() const;
 
         std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cbegin() const;
         std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cend() const;
     private:
-        std::shared_ptr<const Gun>                  gun;
-        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED> ammoUsedList;
+        std::shared_ptr<const GunMetadata>                  gun { };
+        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED> ammoUsedList { };
         int nextIndex { 0 };
     };
 

@@ -23,6 +23,7 @@ bool Manufacturer::operator==(const Manufacturer& other) const{
 }
 
 
+
 Cartridge::Cartridge(std::string setName) : name { setName } {
 
 }
@@ -43,15 +44,48 @@ bool Cartridge::operator==(const Cartridge& other) const{
 }
 
 
-bool Ammo::operator==(const Ammo& other) const {
+
+bool AmmoMetadata::operator==(const AmmoMetadata& other) const {
     if(name == other.name && manufacturer == other.manufacturer && cartridge == other.cartridge && grainWeight == other.grainWeight)
         return true;
     else
         return false;
 }
-bool Ammo::operator<(const Ammo& other) const{
-   std::tuple<std::string, std::string, std::string, int> lhs {cartridge.getName(), manufacturer.getName(), name, grainWeight};
-   std::tuple<std::string, std::string, std::string, int> rhs {other.cartridge.getName(), other.manufacturer.getName(), other.name, other.grainWeight};
+bool AmmoMetadata::operator<(const AmmoMetadata& other) const{
+    std::tuple<std::string, std::string, std::string, int> lhs {cartridge.getName(), manufacturer.getName(), name, grainWeight};
+    std::tuple<std::string, std::string, std::string, int> rhs {other.cartridge.getName(), other.manufacturer.getName(), other.name, other.grainWeight};
 
-   return lhs < rhs;
+    return lhs < rhs;
+}
+
+
+
+AmountOfAmmo::AmountOfAmmo(std::shared_ptr<const AmmoMetadata> setAmmo, int setAmount)
+    :   ammo {setAmmo}, amount {setAmount}
+{
+
+}
+AmountOfAmmo::~AmountOfAmmo() {
+
+}
+AmountOfAmmo::operator bool() const {
+    if(ammo)
+        return true;
+    else
+        return false;
+}
+int AmountOfAmmo::getAmount() const {
+    return amount;
+}
+void AmountOfAmmo::addAmount(int add){
+    amount += add;
+}
+const AmmoMetadata& AmountOfAmmo::getAmmo() const {
+    throwIfInvalid();
+
+    return *ammo;
+}
+void AmountOfAmmo::throwIfInvalid() const {
+    if(!ammo)
+        throw std::invalid_argument("Ammo cannot be null");
 }

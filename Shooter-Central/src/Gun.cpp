@@ -23,40 +23,20 @@ bool WeaponType::operator==(const WeaponType& other) const{
 }
 
 
-Gun::Gun(std::string setName, WeaponType setWeaponType, Cartridge setCartridge)
-        :   name        { setName },
-            weaponType  { setWeaponType },
-            cartridge   { setCartridge }
-{
 
-}
-Gun::~Gun(){
-
-}
-std::string Gun::getName() const{
-    return name;
-}
-WeaponType Gun::getWeaponType() const{
-    return weaponType;
-}
-Cartridge Gun::getCartridge () const{
-    return cartridge;
-}
-bool Gun::isActive() const {
-    return m_isActive;
-}
-bool Gun::operator==(const Gun& other) const{
+bool GunMetadata::operator==(const GunMetadata& other) const{
     if(this->name == other.name && this->weaponType == other.weaponType && this->cartridge == other.cartridge)
         return true;
     else
         return false;
 }
-bool Gun::operator<(const Gun& other) const{
-    return std::tuple{getWeaponType().getName(), getCartridge().getName(), getName()} < std::tuple{other.getWeaponType().getName(), other.getCartridge().getName(), other.getName()};
+bool GunMetadata::operator<(const GunMetadata& other) const{
+    return std::tuple{std::string{weaponType}, std::string{cartridge}, name} < std::tuple{std::string{other.weaponType}, std::string{other.cartridge}, other.name}; 
 }
 
 
-GunAndAmmo::GunAndAmmo(std::shared_ptr<const Gun> setGun) : gun {setGun} {
+
+GunAndAmmo::GunAndAmmo(std::shared_ptr<const GunMetadata> setGun) : gun {setGun} {
 
 }
 GunAndAmmo::~GunAndAmmo(){
@@ -65,8 +45,10 @@ GunAndAmmo::~GunAndAmmo(){
 bool GunAndAmmo::addAmmoUsed(const AmountOfAmmo& ammo) {
     // Check if ammo already in list then add
     for(auto& entry : ammoUsedList){
-        if(ammo.ammo == entry.ammo){
-            entry.amount += ammo.amount;
+        if(!entry)
+            continue;
+        if(ammo.getAmmo() == entry.getAmmo()){
+            entry.addAmount(ammo.getAmount());
             return true;
         }
     }
@@ -80,9 +62,9 @@ bool GunAndAmmo::addAmmoUsed(const AmountOfAmmo& ammo) {
 
     return false;
 }
-bool GunAndAmmo::hasUsedAmmo(const Ammo& ammo) const {
+bool GunAndAmmo::hasUsedAmmo(const AmmoMetadata& ammo) const {
     for(const auto& entry : ammoUsedList){
-        if(ammo == entry.ammo)
+        if(ammo == entry.getAmmo())
             return true;
     }
     
@@ -91,7 +73,7 @@ bool GunAndAmmo::hasUsedAmmo(const Ammo& ammo) const {
 int GunAndAmmo::totalAmmoUsed() const {
     return nextIndex;
 }
-const Gun& GunAndAmmo::getGun() const {
+const GunMetadata& GunAndAmmo::getGun() const {
     return *gun;
 }
 GunAndAmmo::operator bool() const{
