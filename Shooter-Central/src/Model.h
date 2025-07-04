@@ -6,6 +6,7 @@
 
 #include <map>
 #include <memory>
+#include <exception>
 
 namespace ShooterCentral {
 
@@ -66,23 +67,33 @@ namespace ShooterCentral {
         AssociatedGun(std::shared_ptr<const Gun> setGun);
         ~AssociatedGun();
 
+        const Gun& getGun() const;
+        operator bool() const;
+
         int getRoundCount() const;
+        int totalEventsUsed () const;
 
         bool addAmmoUsed    (const AmountOfAmmo& ammo);
         bool removeAmmoUsed (const Ammo& ammo);
         bool hasUsedAmmo    (const Ammo& ammo) const;
 
-        bool addEvent       (std::shared_ptr<Event> event);
-        //bool removeEvent    (const Event& event); 
-        //bool wasUsedInEvent (const Event& event);
+        bool addEvent       (std::shared_ptr<const Event> event); // If key already exists, returns false since data is not overwritten
+        bool removeEvent    (const Event& event); 
+        bool wasUsedInEvent (const Event& event);
 
+        std::map<Ammo, AmountOfAmmo>::const_iterator    ammoUsed_cbegin() const;
+        std::map<Ammo, AmountOfAmmo>::const_iterator    ammoUsed_cend() const;       
 
+        std::map<Event, std::shared_ptr<const Event>>::const_iterator   eventsUsed_cbegin() const;
+        std::map<Event, std::shared_ptr<const Event>>::const_iterator   eventsUsed_cend() const;
     private:
         int totalRoundCount { 0 };
 
-        std::shared_ptr<Gun>                    gun                 { };
-        std::map<Ammo, AmountOfAmmo>            ammoUsedList        { };    // Not shared_ptr because the amount is amount of rounds shot, not in stockpile 
-        std::map<Event, std::shared_ptr<Event>> eventsAssociated    { };
+        std::shared_ptr<const Gun>                      gun           { };
+        std::map<Ammo, AmountOfAmmo>                    ammoUsedList  { };    // Not shared_ptr because the amount is amount of rounds shot, not the amount in the stockpile 
+        std::map<Event, std::shared_ptr<const Event>>   eventsUsed    { };
+
+        void throwIfGunInvalid() const;
     };
 
 }
