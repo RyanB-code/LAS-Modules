@@ -9,6 +9,62 @@ Event::Event(Location setLocation, EventType setEventType, std::string setNotes,
 Event::~Event(){
 
 }
+bool Event::addGun(const GunAndAmmo& gun) {
+    for(auto& entry : gunsUsedList){
+        if(!entry)
+            continue;
+        if(gun.getGun() == entry.getGun())
+            return false;
+    }
+
+    // If not already used, add new entry
+    if(nextIndex < MAX_NUM_GUNS){
+        gunsUsedList[nextIndex] = gun;
+        ++nextIndex;
+        return true;
+    }
+
+    return false;
+}
+bool Event::hasUsedGun(const Gun& gun) const {
+    for(const auto& entry : gunsUsedList){
+        if(entry.getGun() == gun)
+            return true;
+    }
+    
+    return false;
+}
+int Event::totalGunsUsed() const {
+    return nextIndex;
+}
+std::string Event::getNotes() const{
+    return eventMetadata.getNotes();
+}
+EventType Event::getEventType() const{
+    return eventMetadata.getEventType();
+}
+Location Event::getLocation() const{
+    return eventMetadata.getLocation();
+}
+const ymd& Event::getDate() const{
+    return eventMetadata.getDate();
+}
+timepoint Event::getTimepoint()  const{
+    return eventMetadata.getTimepoint();
+}
+std::string Event::printDate() const{
+    return std::format("{:%Od %b %Y}", eventMetadata.getDate());
+}
+std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cbegin() const{
+    return gunsUsedList.cbegin();
+}
+std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cend() const {
+    if(nextIndex > 0)
+        return gunsUsedList.cbegin() + nextIndex;
+    else
+        return gunsUsedList.cbegin();
+}
+
 
 
 AssociatedAmmo::AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountOfAmmo) : amountOfAmmo {setAmountOfAmmo} {
@@ -46,6 +102,7 @@ std::map<Gun, std::shared_ptr<const Gun>>::const_iterator AssociatedAmmo::cend()
     return gunsAssociated.cend();
 }
  
+
 
 AssociatedGun::AssociatedGun(std::shared_ptr<const Gun> setGun) : gun {setGun} {
 

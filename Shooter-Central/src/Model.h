@@ -10,14 +10,31 @@
 namespace ShooterCentral {
     // Forward declarations
     class Event {
+    private:
+        static constexpr int MAX_NUM_GUNS { 5 };
     public:
         Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
         ~Event();
 
+        bool    addGun          (const GunAndAmmo& gun);        // Will not amend existing entries if a gun is already in the container
+        bool    hasUsedGun      (const Gun& ammo) const;
+        int     totalGunsUsed   () const;
+
+        std::string getNotes()      const;
+        EventType   getEventType()  const;
+        Location    getLocation()   const;
+        const ymd&  getDate()       const;
+        timepoint   getTimepoint()  const;
+
+        std::string printDate()     const;
+
+        std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cbegin() const;
+        std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cend() const;
     private:
         EventMetadata eventMetadata;
 
-
+        std::array<GunAndAmmo, MAX_NUM_GUNS> gunsUsedList;
+        int nextIndex { 0 };
     };
 
     class AssociatedAmmo {
