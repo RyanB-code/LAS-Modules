@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace ShooterCentral {
-    // Forward declarations
+
     class Event {
     private:
         static constexpr int MAX_NUM_GUNS { 5 };
@@ -30,7 +30,10 @@ namespace ShooterCentral {
 
         std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cbegin() const;
         std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cend() const;
-    private:
+
+        bool operator== (const Event& other) const;
+        bool operator<  (const Event& other) const;
+   private:
         EventMetadata eventMetadata;
 
         std::array<GunAndAmmo, MAX_NUM_GUNS> gunsUsedList;

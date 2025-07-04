@@ -64,7 +64,25 @@ std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cend() const 
     else
         return gunsUsedList.cbegin();
 }
+bool Event::operator==(const Event& other) const{
+    if(this->eventMetadata.getDate() != other.getDate())
+        return false;
 
+    if(this->eventMetadata.getEventType() != other.getEventType())
+        return false;
+
+    if(this->eventMetadata.getLocation() != other.getLocation())
+        return false;
+    
+    return true;
+}
+
+
+
+bool Event::operator<(const Event& other) const{
+    // This orders with recent events first
+    return std::tuple{other.getDate(), other.getEventType().getName(), other.getLocation().getName()} < std::tuple{eventMetadata.getDate(), eventMetadata.getEventType().getName(), eventMetadata.getLocation().getName()};
+}
 
 
 AssociatedAmmo::AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountOfAmmo) : amountOfAmmo {setAmountOfAmmo} {
