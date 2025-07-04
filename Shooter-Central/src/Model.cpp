@@ -93,7 +93,7 @@ AssociatedAmmo::~AssociatedAmmo() {
 }
 bool AssociatedAmmo::addGun(std::shared_ptr<const Gun> gun) {
     if(gunsAssociated.contains(*gun))
-        return true;
+        return false;
 
     return gunsAssociated.try_emplace(*gun, gun).second;
 }
