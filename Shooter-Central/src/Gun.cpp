@@ -94,6 +94,12 @@ int GunAndAmmo::totalAmmoUsed() const {
 const Gun& GunAndAmmo::getGun() const {
     return *gun;
 }
+GunAndAmmo::operator bool() const{
+    if(gun)
+        return true;
+    else
+        return false;
+}
 std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAmmo::cbegin() const{
     return ammoUsedList.cbegin();
 }

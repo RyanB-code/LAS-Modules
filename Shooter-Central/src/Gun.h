@@ -45,7 +45,7 @@ namespace ShooterCentral{
     private:
         static constexpr int MAX_NUM_AMMO_USED { 10 };
     public:
-        GunAndAmmo(std::shared_ptr<const Gun> setGun);
+        GunAndAmmo(std::shared_ptr<const Gun> setGun=nullptr);
         ~GunAndAmmo();
 
         bool    addAmmoUsed     (const AmountOfAmmo& ammo);
@@ -53,6 +53,8 @@ namespace ShooterCentral{
         int     totalAmmoUsed   () const;
 
         const Gun& getGun() const;
+
+        operator bool() const;
 
         std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cbegin() const;
         std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cend() const;
