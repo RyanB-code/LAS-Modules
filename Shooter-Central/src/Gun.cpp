@@ -104,5 +104,8 @@ std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAm
     return ammoUsedList.cbegin();
 }
 std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAmmo::cend() const {
-    return ammoUsedList.cend();
+     if(nextIndex > 0)
+        return ammoUsedList.cbegin() + nextIndex;
+    else
+        return ammoUsedList.cbegin();
 }
