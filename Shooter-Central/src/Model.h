@@ -42,8 +42,11 @@ namespace ShooterCentral {
 
     class AssociatedAmmo {
     public:
-        AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountofAmmo);
+        AssociatedAmmo(AmountOfAmmo setAmountofAmmo);
         ~AssociatedAmmo();
+
+        const AmountOfAmmo& getAmountOfAmmo() const;
+        operator bool() const;
 
         bool addGun     (std::shared_ptr<const GunMetadata> gun); // If key already exists, returns false since data is not overwritten
         bool removeGun  (const GunMetadata& gun);
@@ -51,13 +54,13 @@ namespace ShooterCentral {
 
         int totalGuns   () const;
 
-        const AmountOfAmmo& getAmountOfAmmo() const;
-
         std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator cbegin() const;     // Const itr to cbegin()
         std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator cend() const;       // Const itr to cend()
    private:
-        std::shared_ptr<const AmountOfAmmo>       amountOfAmmo      { };
-        std::map<GunMetadata, std::shared_ptr<const GunMetadata>> gunsAssociated    { };
+        AmountOfAmmo                                                amountOfAmmo      { };
+        std::map<GunMetadata, std::shared_ptr<const GunMetadata>>   gunsAssociated    { };
+
+        void throwIfInvalid() const;
     };
 
 

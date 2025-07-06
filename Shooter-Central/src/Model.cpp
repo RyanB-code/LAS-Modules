@@ -80,11 +80,17 @@ bool Event::operator<(const Event& other) const{
 
 
 
-AssociatedAmmo::AssociatedAmmo(std::shared_ptr<const AmountOfAmmo> setAmountOfAmmo) : amountOfAmmo {setAmountOfAmmo} {
+AssociatedAmmo::AssociatedAmmo(AmountOfAmmo setAmountOfAmmo) : amountOfAmmo {setAmountOfAmmo} {
 
 }
 AssociatedAmmo::~AssociatedAmmo() {
 
+}
+AssociatedAmmo::operator bool() const {
+    if(amountOfAmmo)
+        return true;
+    else
+        return false;
 }
 bool AssociatedAmmo::addGun(std::shared_ptr<const GunMetadata> gun) {
     if(gunsAssociated.contains(*gun))
@@ -106,7 +112,8 @@ int AssociatedAmmo::totalGuns() const {
     return gunsAssociated.size();
 }
 const AmountOfAmmo& AssociatedAmmo::getAmountOfAmmo() const {
-    return *amountOfAmmo;
+    throwIfInvalid();
+    return amountOfAmmo;
 }
 std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator AssociatedAmmo::cbegin() const {
     return gunsAssociated.cbegin();
@@ -114,7 +121,10 @@ std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator Associ
 std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator AssociatedAmmo::cend() const {
     return gunsAssociated.cend();
 }
- 
+void AssociatedAmmo::throwIfInvalid() const {
+    if(!amountOfAmmo)
+        throw std::invalid_argument("Associated ammo cannot be null");
+}
 
 
 AssociatedGun::AssociatedGun(std::shared_ptr<const GunMetadata> setGun) : gun {setGun} {
