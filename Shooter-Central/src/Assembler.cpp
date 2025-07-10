@@ -22,7 +22,7 @@ bool LASM_loadModuleInfo(LAS::Information::ModuleInfo& moduleInfo){
     moduleInfo.updateFunction   = std::function<void()>{std::bind(&Framework::update, &application)};
     moduleInfo.drawFunction     = std::function<void()>{std::bind(&Framework::draw, &application)};
     // Add commands if needed
-
+    
     return true;
 }
 bool LASM_init(const LAS::Information::EnvironmentInfo& envInfo){
