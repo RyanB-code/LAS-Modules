@@ -4,12 +4,12 @@ using namespace ShooterCentral;
 using namespace LAS;
 
 Framework::Framework() {
-    window = std::make_shared<ShooterCentralWindow>(ShooterCentralWindow{});
+
 }
 Framework::~Framework(){
 
 }
-bool Framework::setup(const std::string& directory){
+bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setShown){
     using namespace ShooterCentral::Setup;
 
     Filepaths paths {directory};
@@ -18,24 +18,30 @@ bool Framework::setup(const std::string& directory){
         log_critical("Failed to setup filesystem");
         return false;
     }
-    if(!setupWindow(window)){
-        log_critical("Failed to setup window");
-        return false;
-    }
+
+    shown = setShown;
    
-    log_info("Setup sucessful");
+    log_info("SC Setup sucessful");
     return true;
 }
-SCWindowPtr Framework::getWindow() const {
-    return window;
+void Framework::update() {
 }
-std::string Framework::getCommandGroupName() const {
-    return commandGroupName;
+void Framework::draw() {
+   
+    if(!ImGui::Begin(TITLE, &*shown, ImGuiWindowFlags_MenuBar)){
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Text("test text");
+
+
+    ImGui::End();
+    
 }
 
 
-
-bool ShooterCentral::Setup::setupFilesystem(Framework::Filepaths& paths){
+bool Setup::setupFilesystem(Framework::Filepaths& paths){
     if(paths.parentDir.empty())
         return false;
 
@@ -59,9 +65,6 @@ bool ShooterCentral::Setup::setupFilesystem(Framework::Filepaths& paths){
         return false;
     }
 
-    return true;
-}
-bool ShooterCentral::Setup::setupWindow(SCWindowPtr window){
     return true;
 }
  

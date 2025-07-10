@@ -3,16 +3,17 @@
 #include "Ammo.h"
 #include "Gun.h"
 #include "Event.h"
-#include "Window.h"
 #include "Model.h"
 
 #include <LAS/Logging.h>
+#include <imgui/imgui.h>
 
 #include <string>
 #include <stdint.h>
 #include <map> 
 #include <vector>
 #include <filesystem>
+#include <memory>
 
 namespace ShooterCentral{
 
@@ -28,20 +29,21 @@ namespace ShooterCentral{
             std::string gunsDir;
         };
 
-        bool setup(const std::string& directory);   // Call inside LASM_init
+        bool setup(const std::string& directory, std::shared_ptr<bool> shown);   // Call inside LASM_init
         
-        SCWindowPtr getWindow() const;
         std::string getCommandGroupName() const;
 
-    private:
-        static constexpr  std::string commandGroupName { "sc" };
+        void update();
+        void draw();
 
-        SCWindowPtr window;
-        Model       model;
+        static constexpr char TITLE[] = "Shooter Central";
+        static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
+    private:
+        Model model;
+         std::shared_ptr<bool> shown;
     };
 
     namespace Setup {
         bool    setupFilesystem(Framework::Filepaths& paths); // Needs parentDir set first
-        bool    setupWindow(SCWindowPtr window);
     }
 }
