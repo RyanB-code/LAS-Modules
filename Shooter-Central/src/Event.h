@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Gun.h"
+
 #include <chrono>
 
 using ymd       = std::chrono::year_month_day;
@@ -44,4 +46,34 @@ namespace ShooterCentral{
         bool operator<  (const EventMetadata& other) const;
    };
  
+
+    class Event {
+    private:
+        static constexpr int MAX_NUM_GUNS { 5 };
+    public:
+        Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
+        ~Event();
+
+        bool    addGun          (const GunAndAmmo& gun);        // Will not amend existing entries if a gun is already in the container
+        bool    hasUsedGun      (const GunMetadata& gun) const;
+        int     totalGunsUsed   () const;
+
+        std::string getNotes()      const;
+        EventType   getEventType()  const;
+        Location    getLocation()   const;
+        const ymd&  getDate()       const;
+
+        std::string printDate()     const;
+
+        std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cbegin() const;
+        std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cend() const;
+
+        bool operator== (const Event& other) const;
+        bool operator<  (const Event& other) const;
+   private:
+        EventMetadata eventMetadata;
+
+        std::array<GunAndAmmo, MAX_NUM_GUNS> gunsUsedList;
+        int nextIndex { 0 };
+    };
 }

@@ -58,3 +58,83 @@ bool EventMetadata::operator<(const EventMetadata& other) const{
     // This orders with recent events first
     return std::tuple(other.date, std::string{other.eventType}, std::string{other.location}) < std::tuple(date, std::string{eventType}, std::string{location});
 }
+
+
+Event::Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate)
+    :   eventMetadata {setLocation, setEventType, setNotes, setDate} {
+
+}
+Event::~Event(){
+
+}
+bool Event::addGun(const GunAndAmmo& gun) {
+    for(auto& entry : gunsUsedList){
+        if(!entry)
+            continue;
+        if(gun.getGun() == entry.getGun())
+            return false;
+    }
+
+    // If not already used, add new entry
+    if(nextIndex < MAX_NUM_GUNS){
+        gunsUsedList[nextIndex] = gun;
+        ++nextIndex;
+        return true;
+    }
+
+    return false;
+}
+bool Event::hasUsedGun(const GunMetadata& gun) const {
+    for(const auto& entry : gunsUsedList){
+        if(entry.getGun() == gun)
+            return true;
+    }
+    
+    return false;
+}
+int Event::totalGunsUsed() const {
+    return nextIndex;
+}
+std::string Event::getNotes() const{
+    return eventMetadata.notes;
+}
+EventType Event::getEventType() const{
+    return eventMetadata.eventType;
+}
+Location Event::getLocation() const{
+    return eventMetadata.location;
+}
+const ymd& Event::getDate() const{
+    return eventMetadata.date;
+}
+std::string Event::printDate() const{
+    return std::format("{:%Od %b %Y}", eventMetadata.date);
+}
+std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cbegin() const{
+    return gunsUsedList.cbegin();
+}
+std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cend() const {
+    if(nextIndex > 0)
+        return gunsUsedList.cbegin() + nextIndex;
+    else
+        return gunsUsedList.cbegin();
+}
+bool Event::operator==(const Event& other) const{
+    if(this->getDate() != other.getDate())
+        return false;
+
+    if(this->getEventType() != other.getEventType())
+        return false;
+
+    if(this->getLocation() != other.getLocation())
+        return false;
+    
+    return true;
+}
+bool Event::operator<(const Event& other) const{
+    // This orders with recent events first
+    return std::tuple{other.getDate(), other.getEventType().getName(), other.getLocation().getName()} < std::tuple{getDate(), getEventType().getName(), getLocation().getName()};
+}
+
+
+
