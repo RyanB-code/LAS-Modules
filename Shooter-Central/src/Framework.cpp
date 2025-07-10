@@ -25,6 +25,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     return true;
 }
 void Framework::update() {
+
 }
 void Framework::draw() {
    
@@ -33,11 +34,26 @@ void Framework::draw() {
         return;
     }
 
-    ImGui::Text("test text");
+    ContainerItrs itrs {
+        model.knownAmmo_cbegin(),
+        model.knownAmmo_cend(),
 
+        model.knownGuns_cbegin(),
+        model.knownGuns_cend(),
+
+        model.ammoStockpile_cbegin(),
+        model.ammoStockpile_cend(),
+
+        model.gunsInArmory_cbegin(),
+        model.gunsInArmory_cend(),
+
+        model.events_cbegin(),
+        model.events_cend()
+    };
+
+    view.draw(itrs, unsavedChanges);
 
     ImGui::End();
-    
 }
 
 

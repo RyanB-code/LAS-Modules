@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Ammo.h"
-#include "Gun.h"
-#include "Event.h"
+#include "AssociatedItems.h"
+#include "CommonItems.h"
+#include "View.h"
 #include "Model.h"
 
 #include <LAS/Logging.h>
-#include <imgui/imgui.h>
 
 #include <string>
 #include <stdint.h>
@@ -39,8 +38,12 @@ namespace ShooterCentral{
         static constexpr char TITLE[] = "Shooter Central";
         static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
     private:
-        Model model;
-         std::shared_ptr<bool> shown;
+        View::GUI       view    { };
+        Model           model   { };
+
+        UnsavedChanges  unsavedChanges { };
+
+        std::shared_ptr<bool> shown;
     };
 
     namespace Setup {
