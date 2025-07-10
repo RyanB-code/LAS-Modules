@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Ammo.h"
-#include "Gun.h"
-#include "Event.h"
+#include "AssociatedItems.h"
+#include "CommonItems.h"
 
 #include <map>
 #include <memory>
