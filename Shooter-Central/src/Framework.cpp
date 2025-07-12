@@ -48,7 +48,7 @@ void Framework::update() {
 }
 void Framework::draw() {
    
-    if(!ImGui::Begin(TITLE, &*shown, ImGuiWindowFlags_MenuBar)){
+    if(!ImGui::Begin(TITLE, &*shown, 0)){
         ImGui::End();
         return;
     }
