@@ -44,7 +44,7 @@ void GUI::draw(const ContainerItrs& itrs, const UnsavedChanges& unsavedChanges) 
 
     switch(currentScreen){
         case Screen::HOME:
-            drawHome(homeData, unsavedChanges);
+            draw_Home(itrs, homeData, unsavedChanges);
             break;
         case Screen::VIEW:
 
@@ -62,31 +62,169 @@ void GUI::draw(const ContainerItrs& itrs, const UnsavedChanges& unsavedChanges) 
 
 
 }
+void centerText(const std::string& text){
+    float windowWidth { ImGui::GetWindowSize().x };
+    float textWidth   { ImGui::CalcTextSize(text.c_str()).x };
 
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+    ImGui::Text("%s", text.c_str());
+}
 
-void drawHome (ScreenData_Home& data, const UnsavedChanges& changes) {
+void draw_Home (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedChanges& changes) {
     
     ImVec2  windowSize { ImGui::GetContentRegionAvail() };
     ImVec2  childWindowSizes { };
     bool    horizontalLayout { false };
 
+    int numShown { 0 }; // Number of child windows
+
+    if(data.showGuns)
+        ++numShown;
+
+    if(data.showEvents)
+        ++numShown;
+
+    if(data.showStockpile)
+        ++numShown;
+
+
     // Horizontal bigger than vertical, display tabs side by side
-    // 3 = number of child windows
-    if( (windowSize.x / 3) > (windowSize.y / 3 ) ){
-        childWindowSizes.x = windowSize.x / 3;
+    if( (windowSize.x / numShown) > (windowSize.y / numShown ) ){
+        childWindowSizes.x = windowSize.x / numShown;
         childWindowSizes.y = windowSize.y;
         horizontalLayout = true;
     }
     else{
         childWindowSizes.x = windowSize.x;
-        childWindowSizes.y = windowSize.y / 3;
+        childWindowSizes.y = windowSize.y / numShown;
         horizontalLayout = false;
     }
 
-
-    if(data.showGuns) {
-        ImGui::Text("showing guns");
+    
+    if(data.showGuns){
+        if(ImGui::BeginChild("Home_Guns", childWindowSizes, 0) ){
+            draw_HomeGuns(itrs.gunsInArmory_cbegin, itrs.gunsInArmory_cend, data.selectedGun);
+        }
+        ImGui::EndChild();
     }
 }
+void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator begin, 
+                        std::map<GunMetadata, AssociatedGun>::const_iterator end, 
+                        std::map<GunMetadata, AssociatedGun>::const_iterator selected
+                    )
+{
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x, 200};
+
+    if(tableSize.x < 400)
+        tableSize.x = 400;
+    if(tableSize.x > 800)
+        tableSize.x = 800;
+
+    ImGui::SeparatorText( "Guns In Armory" );
+    ImGui::Spacing();
+
+    // Center the table
+    float windowWidth { ImGui::GetContentRegionAvail().x };
+    if(tableSize.x < windowWidth)
+        ImGui::SetCursorPosX((windowWidth - tableSize.x) * 0.5f);
+
+    int row { 0 };
+    if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize)) {
+        ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Round Count",  ImGuiTableColumnFlags_None);
+
+        ImGui::TableHeadersRow();
+
+        for(auto itr { begin }; itr != end; ++itr){
+            if(!itr->second) // bool check to see if gun is valid
+                continue;
+
+            const GunMetadata& gun {itr->second.getGun()};
+            bool isGunSelected { false };
+            
+            if(gun == selected->second.getGun())
+                isGunSelected = true;
+
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 4; ++column){
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        ImGui::Selectable(gun.weaponType.getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                        if(isGunSelected)
+                            selected = itr;
+
+                        break;
+                    case 1:
+                        ImGui::Text("%s", gun.cartridge.getName().c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%s", gun.name.c_str());
+                        break;
+                    case 3:
+                        ImGui::Text("%d", itr->second.getRoundCount());
+                        break;
+                    default:
+                        ImGui::TextDisabled("Broken table");
+                        break;
+                }
+            }
+            ImGui::PopID();
+            ++row;       
+        }
+        ImGui::EndTable();
+    }
+   
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Indent(20);
+    ImGui::Text("Guns In Armory:       %d", row); 
+    ImGui::Unindent(20);
+
+    // Next is selected gun information
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::SeparatorText( "Selected Gun" );
+
+    if(selected == end) {
+        centerText("Select A Gun For More Information");
+        return;
+    }
+
+    const AssociatedGun& selectedGun    { selected->second };
+    const GunMetadata& selectedGunInfo  { selectedGun.getGun() };
+
+    // Gun Details
+    if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+        ImGui::Indent(20);
+        ImGui::Text("Name:          %s", selectedGunInfo.name.c_str());
+        ImGui::Text("Weapon Type:   %s", selectedGunInfo.weaponType.getName().c_str()); 
+        ImGui::Text("Cartridge:     %s", selectedGunInfo.cartridge.getName().c_str());
+        ImGui::Unindent(20);
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+        ImGui::Indent(20);
+        ImGui::Text("Round Count:       %d", selectedGun.getRoundCount());
+        ImGui::Text("Events Used In:    %d", selectedGun.totalEventsUsed()); 
+        //ImGui::Text("Last Event:        %s", 
+        ImGui::Unindent(20);
+    }
+    ImGui::EndChild();
+
+
+}
+
 
 } // End namespace
