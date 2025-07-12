@@ -3,7 +3,26 @@
 using namespace ShooterCentral;
 using namespace LAS;
 
-Framework::Framework() {
+Framework::Framework() : view {
+    ContainerItrs {
+        model.knownAmmo_cbegin(),
+        model.knownAmmo_cend(),
+
+        model.knownGuns_cbegin(),
+        model.knownGuns_cend(),
+
+        model.ammoStockpile_cbegin(),
+        model.ammoStockpile_cend(),
+
+        model.gunsInArmory_cbegin(),
+        model.gunsInArmory_cend(),
+
+        model.events_cbegin(),
+        model.events_cend()
+    }
+
+}
+{
 
 }
 Framework::~Framework(){

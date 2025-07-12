@@ -2,7 +2,19 @@
 
 namespace ShooterCentral::View{
 
-GUI::GUI() {
+GUI::GUI(const ContainerItrs& itrs){
+
+    homeData.selectedEvent = itrs.events_cend;
+    homeData.selectedAmmo = itrs.ammoStockpile_cend;
+    homeData.selectedGun = itrs.gunsInArmory_cend;
+
+    viewData.selectedEvent = itrs.events_cend;
+    viewData.selectedAmmo = itrs.ammoStockpile_cend;
+    viewData.selectedGun = itrs.gunsInArmory_cend;
+
+    editData.selectedEvent = itrs.events_cend;
+    editData.selectedAmmo = itrs.ammoStockpile_cend;
+    editData.selectedGun = itrs.gunsInArmory_cend;
 
 }
 GUI::~GUI() {

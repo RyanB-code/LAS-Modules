@@ -38,8 +38,8 @@ namespace ShooterCentral{
         static constexpr char TITLE[] = "Shooter Central";
         static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
     private:
-        View::GUI       view    { };
         Model           model   { };
+        View::GUI       view;
 
         UnsavedChanges  unsavedChanges { };
 

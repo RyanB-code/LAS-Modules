@@ -47,16 +47,16 @@ namespace ShooterCentral::View {
         bool showEvents     { true };
         bool showStockpile  { true };
 
-        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent   { nullptr };
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo    { nullptr };
-        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun     { nullptr };
+        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
+        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo;
+        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun;
     };
     struct ScreenData_View {
         Category category { Category::NONE }; 
 
-        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent   { nullptr };
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo    { nullptr };
-        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun     { nullptr };
+        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
+        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo;
+        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun;
     };
     struct ScreenData_Add {
         Category category   { Category::NONE }; 
@@ -65,15 +65,15 @@ namespace ShooterCentral::View {
     struct ScreenData_Edit {
         Category category { Category::NONE }; 
 
-        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent   { nullptr };
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo    { nullptr };
-        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun     { nullptr };
+        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
+        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo;
+        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun;
     };
 
 
     class GUI {
     public:
-        GUI();
+        GUI(const ContainerItrs& itrs);
         ~GUI();
 
         void draw(const ContainerItrs& itrs, const UnsavedChanges& unsavedChanges);
