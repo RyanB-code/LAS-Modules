@@ -110,7 +110,7 @@ void draw_Home (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedC
 }
 void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator begin, 
                         std::map<GunMetadata, AssociatedGun>::const_iterator end, 
-                        std::map<GunMetadata, AssociatedGun>::const_iterator selected
+                        std::map<GunMetadata, AssociatedGun>::const_iterator& selected
                     )
 {
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x, 200};
@@ -201,6 +201,8 @@ void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator beg
 
     const AssociatedGun& selectedGun    { selected->second };
     const GunMetadata& selectedGunInfo  { selectedGun.getGun() };
+    int roundCount { selectedGun.getRoundCount() };
+    int eventsUsed { selectedGun.totalEventsUsed() };
 
     // Gun Details
     if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
@@ -216,14 +218,12 @@ void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator beg
 
     if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
-        ImGui::Text("Round Count:       %d", selectedGun.getRoundCount());
-        ImGui::Text("Events Used In:    %d", selectedGun.totalEventsUsed()); 
+        ImGui::Text("Round Count:       %d", roundCount);
+        ImGui::Text("Events Used In:    %d", eventsUsed); 
         //ImGui::Text("Last Event:        %s", 
         ImGui::Unindent(20);
     }
     ImGui::EndChild();
-
-
 }
 
 

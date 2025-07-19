@@ -101,7 +101,7 @@ namespace ShooterCentral::View {
     void draw_Home      (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedChanges& changes);
     void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator begin, 
                             std::map<GunMetadata, AssociatedGun>::const_iterator end, 
-                            std::map<GunMetadata, AssociatedGun>::const_iterator selected
+                            std::map<GunMetadata, AssociatedGun>::const_iterator& selected
                         );
 
 }
