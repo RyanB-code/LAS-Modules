@@ -87,5 +87,6 @@ const AmmoMetadata& AmountOfAmmo::getAmmo() const {
 }
 void AmountOfAmmo::throwIfInvalid() const {
     if(!ammo)
-        throw std::invalid_argument("Ammo cannot be null");
+        throw std::invalid_argument("AmmoMetadata cannot be null");
 }
+

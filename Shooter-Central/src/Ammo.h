@@ -60,5 +60,4 @@ namespace ShooterCentral{
 
          void throwIfInvalid() const; // Throws if any operation is attempted if ammo is nullptr
     };
-
 }
