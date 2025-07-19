@@ -2,6 +2,8 @@
 
 #include "Ammo.h" // Needs cartridge definition
 
+#include <LAS/json.h>
+
 #include <array>
 #include <string>
 #include <memory>
@@ -25,11 +27,15 @@ namespace ShooterCentral{
         std::string name        { "N/A" };
         WeaponType  weaponType  { };
         Cartridge   cartridge   { };
-        bool        m_isActive  { false }; 
+        bool        isActive    { false }; 
 
         bool operator== (const GunMetadata& other) const;
         bool operator<  (const GunMetadata& other) const;
     };
+
+    void to_json(LAS::json& j, const GunMetadata& gun);
+    void from_json(const LAS::json& j, GunMetadata& gun);
+
 
     class GunAndAmmo {
     private:

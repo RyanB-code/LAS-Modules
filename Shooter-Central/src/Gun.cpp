@@ -33,7 +33,30 @@ bool GunMetadata::operator==(const GunMetadata& other) const{
 bool GunMetadata::operator<(const GunMetadata& other) const{
     return std::tuple{std::string{weaponType}, std::string{cartridge}, name} < std::tuple{std::string{other.weaponType}, std::string{other.cartridge}, other.name}; 
 }
+void ShooterCentral::to_json(LAS::json& j, const GunMetadata& gun){
+    using LAS::json;
 
+    j = LAS::json{
+        { "name",           gun.name                },
+        { "weaponType",     gun.weaponType.getName()},
+        { "cartridge",      gun.cartridge.getName() },
+        { "isActive",       gun.isActive           }
+    };
+}
+void ShooterCentral::from_json(const LAS::json& j, GunMetadata& gun){
+    using LAS::json;
+
+    std::string nameBuf, weaponTypeBuf, cartBuf; 
+    bool isActiveBuf { false };
+
+    j.at("name").get_to(nameBuf);
+    j.at("weaponType").get_to(weaponTypeBuf);
+    j.at("cartridge").get_to(cartBuf);
+
+    j["isActive"].get_to(isActiveBuf);
+
+    gun = GunMetadata {nameBuf, WeaponType {weaponTypeBuf}, Cartridge {cartBuf}, isActiveBuf };
+}
 
 
 GunAndAmmo::GunAndAmmo(std::shared_ptr<const GunMetadata> setGun) : gun {setGun} {
