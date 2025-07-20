@@ -66,6 +66,8 @@ GunAndAmmo::~GunAndAmmo(){
 
 }
 bool GunAndAmmo::addAmmoUsed(const AmountOfAmmo& ammo) {
+    throwIfInvalid();
+
     // Check if ammo already in list then add
     for(auto& entry : ammoUsedList){
         if(!entry)
@@ -97,6 +99,7 @@ int GunAndAmmo::totalAmmoUsed() const {
     return nextIndex;
 }
 const GunMetadata& GunAndAmmo::getGun() const {
+    throwIfInvalid();
     return *gun;
 }
 GunAndAmmo::operator bool() const{
@@ -113,4 +116,8 @@ std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAm
         return ammoUsedList.cbegin() + nextIndex;
     else
         return ammoUsedList.cbegin();
+}
+void GunAndAmmo::throwIfInvalid() const {
+    if(!gun)
+        throw std::invalid_argument("GunMetadata cannot be null");
 }
