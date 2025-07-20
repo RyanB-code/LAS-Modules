@@ -312,13 +312,6 @@ bool Setup::setupFilesystem(Framework::Filepaths& paths){
 
 namespace ShooterCentral::FileIO {
 
-std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString) {
-    std::stringstream ss{ timeString };
-    std::tm time{};
-    time.tm_isdst = -1;
-    ss >> std::get_time(&time, "%Y-%m-%d%n%H:%M:%S");
-    return std::chrono::system_clock::from_time_t(std::mktime(&time));
-}
 std::string makeFileName    (std::string directory, const GunMetadata& gun) {
     std::ostringstream fileName;
     fileName << directory;

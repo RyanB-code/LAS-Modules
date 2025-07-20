@@ -60,8 +60,6 @@ namespace ShooterCentral{
     }
 
     namespace FileIO {
-        std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
-
         std::string makeFileName    (std::string directory, const GunMetadata& data);
         std::string makeFileName    (std::string directory, const AmmoMetadata& data);
         std::string makeFileName    (std::string directory, const Event& data);
