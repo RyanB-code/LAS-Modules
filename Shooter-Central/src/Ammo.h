@@ -53,7 +53,7 @@ namespace ShooterCentral{
         
         void addAmount(int amount);
 
-        const AmmoMetadata& getAmmo() const;
+        const AmmoMetadata& getAmmo() const; // Throws if shared_ptr is invalid
     private:
         std::shared_ptr<const AmmoMetadata> ammo { };
         int amount  { 0 };
