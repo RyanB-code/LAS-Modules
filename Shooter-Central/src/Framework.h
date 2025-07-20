@@ -14,6 +14,7 @@
 #include <vector>
 #include <filesystem>
 #include <memory>
+#include <chrono>
 
 namespace ShooterCentral{
 
@@ -51,6 +52,7 @@ namespace ShooterCentral{
 
         bool readGuns(const std::string& dir);
         bool readAmmo(const std::string& dir);
+        bool readEvents(const std::string& dir);
     };
 
     namespace Setup {
@@ -58,10 +60,14 @@ namespace ShooterCentral{
     }
 
     namespace FileIO {
+        std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
+
         std::string makeFileName    (std::string directory, const GunMetadata& data);
         std::string makeFileName    (std::string directory, const AmmoMetadata& data);
+        std::string makeFileName    (std::string directory, const Event& data);
 
         bool write (std::string directory, const GunMetadata& data);
         bool write (std::string directory, const AmountOfAmmo& data);
+        bool write (std::string directory, const Event& data);
     }
 }
