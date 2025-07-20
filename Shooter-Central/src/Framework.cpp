@@ -48,12 +48,28 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     if(!readEvents(paths.eventsDir))
         log_error("Failed reading Events");
 
+
+    /*
+    const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
+    const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
+
+    Event testEvent1 { Location{"Test Location"}, EventType{"Test EventType"}, "no notes here fuckwad", ymd} ;
+
+    GunAndAmmo testGAA { model.knownGuns_cbegin()->second };
+    testGAA.addAmmoUsed(AmountOfAmmo{model.knownAmmo_cbegin()->second, 15});
+
+    testEvent1.addGun(testGAA);
+    if(!FileIO::write(paths.eventsDir, testEvent1))
+        log_error("Could not write event");
+    */
+
+ 
+
     std::cout << "Guns:\n";
     for(auto itr {model.knownGuns_cbegin()}; itr != model.knownGuns_cend(); ++itr) {
         const auto& [key, value] {*itr};
         std::cout << std::format("  Name: {}, WT: {}, Cart: {}\n", value->name, value->weaponType.getName(), value->cartridge.getName());
         std::cout << "    Gun Addr: " << &*value << "\n";
-
     }
     std::cout << "\n\nAmmo:\n";
     for(auto itr {model.ammoStockpile_cbegin()}; itr != model.ammoStockpile_cend(); ++itr) {
@@ -154,20 +170,9 @@ bool Framework::readAmmo(const std::string& dir) {
             std::ifstream inputFile{ dirEntry.path(), std::ios::in };
             json j = json::parse(inputFile);
 
-            // Make the AmountOfAmmo object
-            // CANNOT be from_json due to not wanting to recast the shared_ptr in creating a new AmountOfAmmo object
-            std::string manufacturerBuf { }, cartridgeBuf { };
-            AmmoMetadata infoBuf { };
+            AmmoMetadata ammoInfo {j.at("ammoInfo").template get<ShooterCentral::AmmoMetadata>()};
 
-            j.at("name").get_to(infoBuf.name);
-            j.at("manufacturer").get_to(manufacturerBuf);
-            j.at("cartridge").get_to(cartridgeBuf);
-            j.at("grain").get_to(infoBuf.grainWeight);
-
-            infoBuf.manufacturer   = Manufacturer{manufacturerBuf};
-            infoBuf.cartridge      = Cartridge{cartridgeBuf};
-
-            if(!model.knownAmmo_add(std::make_shared<AmmoMetadata>(infoBuf))){
+            if(!model.knownAmmo_add(std::make_shared<AmmoMetadata>(ammoInfo))){
                 log_error("Could not insert AmmoMetadata from file [" + dirEntry.path().string() + ']');
                 continue;
             }
@@ -175,7 +180,7 @@ bool Framework::readAmmo(const std::string& dir) {
             // Make the AmountOfAmmo object and add to stockpile
             int amountBuf { 0 };
             j.at("amount").get_to(amountBuf);
-            if(!model.ammoStockpile_add(AmountOfAmmo{model.knownAmmo_at(infoBuf), amountBuf})){ // Implicit conversion to AssociatedAmmo
+            if(!model.ammoStockpile_add(AmountOfAmmo{model.knownAmmo_at(ammoInfo), amountBuf})){ // Implicit conversion to AssociatedAmmo
                 log_error("Could not add AssociatedAmmo to stockpile from file [" + dirEntry.path().string() + ']');
                 continue;
             }
@@ -199,25 +204,11 @@ bool Framework::readEvents(const std::string& dir) {
             std::ifstream inputFile{ dirEntry.path(), std::ios::in };
             json j = json::parse(inputFile);
 
-            std::string  dateBuf{ }, locationBuf { }, eventTypeBuf { }, notesBuf;
-
-            j.at("date").get_to(dateBuf);
-            j.at("eventType").get_to(eventTypeBuf);
-            j.at("location").get_to(locationBuf);
-            j.at("notes").get_to(notesBuf);
-
-            // Time conversion
-            const std::chrono::zoned_time now {std::chrono::current_zone(), FileIO::stringToTimepoint(dateBuf) };
-            const std::chrono::year_month_day ymdBuf{std::chrono::floor<std::chrono::days>(now.get_local_time())};
-
-
-            Event eventBuf { Location{locationBuf}, EventType{eventTypeBuf}, notesBuf, ymdBuf };
+            Event eventBuf { EventMetadata {j.at("eventInfo").template get<ShooterCentral::EventMetadata>() } };
 
             // Go over all guns used
 	        for (auto& gunElm : j.at("gunsUsed").items()) {
-		        json  gunInfoJson = gunElm.value();
-
-                GunMetadata gunInfoBuf  {gunInfoJson.at("gunInfo").template get<ShooterCentral::GunMetadata>() };
+                GunMetadata gunInfoBuf  {gunElm.value().at("gunInfo").template get<ShooterCentral::GunMetadata>() };
                 
                 // Add to known Guns
                 if(!model.knownGuns_contains(gunInfoBuf)){
@@ -227,23 +218,10 @@ bool Framework::readEvents(const std::string& dir) {
                     }
                 }
 
-                GunAndAmmo gunAndAmmoBuf {model.knownGuns_at(gunInfoBuf)};
-
                 // Get all ammo used for the gun
-                for(auto& ammoElm : gunInfoJson.at("ammoUsed").items()){
-                    json ammoUsedJson = ammoElm.value();
-
-                    std::string manufacturerBuf { }, cartridgeBuf { };
-                    int amountBuf { 0 };
-                    AmmoMetadata infoBuf { };
-
-                    ammoUsedJson.at("name").get_to(infoBuf.name);
-                    ammoUsedJson.at("manufacturer").get_to(manufacturerBuf);
-                    ammoUsedJson.at("cartridge").get_to(cartridgeBuf);
-                    ammoUsedJson.at("grain").get_to(infoBuf.grainWeight);
-
-                    infoBuf.manufacturer   = Manufacturer{manufacturerBuf};
-                    infoBuf.cartridge      = Cartridge{cartridgeBuf};
+                GunAndAmmo gunAndAmmoBuf {model.knownGuns_at(gunInfoBuf)};
+                for(auto& ammoElm : gunElm.value().at("ammoUsed").items()){
+                    AmmoMetadata infoBuf {ammoElm.value().at("ammoInfo").template get<ShooterCentral::AmmoMetadata>() };
 
                     if(!model.knownAmmo_contains(infoBuf)){
                         if(!model.knownAmmo_add(std::make_shared<AmmoMetadata>(infoBuf))){
@@ -252,7 +230,8 @@ bool Framework::readEvents(const std::string& dir) {
                         }
                     }
 
-                    ammoUsedJson.at("amount").get_to(amountBuf);
+                    int amountBuf { 0 };
+                    ammoElm.value().at("amount").get_to(amountBuf);
 
                     if(!gunAndAmmoBuf.addAmmoUsed(AmountOfAmmo{model.knownAmmo_at(infoBuf), amountBuf})){
                         log_error(std::format("Could not add AmountOfAmmo [{}] to Gun [{}] when reading Event from file [{}]", infoBuf.name, gunInfoBuf.name, dirEntry.path().string()));
@@ -427,20 +406,10 @@ bool write(std::string directory, const AmountOfAmmo& data) {
     if(!std::filesystem::exists(directory))
 		return false;
 
-
-    const AmmoMetadata& ammoInfo { data.getAmmo() }; // Throws if ptr is null inside AmountOfAmmo
-    json j;
-
-    j = LAS::json {
-        { "name",           ammoInfo.name },
-        { "manufacturer",   ammoInfo.manufacturer },
-        { "cartridge",      ammoInfo.cartridge },
-        { "grain",          ammoInfo.grainWeight},
-        { "amount",         data.getAmount() }
-    };
+    LAS::json j = data;
 
     // Write to file
-    std::ofstream file{ makeFileName(directory, ammoInfo) };
+    std::ofstream file{ makeFileName(directory, data.getAmmo()) };
     file << std::setw(1) << std::setfill('\t') << j;
     file.close();
    
@@ -462,29 +431,16 @@ bool write (std::string directory, const Event& data){
 
     // Write every gun and ammo used
     for(auto itr {data.cbegin()}; itr != data.cend(); ++itr){
-        const GunAndAmmo& gunAndAmmo { *itr };
-        const GunMetadata& gunInfo {gunAndAmmo.getGun()}; // Throws in ptr inside GunAndAmmo is not set
 
         // Add ammo used to gun
         json ammoUsed = json::array();
-        for(auto itr2 { gunAndAmmo.cbegin() }; itr2 != gunAndAmmo.cend(); ++itr2) {
-            const AmountOfAmmo& amountOfAmmo { *itr2 };
-            const AmmoMetadata ammoInfo { amountOfAmmo.getAmmo() };
-
-            ammoUsed.emplace_back(LAS::json {
-                { "name",           ammoInfo.name },
-                { "manufacturer",   ammoInfo.manufacturer },
-                { "cartridge",      ammoInfo.cartridge },
-                { "grain",          ammoInfo.grainWeight},
-                { "amount",         amountOfAmmo.getAmount() }
-            });
-        }
+        for(auto itr2 { itr->cbegin() }; itr2 != itr->cend(); ++itr2)
+            ammoUsed.emplace_back(*itr2);
         
         // Make json for the gun
         json buffer;
-        json gunInfoJson = gunInfo;
         buffer = json {
-            { "gunInfo", gunInfo },
+            { "gunInfo",  itr->getGun() },
             { "ammoUsed", ammoUsed }
         };
         
@@ -496,11 +452,8 @@ bool write (std::string directory, const Event& data){
     
     // Make JSON
     eventJson = json{
-        { "location",       data.getLocation().getName() },
-        { "eventType",      data.getEventType().getName()},
-        { "notes",          data.getNotes()    },
-        { "date",           timeBuf.str()       },
-        { "gunsUsed",       gunsArray           }
+        { "eventInfo",  data.getInfo() },
+        { "gunsUsed",   gunsArray      }
     };
 
     std::ofstream file{makeFileName(directory, data)};
@@ -510,7 +463,6 @@ bool write (std::string directory, const Event& data){
     return true;
 
 }
-
 
 } // End FileIO namespace
 
