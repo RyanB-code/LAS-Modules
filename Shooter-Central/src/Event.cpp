@@ -58,10 +58,44 @@ bool EventMetadata::operator<(const EventMetadata& other) const{
     // This orders with recent events first
     return std::tuple(other.date, std::string{other.eventType}, std::string{other.location}) < std::tuple(date, std::string{eventType}, std::string{location});
 }
+void ShooterCentral::to_json(LAS::json& j, const EventMetadata& data){
+    j = LAS::json{
+        { "location",       data.location },
+        { "eventType",      data.eventType},
+        { "notes",          data.notes    },
+        { "date",           std::format("{:%Od %b %Y}", data.date)}
+    };
+}
+void ShooterCentral::from_json(const LAS::json& j, EventMetadata& data){
+    std::string  dateBuf{ }, locationBuf { }, eventTypeBuf { }, notesBuf;
 
+    j.at("date").get_to(dateBuf);
+    j.at("eventType").get_to(eventTypeBuf);
+    j.at("location").get_to(locationBuf);
+    j.at("notes").get_to(notesBuf);
+
+    // Time conversion
+    const std::chrono::zoned_time zonedDateBuf {std::chrono::current_zone(), stringToTimepoint(dateBuf) };
+    const std::chrono::year_month_day ymdBuf{std::chrono::floor<std::chrono::days>(zonedDateBuf.get_local_time())};
+
+    data.location   = Location   {locationBuf};
+    data.eventType  = EventType {eventTypeBuf};
+    data.notes      = notesBuf;
+    data.date       = ymdBuf;
+}
+std::chrono::system_clock::time_point ShooterCentral::stringToTimepoint(const std::string& timeString) {
+    std::stringstream ss{ timeString };
+    std::tm time{};
+    time.tm_isdst = -1;
+    ss >> std::get_time(&time, "%Y-%m-%d%n%H:%M:%S");
+    return std::chrono::system_clock::from_time_t(std::mktime(&time));
+}
 
 Event::Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate)
     :   eventMetadata {setLocation, setEventType, setNotes, setDate} {
+
+}
+Event::Event(const EventMetadata& info) : eventMetadata {info} {
 
 }
 Event::~Event(){
@@ -94,6 +128,9 @@ bool Event::hasUsedGun(const GunMetadata& gun) const {
 }
 int Event::totalGunsUsed() const {
     return nextIndex;
+}
+const EventMetadata& Event::getInfo() const {
+    return eventMetadata;
 }
 std::string Event::getNotes() const{
     return eventMetadata.notes;

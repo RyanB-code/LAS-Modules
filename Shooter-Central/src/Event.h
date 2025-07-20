@@ -44,19 +44,25 @@ namespace ShooterCentral{
 
         bool operator== (const EventMetadata& other) const;
         bool operator<  (const EventMetadata& other) const;
-   };
- 
+    };
+
+    void to_json(LAS::json& j, const EventMetadata& data);
+    void from_json(const LAS::json& j, EventMetadata& data);
+    std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
 
     class Event {
     private:
         static constexpr int MAX_NUM_GUNS { 5 };
     public:
         Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
+        Event(const EventMetadata& info);
         ~Event();
 
         bool    addGun          (const GunAndAmmo& gun);        // Will not amend existing entries if a gun is already in the container
         bool    hasUsedGun      (const GunMetadata& gun) const;
         int     totalGunsUsed   () const;
+
+        const EventMetadata& getInfo() const;
 
         std::string getNotes()      const;
         EventType   getEventType()  const;
