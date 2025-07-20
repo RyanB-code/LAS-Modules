@@ -57,7 +57,26 @@ bool AmmoMetadata::operator<(const AmmoMetadata& other) const{
 
     return lhs < rhs;
 }
+void ShooterCentral::to_json (LAS::json& j, const AmmoMetadata& data){
+    j = LAS::json {
+        { "name",           data.name },
+        { "manufacturer",   data.manufacturer },
+        { "cartridge",      data.cartridge },
+        { "grain",          data.grainWeight}
+    };
+}
+void ShooterCentral::from_json(const LAS::json& j, AmmoMetadata& data){
+    std::string manufacturerBuf { }, cartridgeBuf { };
+    int amountBuf { 0 };
 
+    j.at("name").get_to(data.name);
+    j.at("manufacturer").get_to(manufacturerBuf);
+    j.at("cartridge").get_to(cartridgeBuf);
+    j.at("grain").get_to(data.grainWeight);
+
+    data.manufacturer   = Manufacturer{manufacturerBuf};
+    data.cartridge      = Cartridge{cartridgeBuf};
+}
 
 
 AmountOfAmmo::AmountOfAmmo(std::shared_ptr<const AmmoMetadata> setAmmo, int setAmount)
@@ -89,4 +108,9 @@ void AmountOfAmmo::throwIfInvalid() const {
     if(!ammo)
         throw std::invalid_argument("AmmoMetadata cannot be null");
 }
-
+void ShooterCentral::to_json(LAS::json& j, const AmountOfAmmo& data){
+    j = LAS::json {
+        { "ammoInfo",   data.getAmmo() },
+        { "amount",         data.getAmount() }
+    };
+}

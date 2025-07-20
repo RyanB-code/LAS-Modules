@@ -1,5 +1,7 @@
 #pragma once
 
+#include <LAS/json.h>
+
 #include <string>
 #include <memory>
 
@@ -42,6 +44,9 @@ namespace ShooterCentral{
         bool operator<  (const AmmoMetadata& other) const;
     };
 
+    void to_json (LAS::json& j, const AmmoMetadata& data);
+    void from_json(const LAS::json& j, AmmoMetadata& data);
+
     class AmountOfAmmo {
     public:
         AmountOfAmmo(std::shared_ptr<const AmmoMetadata> setAmmo=nullptr, int setAmount=0);
@@ -60,4 +65,6 @@ namespace ShooterCentral{
 
          void throwIfInvalid() const; // Throws if any operation is attempted if ammo is nullptr
     };
+
+    void to_json(LAS::json& j, const AmountOfAmmo& data);
 }
