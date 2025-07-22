@@ -59,11 +59,14 @@ bool EventMetadata::operator<(const EventMetadata& other) const{
     return std::tuple(other.date, std::string{other.eventType}, std::string{other.location}) < std::tuple(date, std::string{eventType}, std::string{location});
 }
 void ShooterCentral::to_json(LAS::json& j, const EventMetadata& data){
+    std::ostringstream timeString;
+    timeString << std::chrono::system_clock::time_point{std::chrono::sys_days{data.date}};
+
     j = LAS::json{
-        { "location",       data.location },
-        { "eventType",      data.eventType},
-        { "notes",          data.notes    },
-        { "date",           std::format("{:%Od %b %Y}", data.date)}
+        { "location",       data.location   },
+        { "eventType",      data.eventType  },
+        { "notes",          data.notes      },
+        { "date",           timeString.str()}
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, EventMetadata& data){
@@ -75,8 +78,7 @@ void ShooterCentral::from_json(const LAS::json& j, EventMetadata& data){
     j.at("notes").get_to(notesBuf);
 
     // Time conversion
-    const std::chrono::zoned_time zonedDateBuf {std::chrono::current_zone(), stringToTimepoint(dateBuf) };
-    const std::chrono::year_month_day ymdBuf{std::chrono::floor<std::chrono::days>(zonedDateBuf.get_local_time())};
+    ymd ymdBuf { std::chrono::floor<std::chrono::days>(stringToTimepoint(dateBuf)) };
 
     data.location   = Location   {locationBuf};
     data.eventType  = EventType {eventTypeBuf};
