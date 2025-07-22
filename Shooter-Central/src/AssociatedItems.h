@@ -50,7 +50,7 @@ namespace ShooterCentral {
         bool removeAmmoUsed (const AmmoMetadata& ammo);
         bool hasUsedAmmo    (const AmmoMetadata& ammo) const;
 
-        bool addEvent       (std::shared_ptr<const Event> event); // If key already exists, returns false since data is not overwritten
+        bool addEvent       (std::shared_ptr<const Event> event); // If key already exists, returns false since data is not overwritten. Iterates over the event and adds all ammo to the gun
         bool removeEvent    (const Event& event); 
         bool wasUsedInEvent (const Event& event);
 
