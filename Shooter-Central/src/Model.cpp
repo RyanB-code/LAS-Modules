@@ -49,7 +49,7 @@ bool Model::ammoStockpile_contains (const AmmoMetadata& key) const{
     return ammoStockpile.contains(key);
 }
 bool Model::gunsInArmory_contains  (const GunMetadata& key) const{
-    return gunsInArmory_contains(key);
+    return gunsInArmory.contains(key);
 }
 bool Model::events_contains        (const Event& key) const{
     return events.contains(key);
