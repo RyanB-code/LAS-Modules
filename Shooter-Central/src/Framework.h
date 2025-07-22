@@ -53,6 +53,8 @@ namespace ShooterCentral{
         bool readGuns(const std::string& dir);
         bool readAmmo(const std::string& dir);
         bool readEvents(const std::string& dir);
+
+        void buildAssociations();
     };
 
     namespace Setup {

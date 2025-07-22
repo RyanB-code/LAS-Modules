@@ -48,7 +48,6 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     if(!readEvents(paths.eventsDir))
         log_error("Failed reading Events");
 
-
     /*
     const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
     const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
@@ -63,32 +62,66 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         log_error("Could not write event");
     */
 
+    buildAssociations();
  
 
-    std::cout << "Guns:\n";
+    std::cout << "Known Guns:\n";
     for(auto itr {model.knownGuns_cbegin()}; itr != model.knownGuns_cend(); ++itr) {
         const auto& [key, value] {*itr};
         std::cout << std::format("  Name: {}, WT: {}, Cart: {}\n", value->name, value->weaponType.getName(), value->cartridge.getName());
         std::cout << "    Gun Addr: " << &*value << "\n";
     }
-    std::cout << "\n\nAmmo:\n";
+    std::cout << "\n\nKnown Ammo:\n";
+    for(auto itr {model.knownAmmo_cbegin()}; itr != model.knownAmmo_cend(); ++itr) {
+        const auto& [key, value] {*itr};
+        const AmmoMetadata& data { *value };
+
+        std::cout << std::format("  Name: {}, Man: {}, Cart: {}, GW: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight );
+        std::cout << "    AmmoAddr: " << &data << "\n";
+    }
+    std::cout << "\n\nAmmo Stockpile (Assoc Ammo) :\n";
     for(auto itr {model.ammoStockpile_cbegin()}; itr != model.ammoStockpile_cend(); ++itr) {
         const auto& [key, value] {*itr};
         const AmmoMetadata& data {value.getAmountOfAmmo().getAmmo() };
-        std::cout << std::format("  Name: {}, Man: {}, Cart: {}, GW: {}, Amount: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight, value.getAmountOfAmmo().getAmount());
-        std::cout << "    Ammo Addr: " << &value.getAmountOfAmmo().getAmmo() << "\n";
+        std::cout << "    Ammo Addr: " << &value.getAmountOfAmmo().getAmmo() << "  Amount: " << value.getAmountOfAmmo().getAmount() << "\n";
+
+        for(auto itr2 {value.cbegin() }; itr2 != value.cend(); ++itr2){
+            std::cout << "      Gun Addr: " << &*itr2->second << "\n";
+        }
     }
     std::cout << "\n\nEvents:\n";
     for(auto itr{model.events_cbegin()}; itr != model.events_cend(); ++itr){
         const Event& event {*itr->second};
         std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", event.getLocation().getName(), event.getEventType().getName(), event.getNotes(), event.printDate());
+        std::cout << "      Event Addr: " << &event << "\n";
 
         for(auto itrGun { event.cbegin() }; itrGun != event.cend(); ++itrGun){
             std::cout << "    Gun Addr: " << &itrGun->getGun() << "\n";
                 
             for(auto itrAmmo { itrGun->cbegin() }; itrAmmo != itrGun->cend(); ++itrAmmo){
-                std::cout << "      AmmoAddr: " << &itrAmmo->getAmmo() << "\n";
+                const AmmoMetadata& data { itrAmmo->getAmmo() };
+                std::cout << "      AmmoAddr: " << &data << "  Amount: " << itrAmmo->getAmount() << "\n";
+
             }
+        }
+    }
+
+
+    std::cout << "\n\nAssoc Guns:\n";
+    for(auto itr{model.gunsInArmory_cbegin()}; itr != model.gunsInArmory_cend(); ++itr){
+        const AssociatedGun& gun {itr->second};
+
+        std::cout << "  Gun Addr: " << &gun.getGun() << "\n";
+        
+        for(auto itrEvent { gun.eventsUsed_cbegin() }; itrEvent != gun.eventsUsed_cend(); ++itrEvent){
+            std::cout << "    Event Addr: " << &itrEvent->second->getInfo() << "\n";
+        }
+
+        for(auto itrAmmo { gun.ammoUsed_cbegin() }; itrAmmo != gun.ammoUsed_cend(); ++itrAmmo){
+            const AmmoMetadata& data { itrAmmo->second.getAmmo() };
+            std::cout << "    AmmoAddr: " << &data << "\n";
+            std::cout << std::format("      Name: {}, Man: {}, Cart: {}, GW: {}, Amount: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight, itrAmmo->second.getAmount());
+
         }
     }
 
@@ -140,16 +173,12 @@ bool Framework::readGuns(const std::string& dir) {
 
             GunMetadata gunBuf {j.template get<ShooterCentral::GunMetadata>()};
 
-            if(!model.knownGuns_add(std::make_shared<GunMetadata>(gunBuf))){
-                log_error("Could not insert GunMetadata from file [" + dirEntry.path().string() + ']');
-                continue;
-            }
-
-            if(!model.gunsInArmory_add(AssociatedGun{model.knownGuns_at(gunBuf)})){ 
-                log_error("Could not add AssociatedGun to armory from file [" + dirEntry.path().string() + ']');
-                continue;
-            }
-
+            if(!model.knownGuns_contains(gunBuf)){
+                if(!model.knownGuns_add(std::make_shared<GunMetadata>(gunBuf))){
+                    log_error("Could not insert GunMetadata from file [" + dirEntry.path().string() + ']');
+                    continue;
+                }
+            }            
 		}
 		catch(std::exception& e){
             if(dirEntry.path().filename().string() != FILENAME_WEAPON_TYPES){  // Ignore the weaponTypes file
@@ -172,17 +201,21 @@ bool Framework::readAmmo(const std::string& dir) {
 
             AmmoMetadata ammoInfo {j.at("ammoInfo").template get<ShooterCentral::AmmoMetadata>()};
 
-            if(!model.knownAmmo_add(std::make_shared<AmmoMetadata>(ammoInfo))){
-                log_error("Could not insert AmmoMetadata from file [" + dirEntry.path().string() + ']');
-                continue;
+            if(!model.knownAmmo_contains(ammoInfo)){
+                if(!model.knownAmmo_add(std::make_shared<AmmoMetadata>(ammoInfo))){
+                    log_error("Could not insert AmmoMetadata from file [" + dirEntry.path().string() + ']');
+                    continue;
+                }
             }
 
             // Make the AmountOfAmmo object and add to stockpile
             int amountBuf { 0 };
             j.at("amount").get_to(amountBuf);
-            if(!model.ammoStockpile_add(AmountOfAmmo{model.knownAmmo_at(ammoInfo), amountBuf})){ // Implicit conversion to AssociatedAmmo
-                log_error("Could not add AssociatedAmmo to stockpile from file [" + dirEntry.path().string() + ']');
-                continue;
+            if(!model.ammoStockpile_contains(ammoInfo)){
+                if(!model.ammoStockpile_add(AmountOfAmmo{model.knownAmmo_at(ammoInfo), amountBuf})){ // Implicit conversion to AssociatedAmmo
+                    log_error("Could not add AssociatedAmmo to stockpile from file [" + dirEntry.path().string() + ']');
+                    continue;
+                }
             }
 		}
 		catch(std::exception& e){
@@ -258,6 +291,47 @@ bool Framework::readEvents(const std::string& dir) {
 	}
     
 	return true;
+}
+void Framework::buildAssociations() {
+    // Go through every event
+    for(auto eventItr {model.events_cbegin()}; eventItr != model.events_cend(); ++eventItr){
+        const Event& event { *eventItr->second };
+
+        // Go through every GunAndAmmo in the event
+        for(auto gunAndAmmoItr { event.cbegin() }; gunAndAmmoItr != event.cend(); ++gunAndAmmoItr){
+            const GunMetadata& gunInfo { gunAndAmmoItr->getGun() };
+
+            // Add AssociatedGun object
+            if(!model.gunsInArmory_contains(gunInfo)){
+                if(!model.gunsInArmory_add(AssociatedGun{model.knownGuns_at(gunInfo)})){ 
+                    log_error("Could not add AssociatedGun to armory when associating Event");
+                    continue;
+                }
+            }
+
+            // Add Event to AssociatedGun object
+            AssociatedGun& assocGun { model.gunsInArmory_at(gunInfo) };
+            assocGun.addEvent(eventItr->second);
+ 
+            // Go through every Ammo used for the Gun
+            for(auto amountOfAmmoItr { gunAndAmmoItr->cbegin() }; amountOfAmmoItr != gunAndAmmoItr->cend(); ++amountOfAmmoItr){
+                const AmmoMetadata& ammoInfo { amountOfAmmoItr->getAmmo()};
+
+                // Add AssociatedAmmo object
+                if(!model.ammoStockpile_contains(ammoInfo)){
+                    if(!model.ammoStockpile_add(AssociatedAmmo{AmountOfAmmo{model.knownAmmo_at(ammoInfo), 0} })){ // Do not add ammo amount since the amount here is for what was used during the Event
+                        log_error("Could not add AssociatedAmmo to stockpile when associating Event");
+                        continue;
+                    }
+                }
+
+                // Add Gun to AssociatedAmmo object
+                AssociatedAmmo& assocAmmo { model.ammoStockpile_at(ammoInfo) };
+                assocAmmo.addGun(model.knownGuns_at(gunInfo));
+
+            } // End every AmountOfAmmo for the gun
+        } // End every GunAndAmmo in the event
+    } // End every event
 }
 
 
