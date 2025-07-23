@@ -16,7 +16,8 @@ namespace ShooterCentral{
 
         std::string getName() const;
         operator std::string() const;
-        bool operator==(const Location& other) const;
+        bool operator== (const Location& other) const;
+        bool operator<  (const Location& other) const;
 
     private:
         std::string name;
@@ -29,7 +30,8 @@ namespace ShooterCentral{
 
         std::string getName() const;
         operator std::string() const;
-        bool operator==(const EventType& other) const;
+        bool operator== (const EventType& other) const;
+        bool operator<  (const EventType& other) const;
 
     private:
         std::string name;

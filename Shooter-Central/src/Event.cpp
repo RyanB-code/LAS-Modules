@@ -21,6 +21,10 @@ bool Location::operator==(const Location& other) const{
     else
         return false;
 }
+bool Location::operator<(const Location& other) const{
+    return name < other.getName();
+}
+
 
 
 EventType::EventType(std::string setName) : name { setName } {
@@ -41,6 +45,11 @@ bool EventType::operator==(const EventType& other) const{
     else
         return false;
 }
+bool EventType::operator<(const EventType& other) const{
+    return name < other.getName();
+}
+
+
 
 bool EventMetadata::operator==(const EventMetadata& other) const{
 if(date != other.date)

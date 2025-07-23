@@ -13,8 +13,10 @@ namespace ShooterCentral{
         ~Manufacturer();
 
         std::string getName() const;
+
         operator std::string() const;
-        bool operator==(const Manufacturer& other) const;
+        bool operator== (const Manufacturer& other) const;
+        bool operator<  (const Manufacturer& other) const;
 
     private:
         std::string name;
@@ -27,7 +29,8 @@ namespace ShooterCentral{
 
         std::string getName() const;
         operator std::string() const;
-        bool operator==(const Cartridge& other) const;
+        bool operator== (const Cartridge& other) const;
+        bool operator<  (const Cartridge& other) const;
 
     private:
         std::string name;

@@ -17,7 +17,8 @@ namespace ShooterCentral{
 
         std::string getName() const;
         operator std::string() const;
-        bool operator==(const WeaponType& other) const;
+        bool operator== (const WeaponType& other) const;
+        bool operator<  (const WeaponType& other) const;
 
     private:
         std::string name;

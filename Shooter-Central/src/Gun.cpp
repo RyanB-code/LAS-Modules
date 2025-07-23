@@ -21,7 +21,9 @@ bool WeaponType::operator==(const WeaponType& other) const{
     else
         return false;
 }
-
+bool WeaponType::operator<(const WeaponType& other) const{
+    return name < other.getName();
+}
 
 
 bool GunMetadata::operator==(const GunMetadata& other) const{

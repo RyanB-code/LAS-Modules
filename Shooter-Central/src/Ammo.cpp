@@ -21,7 +21,9 @@ bool Manufacturer::operator==(const Manufacturer& other) const{
     else
         return false;
 }
-
+bool Manufacturer::operator< (const Manufacturer& other) const{
+    return this->name < other.getName();
+}
 
 
 Cartridge::Cartridge(std::string setName) : name { setName } {
@@ -42,7 +44,9 @@ bool Cartridge::operator==(const Cartridge& other) const{
     else
         return false;
 }
-
+bool Cartridge::operator< (const Cartridge& other) const{
+    return this->name < other.getName();
+}
 
 
 bool AmmoMetadata::operator==(const AmmoMetadata& other) const {
