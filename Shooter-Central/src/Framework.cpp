@@ -126,6 +126,31 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         }
     }
 
+    std::cout << "\n\nManufacturers:\n";
+    for(auto itr{model.manufacturers_cbegin()}; itr != model.manufacturers_cend(); ++itr){
+        std::cout << "  " << itr->getName() << "\n";
+    }
+
+    std::cout << "\n\nLocations:\n";
+    for(auto itr{model.locations_cbegin()}; itr != model.locations_cend(); ++itr){
+        std::cout << "  " << itr->getName() << "\n";
+    }
+
+    std::cout << "\n\nEventTypes:\n";
+    for(auto itr{model.eventTypes_cbegin()}; itr != model.eventTypes_cend(); ++itr){
+        std::cout << "  " << itr->getName() << "\n";
+    }
+
+    std::cout << "\n\nCartridges:\n";
+    for(auto itr{model.cartridges_cbegin()}; itr != model.cartridges_cend(); ++itr){
+        std::cout << "  " << itr->getName() << "\n";
+    }
+
+    std::cout << "\n\nWeaponTypes:\n";
+    for(auto itr{model.weaponTypes_cbegin()}; itr != model.weaponTypes_cend(); ++itr){
+        std::cout << "  " << itr->getName() << "\n";
+    }
+
     // DONE TESTING
    
     log_info("SC Setup sucessful");
