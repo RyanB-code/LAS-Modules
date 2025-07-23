@@ -63,6 +63,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     */
 
     buildAssociations();
+    addItemDescriptors();
  
 
     std::cout << "Known Guns:\n";
@@ -332,6 +333,38 @@ void Framework::buildAssociations() {
             } // End every AmountOfAmmo for the gun
         } // End every GunAndAmmo in the event
     } // End every event
+}
+void Framework::addItemDescriptors() {
+
+    // Add event items
+    for(auto eventItr {model.events_cbegin()}; eventItr != model.events_cend(); ++eventItr){
+        const EventMetadata& data { eventItr->second->getInfo() };
+
+        if(!model.locations_contains(data.location))
+            model.locations_add(data.location);
+
+        if(!model.eventTypes_contains(data.eventType))
+            model.eventTypes_add(data.eventType);
+    }
+
+    // Gun items
+    for(auto gunItr {model.knownGuns_cbegin()}; gunItr != model.knownGuns_cend(); ++gunItr){
+        const GunMetadata& data { *gunItr->second };
+
+        if(!model.weaponTypes_contains(data.weaponType))
+            model.weaponTypes_add(data.weaponType);
+    }
+
+    // Ammo items
+    for(auto ammoItr {model.knownAmmo_cbegin()}; ammoItr != model.knownAmmo_cend(); ++ammoItr){
+        const AmmoMetadata& data { *ammoItr->second };
+
+        if(!model.manufacturers_contains(data.manufacturer))
+            model.manufacturers_add(data.manufacturer);
+
+        if(!model.cartridges_contains(data.cartridge))
+            model.cartridges_add(data.cartridge);
+    }
 }
 
 

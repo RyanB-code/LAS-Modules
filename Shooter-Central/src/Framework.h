@@ -55,6 +55,7 @@ namespace ShooterCentral{
         bool readEvents(const std::string& dir);
 
         void buildAssociations();
+        void addItemDescriptors(); // Things like Cartridge, Manufacuter, Location, etc
     };
 
     namespace Setup {
