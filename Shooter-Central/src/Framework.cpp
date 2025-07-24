@@ -66,7 +66,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
     buildAssociations();
     addItemDescriptors();
- 
+
 
     std::cout << "Known Guns:\n";
     for(auto itr {model.knownGuns_cbegin()}; itr != model.knownGuns_cend(); ++itr) {
@@ -209,9 +209,7 @@ bool Framework::readGuns(const std::string& dir) {
             }            
 		}
 		catch(std::exception& e){
-            if(dirEntry.path().filename().string() != FILENAME_WEAPON_TYPES){  // Ignore the weaponTypes file
-                log_error("Failed to create GunMetadata object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
-            }
+            log_error("Failed to create GunMetadata object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
 		}
 	}
     
@@ -247,9 +245,7 @@ bool Framework::readAmmo(const std::string& dir) {
             }
 		}
 		catch(std::exception& e){
-            if(dirEntry.path().filename().string() != FILENAME_WEAPON_TYPES){  // Ignore the weaponTypes file
-                log_error("Failed to create Ammo objects from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
-            }
+            log_error("Failed to create Ammo objects from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
 		}
 	}
     
