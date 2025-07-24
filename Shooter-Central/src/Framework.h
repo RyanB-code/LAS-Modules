@@ -28,6 +28,8 @@ namespace ShooterCentral{
             std::string ammoDir;
             std::string eventsDir;
             std::string gunsDir;
+
+            std::string miscDir;
         };
 
         bool setup(const std::string& directory, std::shared_ptr<bool> shown);   // Call inside LASM_init
@@ -47,12 +49,15 @@ namespace ShooterCentral{
 
         std::shared_ptr<bool> shown;
 
-        static constexpr char FILENAME_WEAPON_TYPES[] = "WeaponTypes.json";
+        static constexpr char FILENAME_DESCRIPTORS[] = "ItemDescriptors.json";
 
 
-        bool readGuns(const std::string& dir);
-        bool readAmmo(const std::string& dir);
-        bool readEvents(const std::string& dir);
+        bool readGuns           (const std::string& dir);
+        bool readAmmo           (const std::string& dir);
+        bool readEvents         (const std::string& dir);
+        bool readDescriptors    (const std::string& dir);
+
+        bool writeDescriptors   (std::string dirrectory);
 
         void buildAssociations();
         void addItemDescriptors(); // Things like Cartridge, Manufacuter, Location, etc

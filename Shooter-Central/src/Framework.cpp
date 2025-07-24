@@ -47,6 +47,8 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         log_error("Failed reading Ammo");
     if(!readEvents(paths.eventsDir))
         log_error("Failed reading Events");
+    if(!readDescriptors(paths.miscDir))
+        log_error("Failed reading Events");
 
     /*
     const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
@@ -310,13 +312,113 @@ bool Framework::readEvents(const std::string& dir) {
             }
 		} // End of all file elements
 		catch(std::exception& e){
-            if(dirEntry.path().filename().string() != FILENAME_WEAPON_TYPES){  // Ignore the weaponTypes file
-                log_error("Failed to create Event object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
-            }
+            log_error("Failed to create Event object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
 		}
 	}
     
 	return true;
+}
+bool Framework::readDescriptors(const std::string& dir){
+    if(!std::filesystem::exists(dir))
+        return false;
+
+    const std::filesystem::path workingDirectory{dir};
+	for(auto const& dirEntry : std::filesystem::directory_iterator(workingDirectory)){
+
+        if(dirEntry.path().filename().string() != FILENAME_DESCRIPTORS)
+            continue;
+
+		try{
+            std::ifstream inputFile{ dirEntry.path(), std::ios::in };
+            json j = json::parse(inputFile);
+
+            // Parse all items here
+	        for (auto& elm : j.at("manufacturers").items()) {
+                std::string nameBuf { elm.value() };
+                if(!model.manufacturers_add( Manufacturer{nameBuf} ))
+                    log_error(std::format("Could not add Manufacturer [{}]", nameBuf));
+            }
+
+	        for (auto& elm : j.at("cartridges").items()) {
+                std::string nameBuf { elm.value() };
+                if(!model.cartridges_add( Cartridge {nameBuf} ))
+                    log_error(std::format("Could not add Cartridge [{}]", nameBuf));
+            }
+
+            for (auto& elm : j.at("locations").items()) {
+                std::string nameBuf { elm.value() };
+                if(!model.locations_add( Location {nameBuf} ))
+                    log_error(std::format("Could not add Location [{}]", nameBuf));
+            }
+
+            for (auto& elm : j.at("eventTypes").items()) {
+                std::string nameBuf { elm.value() };
+                if(!model.eventTypes_add( EventType {nameBuf} ))
+                    log_error(std::format("Could not add EventType [{}]", nameBuf));
+            }
+
+            for (auto& elm : j.at("weaponTypes").items()) {
+                std::string nameBuf { elm.value() };
+                if(!model.weaponTypes_add( WeaponType {nameBuf} ))
+                    log_error(std::format("Could not add WeaponType [{}]", nameBuf));
+            }
+          
+		} // End of all file elements
+		catch(std::exception& e){
+            log_error("Failed to create Event object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
+		}
+	}
+    
+	return true;
+}
+bool Framework::writeDescriptors(std::string directory) {
+    using LAS::json;
+
+    if(directory.empty())
+       return false;
+
+    directory = LAS::TextManip::ensureSlash(directory);
+
+    if(!std::filesystem::exists(directory))
+		return false;
+
+
+    json manufacturersArray = json::array();
+    for(auto itr {model.manufacturers_cbegin()}; itr != model.manufacturers_cend(); ++itr)
+        manufacturersArray.emplace_back(*itr);
+
+    json cartridgesArray = json::array();
+    for(auto itr {model.cartridges_cbegin()}; itr != model.cartridges_cend(); ++itr)
+        cartridgesArray.emplace_back(*itr);
+
+    json locationsArray = json::array();
+    for(auto itr {model.locations_cbegin()}; itr != model.locations_cend(); ++itr)
+        locationsArray.emplace_back(*itr);
+
+    json eventTypesArray = json::array();
+    for(auto itr {model.eventTypes_cbegin()}; itr != model.eventTypes_cend(); ++itr)
+        eventTypesArray.emplace_back(*itr);
+
+    json weaponTypesArray = json::array();
+    for(auto itr {model.weaponTypes_cbegin()}; itr != model.weaponTypes_cend(); ++itr)
+        weaponTypesArray.emplace_back(*itr);
+
+
+    json j;
+    j = json {
+        { "manufacturers",  manufacturersArray },
+        { "cartridges",     cartridgesArray },
+        { "locations",      locationsArray },
+        { "eventTypes",     eventTypesArray },
+        { "weaponTypes",    weaponTypesArray }
+    };
+
+    // Write to file
+    std::ofstream file{ directory + std::string{FILENAME_DESCRIPTORS} };
+    file << std::setw(1) << std::setfill('\t') << j;
+    file.close();
+   
+    return true;
 }
 void Framework::buildAssociations() {
     // Go through every event
@@ -402,6 +504,7 @@ bool Setup::setupFilesystem(Framework::Filepaths& paths){
     paths.ammoDir         = paths.parentDir + "Ammo/";
     paths.eventsDir       = paths.parentDir + "Events/";
     paths.gunsDir         = paths.parentDir + "Guns/";
+    paths.miscDir         = paths.parentDir + "Misc/";
 
     // Check paths are good
     if(!LAS::ensureDirectory(paths.ammoDir)){
@@ -416,7 +519,10 @@ bool Setup::setupFilesystem(Framework::Filepaths& paths){
         log_error(std::format("Error finding or creating directory [{}]", paths.gunsDir));
         return false;
     }
-
+    if(!LAS::ensureDirectory(paths.miscDir)){
+        log_error(std::format("Error finding or creating directory [{}]", paths.miscDir));
+        return false;
+    }
     return true;
 }
  
