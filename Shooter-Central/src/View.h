@@ -97,11 +97,24 @@ namespace ShooterCentral::View {
     };
 
     void centerText(const std::string& text);
+    void centerTextDisabled(const std::string& text);
 
     void draw_Home      (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedChanges& changes);
     void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator begin, 
                             std::map<GunMetadata, AssociatedGun>::const_iterator end, 
                             std::map<GunMetadata, AssociatedGun>::const_iterator& selected
                         );
+    void draw_HomeEvents (  std::map<Event, std::shared_ptr<Event>>::const_iterator begin,
+                            std::map<Event, std::shared_ptr<Event>>::const_iterator end,
+                            std::map<Event, std::shared_ptr<Event>>::const_iterator& selected
+                        );
+    void draw_HomeStockpile (   std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator begin,
+                                std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator end,
+                                std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator& selected
+                            );
+
+
+
+
 
 }

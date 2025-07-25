@@ -69,7 +69,13 @@ void centerText(const std::string& text){
     ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
     ImGui::Text("%s", text.c_str());
 }
+void centerTextDisabled(const std::string& text){
+    float windowWidth { ImGui::GetWindowSize().x };
+    float textWidth   { ImGui::CalcTextSize(text.c_str()).x };
 
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+    ImGui::TextDisabled("%s", text.c_str());
+}
 void draw_Home (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedChanges& changes) {
     
     ImVec2  windowSize { ImGui::GetContentRegionAvail() };
@@ -102,18 +108,39 @@ void draw_Home (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedC
 
     
     if(data.showGuns){
-        if(ImGui::BeginChild("Home_Guns", childWindowSizes, 0) ){
+        if(ImGui::BeginChild("Home Guns", childWindowSizes, 0) ){
             draw_HomeGuns(itrs.gunsInArmory_cbegin, itrs.gunsInArmory_cend, data.selectedGun);
         }
         ImGui::EndChild();
     }
+
+    if(horizontalLayout)
+        ImGui::SameLine();
+
+    if(data.showEvents){
+        if(ImGui::BeginChild("Home Events", childWindowSizes, 0) ){
+            draw_HomeEvents(itrs.events_cbegin, itrs.events_cend, data.selectedEvent);
+        }
+        ImGui::EndChild();
+    }
+
+    if(horizontalLayout)
+        ImGui::SameLine();
+
+    if(data.showStockpile){
+        if(ImGui::BeginChild("Home Stockpile", childWindowSizes, 0) ){
+            draw_HomeStockpile(itrs.ammoStockpile_cbegin, itrs.ammoStockpile_cend, data.selectedAmmo);
+        }
+        ImGui::EndChild();
+    }
+
 }
 void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator begin, 
                         std::map<GunMetadata, AssociatedGun>::const_iterator end, 
                         std::map<GunMetadata, AssociatedGun>::const_iterator& selected
                     )
 {
-    ImVec2 tableSize { ImGui::GetContentRegionAvail().x, 200};
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
 
     if(tableSize.x < 400)
         tableSize.x = 400;
@@ -144,9 +171,9 @@ void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator beg
             const GunMetadata& gun {itr->second.getGun()};
             bool isGunSelected { false };
             
-            if(gun == selected->second.getGun())
+            if(itr == selected)
                 isGunSelected = true;
-
+            
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
 
@@ -199,10 +226,12 @@ void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator beg
         return;
     }
 
+    
     const AssociatedGun& selectedGun    { selected->second };
     const GunMetadata& selectedGunInfo  { selectedGun.getGun() };
     int roundCount { selectedGun.getRoundCount() };
     int eventsUsed { selectedGun.totalEventsUsed() };
+
 
     // Gun Details
     if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
@@ -217,14 +246,190 @@ void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator beg
     ImGui::SameLine();
 
     if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
-        ImGui::Indent(20);
         ImGui::Text("Round Count:       %d", roundCount);
         ImGui::Text("Events Used In:    %d", eventsUsed); 
         //ImGui::Text("Last Event:        %s", 
-        ImGui::Unindent(20);
     }
     ImGui::EndChild();
 }
 
 
-} // End namespace
+void draw_HomeEvents (  std::map<Event, std::shared_ptr<Event>>::const_iterator begin,
+                        std::map<Event, std::shared_ptr<Event>>::const_iterator end,
+                        std::map<Event, std::shared_ptr<Event>>::const_iterator& selected
+                        )
+{
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
+
+    if(tableSize.x < 400)
+        tableSize.x = 400;
+    if(tableSize.x > 800)
+        tableSize.x = 800;
+
+    ImGui::SeparatorText( "Events" );
+    ImGui::Spacing();
+
+    // Center the table
+    float windowWidth { ImGui::GetContentRegionAvail().x };
+    if(tableSize.x < windowWidth)
+        ImGui::SetCursorPosX((windowWidth - tableSize.x) * 0.5f);
+
+    int row { 0 };
+    if(ImGui::BeginTable("Event Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize )){
+        ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None);
+
+        ImGui::TableHeadersRow();
+
+        for(auto& itr {begin}; itr != end; ++itr){
+            if(!itr->second)
+                continue;
+
+            const Event& event      { *itr->second };
+            bool isEventSelected    { false };
+
+            if(itr == selected)
+                isEventSelected = true;
+            
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 4; ++column){                   
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        ImGui::Selectable(event.printDate().c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                        if(isEventSelected)
+                            selected = itr;
+                        break;
+                    case 1:
+                        ImGui::Text("%s", event.getEventType().getName().c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%s", event.getLocation().getName().c_str());
+                        break;
+                    case 3:
+                        ImGui::Text("%d", event.totalGunsUsed());
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Indent(20);
+    ImGui::Text("Events:       %d", row); 
+    ImGui::Unindent(20);
+
+    // Next is selected gun information
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::SeparatorText( "Selected Event" );
+
+    if(selected == end) {
+        centerText("Select An Event For More Information");
+        return;
+    }
+
+    
+    const Event& selectedEvent          { *selected->second };
+    const EventMetadata& selectedInfo   { selectedEvent.getInfo() };
+
+
+    // Gun Details
+    if(ImGui::BeginChild("Selected Event Details", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+        ImGui::Indent(20);
+        ImGui::TextDisabled("Date: ");
+        ImGui::SameLine(100);
+        ImGui::Text("%s", selectedEvent.printDate().c_str());
+
+        ImGui::TextDisabled("Location: ");
+        ImGui::SameLine(100);
+        ImGui::Text("%s", selectedEvent.getLocation().getName().c_str());
+
+        ImGui::TextDisabled("Event Type: ");
+        ImGui::SameLine(100);
+        ImGui::Text("%s", selectedEvent.getEventType().getName().c_str());
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Selected Event Notes", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
+        centerTextDisabled("Notes");
+        ImGui::TextWrapped("%s", selectedEvent.getNotes().c_str());
+    }
+    ImGui::EndChild();
+
+
+}
+void draw_HomeStockpile (   std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator begin,
+                            std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator end,
+                            std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator& selected
+                        )
+{
+    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
+
+    if(tableSize.x < 400)
+        tableSize.x = 400;
+    if(tableSize.x > 800)
+        tableSize.x = 800;
+
+    ImGui::SeparatorText( "Ammo Stockpile" );
+    ImGui::Spacing();
+
+    // Center the table
+    float windowWidth { ImGui::GetContentRegionAvail().x };
+    if(tableSize.x < windowWidth)
+        ImGui::SetCursorPosX((windowWidth - tableSize.x) * 0.5f);
+
+    int row { 0 };
+
+    // NEED TO SHOW BREAKDOWN OF STOCKPILE
+
+    if(ImGui::BeginTable("Stockpile", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
+        ImGui::TableSetupColumn("Cartridge",    0);
+        ImGui::TableSetupColumn("Amount",       0);
+        ImGui::TableHeadersRow();
+
+        if(itr == selected)
+            isEventSelected = true;
+            
+        ImGui::PushID(std::to_string(row).c_str());
+        ImGui::TableNextRow();
+
+        for (int column{0}; column < 2; ++column){        
+            ImGui::TableSetColumnIndex(column);
+            switch( column ){
+                case 0:
+                    ImGui::Text("%s", cart.getName().c_str());
+                    break;
+                case 1:
+                    ImGui::Text("%d", amount);
+                    break;
+                default:
+                    ImGui::Text("Broken table");
+                    break;
+            }
+        }
+    }
+    ImGui::EndTable();
+}
+
+
+
+
+} // End view namespace
