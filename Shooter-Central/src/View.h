@@ -42,51 +42,21 @@ namespace ShooterCentral::View {
         GUN_TYPE
     };
 
-    class SelectAmmo {
-    public:
-        SelectAmmo();
-        ~SelectAmmo();
-
-        void setCartridgeMap (std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator set);
-        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator getCartridgeMap();
-
-        bool select(const AmmoMetadata& key);
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator getSelected();
-    private:
-        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator selectedMap;
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator selectedAmmo;
-    };
-
-    class SelectGun {
-    public:
-        SelectGun();
-        ~SelectGun();
-
-        void setCartridgeMap (std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator set);
-        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator getCartridgeMap();
-
-        bool select(const GunMetadata& key);
-        std::map<GunMetadata, AssociatedGun>::const_iterator getSelected();
-    private:
-        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator selectedMap;
-        std::map<GunMetadata, AssociatedGun>::const_iterator selectedGun;
-    };
-
     struct ScreenData_Home {
         bool showGuns       { true };
         bool showEvents     { true };
         bool showStockpile  { true };
 
-        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
-        SelectAmmo  selectedAmmo;
-        SelectGun   selectedGun;
+        std::weak_ptr<Event>            selectedEvent;
+        std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+        std::weak_ptr<AssociatedGun>    selectedGun;
     };
     struct ScreenData_View {
         Category category { Category::NONE }; 
 
-        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
-        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator      selectedAmmo;
-        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator        selectedGun;
+        std::weak_ptr<Event>            selectedEvent;
+        std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+        std::weak_ptr<AssociatedGun>    selectedGun;
     };
     struct ScreenData_Add {
         Category category   { Category::NONE }; 
@@ -95,9 +65,9 @@ namespace ShooterCentral::View {
     struct ScreenData_Edit {
         Category category { Category::NONE }; 
 
-        std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
-        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator      selectedAmmo;
-        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator        selectedGun;
+        std::weak_ptr<Event>            selectedEvent;
+        std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+        std::weak_ptr<AssociatedGun>    selectedGun;
     };
 
 
@@ -130,15 +100,7 @@ namespace ShooterCentral::View {
     void centerTextDisabled(const std::string& text);
 
     void draw_Home      (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes);
-    void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, SelectGun& selected );
-    void draw_HomeEvents(const std::map<Event, std::shared_ptr<Event>>& events, std::map<Event, std::shared_ptr<Event>>::const_iterator& selected );
-    void draw_HomeStockpile (   std::map<Cartridge, std::map<AmmoMetadata,  AssociatedAmmo>>::const_iterator begin,
-                                std::map<Cartridge, std::map<AmmoMetadata,  AssociatedAmmo>>::const_iterator end,
-                                SelectAmmo& selected
-                            );
-
-
-
-
-
+    void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
+    void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
+    void draw_HomeStockpile(const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList, std::weak_ptr<AssociatedAmmo>& selected);
 }
