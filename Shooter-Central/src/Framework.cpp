@@ -3,29 +3,10 @@
 using namespace ShooterCentral;
 using namespace LAS;
 
-Framework::Framework() : view {
-    ContainerItrs {
-        model.knownAmmo_cbegin(),
-        model.knownAmmo_cend(),
-
-        model.knownGuns_cbegin(),
-        model.knownGuns_cend(),
-
-        model.ammoStockpile_cbegin(),
-        model.ammoStockpile_cend(),
-
-        model.gunsInArmory_cbegin(),
-        model.gunsInArmory_cend(),
-
-        model.events_cbegin(),
-        model.events_cend()
-    }
+Framework::Framework() {
 
 }
-{
-
-}
-Framework::~Framework(){
+Framework::~Framework() {
 
 }
 bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setShown){
@@ -56,8 +37,8 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
     Event testEvent1 { Location{"Test Location"}, EventType{"Test EventType"}, "no notes here fuckwad", ymd} ;
 
-    GunAndAmmo testGAA { model.knownGuns_cbegin()->second };
-    testGAA.addAmmoUsed(AmountOfAmmo{model.knownAmmo_cbegin()->second, 15});
+    GunAndAmmo testGAA { containers.knownGuns_cbegin()->second };
+    testGAA.addAmmoUsed(AmountOfAmmo{containers.knownAmmo_cbegin()->second, 15});
 
     testEvent1.addGun(testGAA);
     if(!FileIO::write(paths.eventsDir, testEvent1))
@@ -69,32 +50,33 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
 
     std::cout << "Known Guns:\n";
-    for(auto itr {model.knownGuns_cbegin()}; itr != model.knownGuns_cend(); ++itr) {
-        const auto& [key, value] {*itr};
+    for(const auto& [gunMetadata, value] : containers.getKnownGuns() ) {
         std::cout << std::format("  Name: {}, WT: {}, Cart: {}\n", value->name, value->weaponType.getName(), value->cartridge.getName());
         std::cout << "    Gun Addr: " << &*value << "\n";
     }
     std::cout << "\n\nKnown Ammo:\n";
-    for(auto itr {model.knownAmmo_cbegin()}; itr != model.knownAmmo_cend(); ++itr) {
-        const auto& [key, value] {*itr};
-        const AmmoMetadata& data { *value };
-
+    for(const auto& [data, value ] : containers.getKnownAmmo() ) {
         std::cout << std::format("  Name: {}, Man: {}, Cart: {}, GW: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight );
-        std::cout << "    AmmoAddr: " << &data << "\n";
+        std::cout << "    AmmoAddr: " << &*value << "\n";
     }
     std::cout << "\n\nAmmo Stockpile (Assoc Ammo) :\n";
-    for(auto itr {model.ammoStockpile_cbegin()}; itr != model.ammoStockpile_cend(); ++itr) {
-        const auto& [key, value] {*itr};
-        const AmmoMetadata& data {value.getAmountOfAmmo().getAmmo() };
-        std::cout << "    Ammo Addr: " << &value.getAmountOfAmmo().getAmmo() << "  Amount: " << value.getAmountOfAmmo().getAmount() << "\n";
+    for(const auto& [cartridge, map] : containers.getAmmoStockpile() ) {
+        
+        for(auto mapItr {map.cbegin()}; mapItr != map.cend(); ++mapItr){
+            const auto& [key, value] { *mapItr };
 
-        for(auto itr2 {value.cbegin() }; itr2 != value.cend(); ++itr2){
-            std::cout << "      Gun Addr: " << &*itr2->second << "\n";
+            const AmmoMetadata& data {value->getAmountOfAmmo().getAmmo() };
+            std::cout << "    Ammo Addr: " << &value->getAmountOfAmmo().getAmmo() << "  Amount: " << value->getAmountOfAmmo().getAmount() << "\n";
+
+            for(auto itr2 {value->cbegin() }; itr2 != value->cend(); ++itr2){
+                std::cout << "      Gun Addr: " << &*itr2->second << "\n";
+            }
         }
+        
     }
     std::cout << "\n\nEvents:\n";
-    for(auto itr{model.events_cbegin()}; itr != model.events_cend(); ++itr){
-        const Event& event {*itr->second};
+    for(const auto& [evntMetadata, eventPtr] :containers.getEvents() ) {
+        const Event& event {*eventPtr};
         std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", event.getLocation().getName(), event.getEventType().getName(), event.getNotes(), event.printDate());
         std::cout << "      Event Addr: " << &event << "\n";
 
@@ -111,45 +93,48 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
 
     std::cout << "\n\nAssoc Guns:\n";
-    for(auto itr{model.gunsInArmory_cbegin()}; itr != model.gunsInArmory_cend(); ++itr){
-        const AssociatedGun& gun {itr->second};
+    for(auto itr{containers.getGunsInArmory().cbegin()}; itr != containers.getGunsInArmory().cend(); ++itr){
+        const auto& [cartridge, map] {*itr};
 
-        std::cout << "  Gun Addr: " << &gun.getGun() << "\n";
+        for(auto mapItr {map.cbegin()}; mapItr != map.cend(); ++mapItr){
+            const AssociatedGun& gun {*mapItr->second};
+
+            std::cout << "  Gun Addr: " << &gun.getGun() << "\n";
         
-        for(auto itrEvent { gun.eventsUsed_cbegin() }; itrEvent != gun.eventsUsed_cend(); ++itrEvent){
-            std::cout << "    Event Addr: " << &itrEvent->second->getInfo() << "\n";
-        }
+            for(auto itrEvent { gun.eventsUsed_cbegin() }; itrEvent != gun.eventsUsed_cend(); ++itrEvent){
+                std::cout << "    Event Addr: " << &itrEvent->second->getInfo() << "\n";
+            }
 
-        for(auto itrAmmo { gun.ammoUsed_cbegin() }; itrAmmo != gun.ammoUsed_cend(); ++itrAmmo){
-            const AmmoMetadata& data { itrAmmo->second.getAmmo() };
-            std::cout << "    AmmoAddr: " << &data << "\n";
-            std::cout << std::format("      Name: {}, Man: {}, Cart: {}, GW: {}, Amount: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight, itrAmmo->second.getAmount());
-
+            for(auto itrAmmo { gun.ammoUsed_cbegin() }; itrAmmo != gun.ammoUsed_cend(); ++itrAmmo){
+                const AmmoMetadata& data { itrAmmo->second.getAmmo() };
+                std::cout << "    AmmoAddr: " << &data << "\n";
+                std::cout << std::format("      Name: {}, Man: {}, Cart: {}, GW: {}, Amount: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight, itrAmmo->second.getAmount());
+            }
         }
     }
 
     std::cout << "\n\nManufacturers:\n";
-    for(auto itr{model.manufacturers_cbegin()}; itr != model.manufacturers_cend(); ++itr){
+    for(auto itr{containers.getManufacturers().cbegin()}; itr != containers.getManufacturers().cend(); ++itr){
         std::cout << "  " << itr->getName() << "\n";
     }
 
     std::cout << "\n\nLocations:\n";
-    for(auto itr{model.locations_cbegin()}; itr != model.locations_cend(); ++itr){
+    for(auto itr{containers.getLocations().cbegin()}; itr != containers.getLocations().cend(); ++itr){
         std::cout << "  " << itr->getName() << "\n";
     }
 
     std::cout << "\n\nEventTypes:\n";
-    for(auto itr{model.eventTypes_cbegin()}; itr != model.eventTypes_cend(); ++itr){
+    for(auto itr{containers.getEventTypes().cbegin()}; itr != containers.getEventTypes().cend(); ++itr){
         std::cout << "  " << itr->getName() << "\n";
     }
 
     std::cout << "\n\nCartridges:\n";
-    for(auto itr{model.cartridges_cbegin()}; itr != model.cartridges_cend(); ++itr){
+    for(auto itr{containers.getCartridges().cbegin()}; itr != containers.getCartridges().cend(); ++itr){
         std::cout << "  " << itr->getName() << "\n";
     }
 
     std::cout << "\n\nWeaponTypes:\n";
-    for(auto itr{model.weaponTypes_cbegin()}; itr != model.weaponTypes_cend(); ++itr){
+    for(auto itr{containers.getWeaponTypes().cbegin()}; itr != containers.getWeaponTypes().cend(); ++itr){
         std::cout << "  " << itr->getName() << "\n";
     }
 
@@ -168,24 +153,7 @@ void Framework::draw() {
         return;
     }
 
-    ContainerItrs itrs {
-        model.knownAmmo_cbegin(),
-        model.knownAmmo_cend(),
-
-        model.knownGuns_cbegin(),
-        model.knownGuns_cend(),
-
-        model.ammoStockpile_cbegin(),
-        model.ammoStockpile_cend(),
-
-        model.gunsInArmory_cbegin(),
-        model.gunsInArmory_cend(),
-
-        model.events_cbegin(),
-        model.events_cend()
-    };
-
-    view.draw(itrs, unsavedChanges);
+    view.draw(containers, unsavedChanges);
 
     ImGui::End();
 }
@@ -201,8 +169,8 @@ bool Framework::readGuns(const std::string& dir) {
 
             GunMetadata gunBuf {j.template get<ShooterCentral::GunMetadata>()};
 
-            if(!model.knownGuns_contains(gunBuf)){
-                if(!model.knownGuns_add(std::make_shared<GunMetadata>(gunBuf))){
+            if(!containers.getKnownGuns().contains(gunBuf)){
+                if(!containers.knownGuns_add(std::make_shared<GunMetadata>(gunBuf))){
                     log_error("Could not insert GunMetadata from file [" + dirEntry.path().string() + ']');
                     continue;
                 }
@@ -227,8 +195,8 @@ bool Framework::readAmmo(const std::string& dir) {
 
             AmmoMetadata ammoInfo {j.at("ammoInfo").template get<ShooterCentral::AmmoMetadata>()};
 
-            if(!model.knownAmmo_contains(ammoInfo)){
-                if(!model.knownAmmo_add(std::make_shared<AmmoMetadata>(ammoInfo))){
+            if(!containers.getKnownAmmo().contains(ammoInfo)){
+                if(!containers.knownAmmo_add(std::make_shared<AmmoMetadata>(ammoInfo))){
                     log_error("Could not insert AmmoMetadata from file [" + dirEntry.path().string() + ']');
                     continue;
                 }
@@ -237,8 +205,10 @@ bool Framework::readAmmo(const std::string& dir) {
             // Make the AmountOfAmmo object and add to stockpile
             int amountBuf { 0 };
             j.at("amount").get_to(amountBuf);
-            if(!model.ammoStockpile_contains(ammoInfo)){
-                if(!model.ammoStockpile_add(AmountOfAmmo{model.knownAmmo_at(ammoInfo), amountBuf})){ // Implicit conversion to AssociatedAmmo
+            if(!containers.ammoStockpile_contains(ammoInfo)){
+                if(!containers.ammoStockpile_add(
+                                std::make_shared<AssociatedAmmo>(AmountOfAmmo{containers.knownAmmo_at(ammoInfo), amountBuf}) ) )
+                { 
                     log_error("Could not add AssociatedAmmo to stockpile from file [" + dirEntry.path().string() + ']');
                     continue;
                 }
@@ -268,20 +238,20 @@ bool Framework::readEvents(const std::string& dir) {
                 GunMetadata gunInfoBuf  {gunElm.value().at("gunInfo").template get<ShooterCentral::GunMetadata>() };
                 
                 // Add to known Guns
-                if(!model.knownGuns_contains(gunInfoBuf)){
-                    if(!model.knownGuns_add(std::make_shared<GunMetadata>(gunInfoBuf))){
+                if(!containers.getKnownGuns().contains(gunInfoBuf)){
+                    if(!containers.knownGuns_add(std::make_shared<GunMetadata>(gunInfoBuf))){
                         log_error("Could not insert GunMetadata when reading Event from file [" + dirEntry.path().string() + ']');
                         continue;
                     }
                 }
 
                 // Get all ammo used for the gun
-                GunAndAmmo gunAndAmmoBuf {model.knownGuns_at(gunInfoBuf)};
+                GunAndAmmo gunAndAmmoBuf {containers.knownGuns_at(gunInfoBuf)};
                 for(auto& ammoElm : gunElm.value().at("ammoUsed").items()){
                     AmmoMetadata infoBuf {ammoElm.value().at("ammoInfo").template get<ShooterCentral::AmmoMetadata>() };
 
-                    if(!model.knownAmmo_contains(infoBuf)){
-                        if(!model.knownAmmo_add(std::make_shared<AmmoMetadata>(infoBuf))){
+                    if(!containers.getKnownAmmo().contains(infoBuf)){
+                        if(!containers.knownAmmo_add(std::make_shared<AmmoMetadata>(infoBuf))){
                             log_error("Could not insert AmmoMetadata when reading Event from file [" + dirEntry.path().string() + ']');
                             continue;
                         }
@@ -290,7 +260,7 @@ bool Framework::readEvents(const std::string& dir) {
                     int amountBuf { 0 };
                     ammoElm.value().at("amount").get_to(amountBuf);
 
-                    if(!gunAndAmmoBuf.addAmmoUsed(AmountOfAmmo{model.knownAmmo_at(infoBuf), amountBuf})){
+                    if(!gunAndAmmoBuf.addAmmoUsed(AmountOfAmmo{containers.knownAmmo_at(infoBuf), amountBuf})) {
                         log_error(std::format("Could not add AmountOfAmmo [{}] to Gun [{}] when reading Event from file [{}]", infoBuf.name, gunInfoBuf.name, dirEntry.path().string()));
                         continue;
                     }
@@ -302,8 +272,8 @@ bool Framework::readEvents(const std::string& dir) {
                 }
 	        } // End of all Gun elements
 
-            if(!model.events_add(std::make_shared<Event>(eventBuf))){
-                log_error(std::format("Could not add Event to model. Event file [{}]", dirEntry.path().string()));
+            if(!containers.events_add(std::make_shared<Event>(eventBuf))){
+                log_error(std::format("Could not add Event to containers. Event file [{}]", dirEntry.path().string()));
                 continue;
             }
 		} // End of all file elements
@@ -331,31 +301,31 @@ bool Framework::readDescriptors(const std::string& dir){
             // Parse all items here
 	        for (auto& elm : j.at("manufacturers").items()) {
                 std::string nameBuf { elm.value() };
-                if(!model.manufacturers_add( Manufacturer{nameBuf} ))
+                if(!containers.manufacturers_add( Manufacturer{nameBuf} ))
                     log_error(std::format("Could not add Manufacturer [{}]", nameBuf));
             }
 
 	        for (auto& elm : j.at("cartridges").items()) {
                 std::string nameBuf { elm.value() };
-                if(!model.cartridges_add( Cartridge {nameBuf} ))
+                if(!containers.cartridges_add( Cartridge {nameBuf} ))
                     log_error(std::format("Could not add Cartridge [{}]", nameBuf));
             }
 
             for (auto& elm : j.at("locations").items()) {
                 std::string nameBuf { elm.value() };
-                if(!model.locations_add( Location {nameBuf} ))
+                if(!containers.locations_add( Location {nameBuf} ))
                     log_error(std::format("Could not add Location [{}]", nameBuf));
             }
 
             for (auto& elm : j.at("eventTypes").items()) {
                 std::string nameBuf { elm.value() };
-                if(!model.eventTypes_add( EventType {nameBuf} ))
+                if(!containers.eventTypes_add( EventType {nameBuf} ))
                     log_error(std::format("Could not add EventType [{}]", nameBuf));
             }
 
             for (auto& elm : j.at("weaponTypes").items()) {
                 std::string nameBuf { elm.value() };
-                if(!model.weaponTypes_add( WeaponType {nameBuf} ))
+                if(!containers.weaponTypes_add( WeaponType {nameBuf} ))
                     log_error(std::format("Could not add WeaponType [{}]", nameBuf));
             }
           
@@ -380,24 +350,24 @@ bool Framework::writeDescriptors(std::string directory) {
 
 
     json manufacturersArray = json::array();
-    for(auto itr {model.manufacturers_cbegin()}; itr != model.manufacturers_cend(); ++itr)
-        manufacturersArray.emplace_back(*itr);
+    for(const auto& man : containers.getManufacturers() )
+        manufacturersArray.emplace_back(man);
 
     json cartridgesArray = json::array();
-    for(auto itr {model.cartridges_cbegin()}; itr != model.cartridges_cend(); ++itr)
-        cartridgesArray.emplace_back(*itr);
+    for(const auto cart : containers.getCartridges() )
+        cartridgesArray.emplace_back(cart);
 
     json locationsArray = json::array();
-    for(auto itr {model.locations_cbegin()}; itr != model.locations_cend(); ++itr)
-        locationsArray.emplace_back(*itr);
+    for(const auto loc : containers.getLocations() )
+        locationsArray.emplace_back(loc);
 
     json eventTypesArray = json::array();
-    for(auto itr {model.eventTypes_cbegin()}; itr != model.eventTypes_cend(); ++itr)
-        eventTypesArray.emplace_back(*itr);
+    for(const auto& et : containers.getEventTypes() )
+        eventTypesArray.emplace_back(et);
 
     json weaponTypesArray = json::array();
-    for(auto itr {model.weaponTypes_cbegin()}; itr != model.weaponTypes_cend(); ++itr)
-        weaponTypesArray.emplace_back(*itr);
+    for(const auto& wt : containers.getWeaponTypes() )
+        weaponTypesArray.emplace_back(wt);
 
 
     json j;
@@ -418,40 +388,42 @@ bool Framework::writeDescriptors(std::string directory) {
 }
 void Framework::buildAssociations() {
     // Go through every event
-    for(auto eventItr {model.events_cbegin()}; eventItr != model.events_cend(); ++eventItr){
-        const Event& event { *eventItr->second };
+    for(const auto& [eventMetadata, eventPtr] : containers.getEvents() ){
+        const Event& event { *eventPtr };
 
         // Go through every GunAndAmmo in the event
         for(auto gunAndAmmoItr { event.cbegin() }; gunAndAmmoItr != event.cend(); ++gunAndAmmoItr){
             const GunMetadata& gunInfo { gunAndAmmoItr->getGun() };
 
             // Add AssociatedGun object
-            if(!model.gunsInArmory_contains(gunInfo)){
-                if(!model.gunsInArmory_add(AssociatedGun{model.knownGuns_at(gunInfo)})){ 
+            if(!containers.gunsInArmory_contains(gunInfo)){
+                if(!containers.gunsInArmory_add(std::make_shared<AssociatedGun>(containers.knownGuns_at(gunInfo)))){ 
                     log_error("Could not add AssociatedGun to armory when associating Event");
                     continue;
                 }
             }
 
             // Add Event to AssociatedGun object
-            AssociatedGun& assocGun { model.gunsInArmory_at(gunInfo) };
-            assocGun.addEvent(eventItr->second);
+            AssociatedGun& assocGun { *containers.gunsInArmory_at(gunInfo) };
+            assocGun.addEvent(eventPtr);
  
             // Go through every Ammo used for the Gun
             for(auto amountOfAmmoItr { gunAndAmmoItr->cbegin() }; amountOfAmmoItr != gunAndAmmoItr->cend(); ++amountOfAmmoItr){
                 const AmmoMetadata& ammoInfo { amountOfAmmoItr->getAmmo()};
 
                 // Add AssociatedAmmo object
-                if(!model.ammoStockpile_contains(ammoInfo)){
-                    if(!model.ammoStockpile_add(AssociatedAmmo{AmountOfAmmo{model.knownAmmo_at(ammoInfo), 0} })){ // Do not add ammo amount since the amount here is for what was used during the Event
+                if(!containers.ammoStockpile_contains(ammoInfo)){
+                    if(!containers.ammoStockpile_add(
+                                std::make_shared<AssociatedAmmo>(AssociatedAmmo{AmountOfAmmo{containers.knownAmmo_at(ammoInfo), 0} }))) // Do not add ammo amount since the amount here is for what was used during the Event
+                    { 
                         log_error("Could not add AssociatedAmmo to stockpile when associating Event");
                         continue;
                     }
                 }
 
                 // Add Gun to AssociatedAmmo object
-                AssociatedAmmo& assocAmmo { model.ammoStockpile_at(ammoInfo) };
-                assocAmmo.addGun(model.knownGuns_at(gunInfo));
+                AssociatedAmmo& assocAmmo { *containers.ammoStockpile_at(ammoInfo) };
+                assocAmmo.addGun(containers.knownGuns_at(gunInfo));
 
             } // End every AmountOfAmmo for the gun
         } // End every GunAndAmmo in the event
@@ -459,34 +431,25 @@ void Framework::buildAssociations() {
 }
 void Framework::addItemDescriptors() {
 
-    // Add event items
-    for(auto eventItr {model.events_cbegin()}; eventItr != model.events_cend(); ++eventItr){
-        const EventMetadata& data { eventItr->second->getInfo() };
+    for(const auto& [eventMetadata, eventPtr] : containers.getEvents() ){
+        if(!containers.getLocations().contains(eventMetadata.location))
+            containers.locations_add(eventMetadata.location);
 
-        if(!model.locations_contains(data.location))
-            model.locations_add(data.location);
-
-        if(!model.eventTypes_contains(data.eventType))
-            model.eventTypes_add(data.eventType);
+        if(!containers.getEventTypes().contains(eventMetadata.eventType))
+            containers.eventTypes_add(eventMetadata.eventType);
     }
 
-    // Gun items
-    for(auto gunItr {model.knownGuns_cbegin()}; gunItr != model.knownGuns_cend(); ++gunItr){
-        const GunMetadata& data { *gunItr->second };
-
-        if(!model.weaponTypes_contains(data.weaponType))
-            model.weaponTypes_add(data.weaponType);
+    for(const auto& [gunMetadata, gunPtr ] : containers.getKnownGuns() ){
+        if(!containers.getWeaponTypes().contains(gunMetadata.weaponType))
+            containers.weaponTypes_add(gunMetadata.weaponType);
     }
 
-    // Ammo items
-    for(auto ammoItr {model.knownAmmo_cbegin()}; ammoItr != model.knownAmmo_cend(); ++ammoItr){
-        const AmmoMetadata& data { *ammoItr->second };
+    for(const auto& [ammoMetadata, ammoPtr] : containers.getKnownAmmo() ) {
+        if(!containers.getManufacturers().contains(ammoMetadata.manufacturer))
+            containers.manufacturers_add(ammoMetadata.manufacturer);
 
-        if(!model.manufacturers_contains(data.manufacturer))
-            model.manufacturers_add(data.manufacturer);
-
-        if(!model.cartridges_contains(data.cartridge))
-            model.cartridges_add(data.cartridge);
+        if(!containers.getCartridges().contains(ammoMetadata.cartridge))
+            containers.cartridges_add(ammoMetadata.cartridge);
     }
 }
 
@@ -699,32 +662,5 @@ bool write (std::string directory, const Event& data){
 }
 
 } // End FileIO namespace
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

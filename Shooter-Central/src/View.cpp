@@ -2,26 +2,64 @@
 
 namespace ShooterCentral::View{
 
-GUI::GUI(const ContainerItrs& itrs){
+SelectAmmo::SelectAmmo(){
 
-    homeData.selectedEvent = itrs.events_cend;
-    homeData.selectedAmmo = itrs.ammoStockpile_cend;
-    homeData.selectedGun = itrs.gunsInArmory_cend;
+}
+SelectAmmo::~SelectAmmo(){
 
-    viewData.selectedEvent = itrs.events_cend;
-    viewData.selectedAmmo = itrs.ammoStockpile_cend;
-    viewData.selectedGun = itrs.gunsInArmory_cend;
+}
+void SelectAmmo::setCartridgeMap (std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator set){
+    selectedMap == set;
+}
+std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator SelectAmmo::getCartridgeMap(){
+    return selectedMap;
+}
+bool SelectAmmo::select(const AmmoMetadata& key){
+    if(!selectedMap->second.contains(key))
+        return false;
 
-    editData.selectedEvent = itrs.events_cend;
-    editData.selectedAmmo = itrs.ammoStockpile_cend;
-    editData.selectedGun = itrs.gunsInArmory_cend;
+    selectedAmmo = selectedMap->second.find(key);
+    return true;
+}
+std::map<AmmoMetadata, AssociatedAmmo>::const_iterator SelectAmmo::getSelected(){
+    return selectedAmmo;
+}
+
+SelectGun::SelectGun(){
+
+}
+SelectGun::~SelectGun(){
+
+}
+void SelectGun::setCartridgeMap (std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator set){
+    selectedMap == set;
+}
+std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator SelectGun::getCartridgeMap(){
+    return selectedMap;
+}
+bool SelectGun::select(const GunMetadata& key){
+    if(!selectedMap->second.contains(key))
+        return false;
+
+    selectedGun = selectedMap->second.find(key);
+    return true;
+}
+std::map<GunMetadata, AssociatedGun>::const_iterator SelectGun::getSelected(){
+    return selectedGun;
+}
+
+
+
+GUI::GUI(){
 
 }
 GUI::~GUI() {
 
 }
-void GUI::draw(const ContainerItrs& itrs, const UnsavedChanges& unsavedChanges) {
+void GUI::draw(const Containers& containers, const UnsavedChanges& unsavedChanges) {
 
+    /* 
+     
      if(ImGui::BeginTabBar("Tabs")){
         if(ImGui::BeginTabItem("Home")){
             currentScreen = Screen::HOME;
@@ -44,7 +82,7 @@ void GUI::draw(const ContainerItrs& itrs, const UnsavedChanges& unsavedChanges) 
 
     switch(currentScreen){
         case Screen::HOME:
-            draw_Home(itrs, homeData, unsavedChanges);
+            draw_Home(containers, homeData, unsavedChanges);
             break;
         case Screen::VIEW:
 
@@ -59,6 +97,9 @@ void GUI::draw(const ContainerItrs& itrs, const UnsavedChanges& unsavedChanges) 
             LAS::log_warn("SC Screen case not handled");
             break;
     }
+
+    */
+    std::cout << "drawing\n";
 
 
 }
@@ -76,8 +117,9 @@ void centerTextDisabled(const std::string& text){
     ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
     ImGui::TextDisabled("%s", text.c_str());
 }
-void draw_Home (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedChanges& changes) {
+void draw_Home (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes) {
     
+    /*
     ImVec2  windowSize { ImGui::GetContentRegionAvail() };
     ImVec2  childWindowSizes { };
     bool    horizontalLayout { false };
@@ -133,11 +175,12 @@ void draw_Home (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedC
         }
         ImGui::EndChild();
     }
+    */
 
 }
-void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator begin, 
-                        std::map<GunMetadata, AssociatedGun>::const_iterator end, 
-                        std::map<GunMetadata, AssociatedGun>::const_iterator& selected
+void draw_HomeGuns  (   std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator begin, 
+                        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator end, 
+                        SelectGun& selected
                     )
 {
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -165,44 +208,52 @@ void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator beg
         ImGui::TableHeadersRow();
 
         for(auto itr { begin }; itr != end; ++itr){
-            if(!itr->second) // bool check to see if gun is valid
-                continue;
+            const auto& [cartridgeKey, map] { *itr };
+            // Do not sort by Cartridge so just ignore it
 
-            const GunMetadata& gun {itr->second.getGun()};
-            bool isGunSelected { false };
+            for(auto mapItr {map.cbegin()}; mapItr != map.cend(); ++mapItr){
+
+                if(!mapItr->second) // bool check to see if gun is valid
+                    continue;
+
+                const GunMetadata& gun {mapItr->second.getGun()};
+                bool isGunSelected { false };
             
-            if(itr == selected)
-                isGunSelected = true;
+                if(mapItr == selected.getSelected() && itr == selected.getCartridgeMap())
+                    isGunSelected = true;
             
-            ImGui::PushID(std::to_string(row).c_str());
-            ImGui::TableNextRow();
+                ImGui::PushID(std::to_string(row).c_str());
+                ImGui::TableNextRow();
 
-            for (int column{0}; column < 4; ++column){
-                ImGui::TableSetColumnIndex(column);
-                switch( column ){
-                    case 0:
-                        ImGui::Selectable(gun.weaponType.getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
+                for (int column{0}; column < 4; ++column){
+                    ImGui::TableSetColumnIndex(column);
+                    switch( column ){
+                        case 0:
+                            ImGui::Selectable(gun.weaponType.getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
 
-                        if(isGunSelected)
-                            selected = itr;
+                            if(isGunSelected){
+                                selected.setCartridgeMap(itr);
+                                selected.select(gun);
+                            }
 
-                        break;
-                    case 1:
-                        ImGui::Text("%s", gun.cartridge.getName().c_str());
-                        break;
-                    case 2:
-                        ImGui::Text("%s", gun.name.c_str());
-                        break;
-                    case 3:
-                        ImGui::Text("%d", itr->second.getRoundCount());
-                        break;
-                    default:
-                        ImGui::TextDisabled("Broken table");
-                        break;
+                            break;
+                        case 1:
+                            ImGui::Text("%s", gun.cartridge.getName().c_str());
+                            break;
+                        case 2:
+                            ImGui::Text("%s", gun.name.c_str());
+                            break;
+                        case 3:
+                            ImGui::Text("%d", mapItr->second.getRoundCount());
+                            break;
+                        default:
+                            ImGui::TextDisabled("Broken table");
+                            break;
+                    }
                 }
+                ImGui::PopID();
+                ++row;       
             }
-            ImGui::PopID();
-            ++row;       
         }
         ImGui::EndTable();
     }
@@ -221,16 +272,24 @@ void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator beg
 
     ImGui::SeparatorText( "Selected Gun" );
 
-    if(selected == end) {
+    if(selected.getCartridgeMap() == end) {
         centerText("Select A Gun For More Information");
         return;
     }
 
+    std::cout << "here\n";
+
+    std::cout << "selected addr: " << &*selected.getCartridgeMap() << "\n";
+    std::cout << "end addr: " << &*end << "\n";
+
+
     
-    const AssociatedGun& selectedGun    { selected->second };
+    const AssociatedGun& selectedGun    { selected.getSelected()->second };
     const GunMetadata& selectedGunInfo  { selectedGun.getGun() };
     int roundCount { selectedGun.getRoundCount() };
     int eventsUsed { selectedGun.totalEventsUsed() };
+
+    std::cout << "here 2\n";
 
 
     // Gun Details
@@ -376,9 +435,9 @@ void draw_HomeEvents (  std::map<Event, std::shared_ptr<Event>>::const_iterator 
 
 
 }
-void draw_HomeStockpile (   std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator begin,
-                            std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator end,
-                            std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator& selected
+void draw_HomeStockpile (   std::map<Cartridge, std::map<AmmoMetadata,  AssociatedAmmo>>::const_iterator begin,
+                            std::map<Cartridge, std::map<AmmoMetadata,  AssociatedAmmo>>::const_iterator end,
+                            std::map<Cartridge, std::map<AmmoMetadata,  AssociatedAmmo>>::const_iterator& selected
                         )
 {
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -399,6 +458,7 @@ void draw_HomeStockpile (   std::map<AmmoMetadata,  AssociatedAmmo>::const_itera
     int row { 0 };
 
     // NEED TO SHOW BREAKDOWN OF STOCKPILE
+    /*
 
     if(ImGui::BeginTable("Stockpile", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
         ImGui::TableSetupColumn("Cartridge",    0);
@@ -427,6 +487,7 @@ void draw_HomeStockpile (   std::map<AmmoMetadata,  AssociatedAmmo>::const_itera
         }
     }
     ImGui::EndTable();
+    */
 }
 
 

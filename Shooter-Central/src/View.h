@@ -2,6 +2,7 @@
 
 #include "AssociatedItems.h"
 #include "CommonItems.h"
+#include "Containers.h"
 
 #include <LAS/Logging.h>
 #include <imgui/imgui.h>
@@ -41,6 +42,35 @@ namespace ShooterCentral::View {
         GUN_TYPE
     };
 
+    class SelectAmmo {
+    public:
+        SelectAmmo();
+        ~SelectAmmo();
+
+        void setCartridgeMap (std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator set);
+        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator getCartridgeMap();
+
+        bool select(const AmmoMetadata& key);
+        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator getSelected();
+    private:
+        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator selectedMap;
+        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator selectedAmmo;
+    };
+
+    class SelectGun {
+    public:
+        SelectGun();
+        ~SelectGun();
+
+        void setCartridgeMap (std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator set);
+        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator getCartridgeMap();
+
+        bool select(const GunMetadata& key);
+        std::map<GunMetadata, AssociatedGun>::const_iterator getSelected();
+    private:
+        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator selectedMap;
+        std::map<GunMetadata, AssociatedGun>::const_iterator selectedGun;
+    };
 
     struct ScreenData_Home {
         bool showGuns       { true };
@@ -48,15 +78,15 @@ namespace ShooterCentral::View {
         bool showStockpile  { true };
 
         std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo;
-        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun;
+        SelectAmmo  selectedAmmo;
+        SelectGun   selectedGun;
     };
     struct ScreenData_View {
         Category category { Category::NONE }; 
 
         std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo;
-        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun;
+        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator      selectedAmmo;
+        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator        selectedGun;
     };
     struct ScreenData_Add {
         Category category   { Category::NONE }; 
@@ -66,17 +96,17 @@ namespace ShooterCentral::View {
         Category category { Category::NONE }; 
 
         std::map<Event, std::shared_ptr<Event>>::const_iterator     selectedEvent;
-        std::map<AmmoMetadata, AssociatedAmmo>::const_iterator      selectedAmmo;
-        std::map<GunMetadata, AssociatedGun>::const_iterator        selectedGun;
+        std::map<Cartridge, std::map<AmmoMetadata, AssociatedAmmo>>::const_iterator      selectedAmmo;
+        std::map<Cartridge, std::map<GunMetadata, AssociatedGun>>::const_iterator        selectedGun;
     };
 
 
     class GUI {
     public:
-        GUI(const ContainerItrs& itrs);
+        GUI();
         ~GUI();
 
-        void draw(const ContainerItrs& itrs, const UnsavedChanges& unsavedChanges);
+        void draw(const Containers& containers, const UnsavedChanges& unsavedChanges);
 
     private:
         Screen currentScreen { Screen::HOME };
@@ -99,18 +129,12 @@ namespace ShooterCentral::View {
     void centerText(const std::string& text);
     void centerTextDisabled(const std::string& text);
 
-    void draw_Home      (const ContainerItrs& itrs, ScreenData_Home& data, const UnsavedChanges& changes);
-    void draw_HomeGuns  (   std::map<GunMetadata, AssociatedGun>::const_iterator begin, 
-                            std::map<GunMetadata, AssociatedGun>::const_iterator end, 
-                            std::map<GunMetadata, AssociatedGun>::const_iterator& selected
-                        );
-    void draw_HomeEvents (  std::map<Event, std::shared_ptr<Event>>::const_iterator begin,
-                            std::map<Event, std::shared_ptr<Event>>::const_iterator end,
-                            std::map<Event, std::shared_ptr<Event>>::const_iterator& selected
-                        );
-    void draw_HomeStockpile (   std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator begin,
-                                std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator end,
-                                std::map<AmmoMetadata,  AssociatedAmmo>::const_iterator& selected
+    void draw_Home      (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes);
+    void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, SelectGun& selected );
+    void draw_HomeEvents(const std::map<Event, std::shared_ptr<Event>>& events, std::map<Event, std::shared_ptr<Event>>::const_iterator& selected );
+    void draw_HomeStockpile (   std::map<Cartridge, std::map<AmmoMetadata,  AssociatedAmmo>>::const_iterator begin,
+                                std::map<Cartridge, std::map<AmmoMetadata,  AssociatedAmmo>>::const_iterator end,
+                                SelectAmmo& selected
                             );
 
 

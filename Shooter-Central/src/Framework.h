@@ -3,7 +3,7 @@
 #include "AssociatedItems.h"
 #include "CommonItems.h"
 #include "View.h"
-#include "Model.h"
+#include "Containers.h"
 
 #include <LAS/Logging.h>
 #include <LAS/json.h>
@@ -32,20 +32,18 @@ namespace ShooterCentral{
             std::string miscDir;
         };
 
-        bool setup(const std::string& directory, std::shared_ptr<bool> shown);   // Call inside LASM_init
+        bool setup(const std::string& directory, std::shared_ptr<bool> shown);   // Called inside LASM_init
         
-        std::string getCommandGroupName() const;
-
         void update();
         void draw();
 
         static constexpr char TITLE[] = "Shooter Central";
         static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
-    private:
-        Model           model   { };
-        View::GUI       view;
 
-        UnsavedChanges  unsavedChanges { };
+    private:
+        Containers      containers      { };
+        View::GUI       view            { };
+        UnsavedChanges  unsavedChanges  { };
 
         std::shared_ptr<bool> shown;
 
