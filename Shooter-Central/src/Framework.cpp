@@ -541,6 +541,15 @@ std::string makeFileName (std::string directory, const AmmoMetadata& ammo) {
 
     fileName << '_';
 
+    for(const auto& c : ammo.cartridge.getName()){     // Remove spaces and make lowercase
+        if(isalnum(c))
+            fileName << c;
+        else if(c == ' ' || c == '\t')
+            fileName << '-';
+    }
+
+    fileName << '_';
+
     for(const auto& c : ammo.name){     // Remove spaces and make lowercase
         if(isalnum(c))
             fileName << c;
