@@ -98,6 +98,7 @@ namespace ShooterCentral::View {
 
     void centerText(const std::string& text);
     void centerTextDisabled(const std::string& text);
+    bool centerButton(const std::string& text, ImVec2 size);
 
     void draw_Home      (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes);
     void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );

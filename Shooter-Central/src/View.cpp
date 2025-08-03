@@ -62,6 +62,13 @@ void centerTextDisabled(const std::string& text){
     ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
     ImGui::TextDisabled("%s", text.c_str());
 }
+bool centerButton(const std::string& text, ImVec2 size){
+    float windowWidth = ImGui::GetWindowSize().x;
+
+    ImGui::SetCursorPosX((windowWidth - size.x) * 0.5f);
+    return ImGui::Button(text.c_str(), size);
+
+}
 void draw_Home (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes) {
     
     ImVec2  windowSize { ImGui::GetContentRegionAvail() };
