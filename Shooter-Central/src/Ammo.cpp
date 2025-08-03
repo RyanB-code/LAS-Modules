@@ -66,7 +66,8 @@ void ShooterCentral::to_json (LAS::json& j, const AmmoMetadata& data){
         { "name",           data.name },
         { "manufacturer",   data.manufacturer },
         { "cartridge",      data.cartridge },
-        { "grain",          data.grainWeight}
+        { "grain",          data.grainWeight},
+        { "isActive",       data.isActive}
     };
 }
 void ShooterCentral::from_json(const LAS::json& j, AmmoMetadata& data){
@@ -77,6 +78,7 @@ void ShooterCentral::from_json(const LAS::json& j, AmmoMetadata& data){
     j.at("manufacturer").get_to(manufacturerBuf);
     j.at("cartridge").get_to(cartridgeBuf);
     j.at("grain").get_to(data.grainWeight);
+    j.at("isActive").get_to(data.isActive);
 
     data.manufacturer   = Manufacturer{manufacturerBuf};
     data.cartridge      = Cartridge{cartridgeBuf};
@@ -115,6 +117,6 @@ void AmountOfAmmo::throwIfInvalid() const {
 void ShooterCentral::to_json(LAS::json& j, const AmountOfAmmo& data){
     j = LAS::json {
         { "ammoInfo",   data.getAmmo() },
-        { "amount",         data.getAmount() }
+        { "amount",     data.getAmount() }
     };
 }

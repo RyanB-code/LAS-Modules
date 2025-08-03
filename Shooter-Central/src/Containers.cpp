@@ -24,6 +24,9 @@ const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo
 const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>& Containers::getGunsInArmory()     const{
     return gunsInArmory;
 }
+const std::map<Cartridge, int>& Containers::getAmountPerCartridge() const{
+    return amountPerCartridge;
+}
 const std::set<Manufacturer>& Containers::getManufacturers()    const{
     return manufacturers;
 }
@@ -61,18 +64,26 @@ bool Containers::ammoStockpile_add  (std::shared_ptr<AssociatedAmmo> add){
     if(!add)
         return false;
 
-    if(!*add)           // Checks to see if Assoc item is pointing to a valid objects
+    if(!*add)           // Checks to see if Assoc item is pointing to a valid object
         return false;
 
     const AmmoMetadata& info { add->getAmountOfAmmo().getAmmo() };
 
-    if(ammoStockpile.contains(info.cartridge))
-        return ammoStockpile.at(info.cartridge).try_emplace(info, add).second;
-
-    if(ammoStockpile.try_emplace(info.cartridge).second)
-        return ammoStockpile.at(info.cartridge).try_emplace(info, add).second;
+    if(!ammoStockpile.contains(info.cartridge)){
+        if(!ammoStockpile.try_emplace(info.cartridge).second)
+            return false;
+    }
     
-    return false;
+    if(!ammoStockpile.at(info.cartridge).try_emplace(info, add).second)
+        return false;
+
+    // Add to amount per cartridge list
+    if(!addAmountPerCartridge(info.cartridge, add->getAmountOfAmmo().getAmount() )){
+        ammoStockpile.at(info.cartridge).erase(info);
+        return false;
+    }
+    
+    return true;
 }
 bool Containers::gunsInArmory_add   (std::shared_ptr<AssociatedGun> add){
     if(!add)
@@ -134,4 +145,18 @@ bool Containers::gunsInArmory_contains  (const GunMetadata& key) const{
     return gunsInArmory.at(key.cartridge).contains(key);
 
 }
+int Containers::getAmountOfCartridge(const Cartridge& cartridge) const {
+    if(!amountPerCartridge.contains(cartridge))
+        return -1;
 
+    return amountPerCartridge.at(cartridge);
+}
+bool Containers::addAmountPerCartridge(const Cartridge& cartridge, int addAmount) {
+    if(!amountPerCartridge.contains(cartridge)){
+        return amountPerCartridge.try_emplace(cartridge, addAmount).second;
+    }
+
+    amountPerCartridge.at(cartridge) += addAmount;
+
+    return true;
+}

@@ -21,6 +21,7 @@ namespace ShooterCentral {
 
         const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    getAmmoStockpile()    const;
         const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     getGunsInArmory()     const;
+        const std::map<Cartridge, int>& getAmountPerCartridge() const;
 
         const std::set<Manufacturer>&   getManufacturers()    const;
         const std::set<Cartridge>&      getCartridges()       const;
@@ -32,7 +33,7 @@ namespace ShooterCentral {
         bool knownAmmo_add      (std::shared_ptr<AmmoMetadata> add);
         bool knownGuns_add      (std::shared_ptr<GunMetadata> add);
         bool events_add         (std::shared_ptr<Event> add);      
-        bool ammoStockpile_add  (std::shared_ptr<AssociatedAmmo> add);
+        bool ammoStockpile_add  (std::shared_ptr<AssociatedAmmo> add); // Will return false if cannot add to ammoStockpile OR amountPerCartridge container
         bool gunsInArmory_add   (std::shared_ptr<AssociatedGun> add);
 
         bool manufacturers_add  (const Manufacturer& add);
@@ -50,12 +51,16 @@ namespace ShooterCentral {
         bool ammoStockpile_contains (const AmmoMetadata& key) const;
         bool gunsInArmory_contains  (const GunMetadata& key) const;
 
+        int getAmountOfCartridge(const Cartridge& cartridge) const;
+
     private:
         std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>   knownAmmo;
         std::map<GunMetadata, std::shared_ptr<GunMetadata>>     knownGuns;
         std::map<EventMetadata, std::shared_ptr<Event>>         events;
 
         std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>> ammoStockpile;
+        std::map<Cartridge, int> amountPerCartridge;
+
         std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>  gunsInArmory;
 
         std::set<Manufacturer>  manufacturers;
@@ -63,6 +68,8 @@ namespace ShooterCentral {
         std::set<Location>      locations;
         std::set<EventType>     eventTypes;
         std::set<WeaponType>    weaponTypes;
+
+        bool addAmountPerCartridge(const Cartridge& cartridge, int amount);
     };
 
 }

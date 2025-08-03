@@ -77,6 +77,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     std::cout << "\n\nEvents:\n";
     for(const auto& [evntMetadata, eventPtr] :containers.getEvents() ) {
         const Event& event {*eventPtr};
+
         std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", event.getLocation().getName(), event.getEventType().getName(), event.getNotes(), event.printDate());
         std::cout << "      Event Addr: " << &event << "\n";
 
@@ -202,7 +203,10 @@ bool Framework::readAmmo(const std::string& dir) {
                 }
             }
 
-            // Make the AmountOfAmmo object and add to stockpile
+            // Make the AmountOfAmmo object and add to stockpile ONLY if it is set to active
+            if(!ammoInfo.isActive)
+                continue;
+
             int amountBuf { 0 };
             j.at("amount").get_to(amountBuf);
             if(!containers.ammoStockpile_contains(ammoInfo)){
@@ -411,7 +415,10 @@ void Framework::buildAssociations() {
             for(auto amountOfAmmoItr { gunAndAmmoItr->cbegin() }; amountOfAmmoItr != gunAndAmmoItr->cend(); ++amountOfAmmoItr){
                 const AmmoMetadata& ammoInfo { amountOfAmmoItr->getAmmo()};
 
-                // Add AssociatedAmmo object
+                // Add AssociatedAmmo object ONLY IF it is set to active
+                if(!ammoInfo.isActive)
+                    continue;
+
                 if(!containers.ammoStockpile_contains(ammoInfo)){
                     if(!containers.ammoStockpile_add(
                                 std::make_shared<AssociatedAmmo>(AssociatedAmmo{AmountOfAmmo{containers.knownAmmo_at(ammoInfo), 0} }))) // Do not add ammo amount since the amount here is for what was used during the Event
@@ -526,6 +533,15 @@ std::string makeFileName (std::string directory, const AmmoMetadata& ammo) {
     fileName << directory;
 
     for(const auto& c : ammo.manufacturer.getName()){     // Remove spaces and make lowercase
+        if(isalnum(c))
+            fileName << c;
+        else if(c == ' ' || c == '\t')
+            fileName << '-';
+    }
+
+    fileName << '_';
+
+    for(const auto& c : ammo.cartridge.getName()){     // Remove spaces and make lowercase
         if(isalnum(c))
             fileName << c;
         else if(c == ' ' || c == '\t')
