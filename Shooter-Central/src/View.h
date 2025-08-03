@@ -48,8 +48,8 @@ namespace ShooterCentral::View {
         bool showStockpile  { true };
 
         std::weak_ptr<Event>            selectedEvent;
-        std::weak_ptr<AssociatedAmmo>   selectedAmmo;
         std::weak_ptr<AssociatedGun>    selectedGun;
+        int selectedCartridgeRow { -1 };
     };
     struct ScreenData_View {
         Category category { Category::NONE }; 
@@ -103,5 +103,5 @@ namespace ShooterCentral::View {
     void draw_Home      (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes);
     void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
     void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
-    void draw_HomeStockpile(const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList, std::weak_ptr<AssociatedAmmo>& selected);
+    void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, int& selectedRow);
 }

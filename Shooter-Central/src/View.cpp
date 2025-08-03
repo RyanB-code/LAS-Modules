@@ -122,7 +122,7 @@ void draw_Home (const Containers& containers, ScreenData_Home& data, const Unsav
 
     if(data.showStockpile){
         if(ImGui::BeginChild("Home Stockpile", childWindowSizes, 0) ){
-            draw_HomeStockpile(containers.getAmmoStockpile(), data.selectedAmmo); 
+            draw_HomeStockpile(containers.getAmountPerCartridge(), data.selectedCartridgeRow); 
         }
         ImGui::EndChild();
     }
@@ -372,12 +372,9 @@ void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& even
     }
     ImGui::EndChild();
 }
-void draw_HomeStockpile(const std::map<Cartridge, std::map<AmmoMetadata, std::shared_ptr<AssociatedAmmo>>>& ammoList, std::weak_ptr<AssociatedAmmo>& weakSelected){
-    // Obtain lock on selected
-    std::shared_ptr<AssociatedAmmo> selected { weakSelected.lock() };
-
-    if(!selected)
-        weakSelected.reset();
+void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, int& selectedRow){
+    static Cartridge EMPTY_CART { "NULL" };
+    Cartridge selectedCartridge { EMPTY_CART };
 
     // Size the table
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -396,38 +393,70 @@ void draw_HomeStockpile(const std::map<Cartridge, std::map<AmmoMetadata, std::sh
         ImGui::SetCursorPosX((windowWidth - tableSize.x) * 0.5f);
 
     int row { 0 };
-
-    // NEED TO SHOW BREAKDOWN OF STOCKPILE
-    /*
-
     if(ImGui::BeginTable("Stockpile", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
         ImGui::TableSetupColumn("Cartridge",    0);
         ImGui::TableSetupColumn("Amount",       0);
         ImGui::TableHeadersRow();
 
-        if(itr == selected)
-            isEventSelected = true;
-            
-        ImGui::PushID(std::to_string(row).c_str());
-        ImGui::TableNextRow();
+        for(const auto& [cartridge, amount] : amountPerCartridgeList){
+            bool isCartridgeSelected { false };
 
-        for (int column{0}; column < 2; ++column){        
-            ImGui::TableSetColumnIndex(column);
-            switch( column ){
-                case 0:
-                    ImGui::Text("%s", cart.getName().c_str());
-                    break;
-                case 1:
-                    ImGui::Text("%d", amount);
-                    break;
-                default:
-                    ImGui::Text("Broken table");
-                    break;
+            if(row == selectedRow)
+                isCartridgeSelected = true;
+            
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 2; ++column){        
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        ImGui::Selectable(cartridge.getName().c_str(), &isCartridgeSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                        if(isCartridgeSelected){
+                            selectedCartridge = cartridge;
+                            selectedRow = row;
+                        }
+
+                        break;
+                    case 1:
+                        ImGui::Text("%d", amount);
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
             }
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Indent(20);
+    ImGui::Text("Cartridges in Stockpile:       %d", row); 
+    ImGui::Unindent(20);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::SeparatorText( "Selected Cartridge" );
+
+    if(selectedCartridge == EMPTY_CART) {
+        centerText("Select A Cartridge For More Information");
+        return;
+    }
+
+    if(ImGui::BeginChild("Selected Cartridge Details", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
+        if(centerButton("View Detailed\nInformation", ImVec2 { 100, 50 })){
+            std::cout << "go to view\n";
         }
     }
-    ImGui::EndTable();
-    */
+    ImGui::EndChild();
+
 }
 
 
