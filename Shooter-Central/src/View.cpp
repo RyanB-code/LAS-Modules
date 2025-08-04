@@ -35,7 +35,7 @@ void GUI::draw(const Containers& containers, const UnsavedChanges& unsavedChange
             draw_Home(containers, homeData, unsavedChanges);
             break;
         case Screen::VIEW:
-
+            draw_View(containers, viewData);
             break;
         case Screen::ADD:
 
@@ -453,7 +453,85 @@ void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, 
     ImGui::EndChild();
 
 }
+void draw_View(const Containers& containers, ScreenData_View& data){
 
+    
+    static std::string comboText;
+    static constexpr std::array<Category, static_cast<size_t>(Category::SIZE)> categoryList {
+        Category::NONE,
+        Category::GUNS,
+        Category::EVENTS,
+        Category::STOCKPILE
+    };
+
+    switch(data.category){
+        case Category::NONE:
+            comboText = "Select A Category";
+            break;
+        case Category::GUNS:
+            // show gun detailed view
+            comboText = "Armory";
+            break;
+        case Category::EVENTS:
+            // show events
+            comboText = "Events";
+            break;
+        case Category::STOCKPILE:
+            // stockpile table and items
+            comboText = "Stockpile";
+            break;
+        default:
+            comboText = "Select A Category";
+            break;
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Indent(20);
+    ImGui::Text("Select Category"); 
+    ImGui::SameLine();
+    
+    if (ImGui::BeginCombo("##Category Select Combo", comboText.c_str(), ImGuiComboFlags_HeightSmall)) {
+
+        for (const Category& category : categoryList) {
+            const bool isSelected = (data.category == category);
+
+            switch(category){
+                case Category::NONE:
+                    if (ImGui::Selectable("Select A Category", isSelected))
+                        data.category = category;
+                        break;
+                case Category::GUNS:
+                    if (ImGui::Selectable("Armory", isSelected))
+                         data.category = category;
+                    break;
+                case Category::EVENTS:
+                    if (ImGui::Selectable("Events", isSelected))
+                         data.category = category;
+                    break;
+                case Category::STOCKPILE:
+                    if (ImGui::Selectable("Stockpile", isSelected))
+                         data.category = category;
+                    break;
+                default:
+                    if (ImGui::Selectable("Select A Category", isSelected))
+                         data.category = category;
+                    break;
+            }
+
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::Unindent(20);
+    
+}
+void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected ){
+
+}
 
 
 

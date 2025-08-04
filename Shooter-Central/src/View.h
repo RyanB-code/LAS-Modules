@@ -25,7 +25,9 @@ namespace ShooterCentral::View {
         NONE,
         GUNS,
         EVENTS,
-        STOCKPILE
+        STOCKPILE,
+
+        SIZE
     };
     enum class SubItem {
         NONE,
@@ -107,5 +109,6 @@ namespace ShooterCentral::View {
     void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
     void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, Cartridge& selectedCartridge);
 
-    void draw_View  (const Containers& containers, ScreenData_View& data);
+    void draw_View      (const Containers& containers, ScreenData_View& data);
+    void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
 }
