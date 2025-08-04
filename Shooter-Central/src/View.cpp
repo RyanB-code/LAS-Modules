@@ -122,7 +122,7 @@ void draw_Home (const Containers& containers, ScreenData_Home& data, const Unsav
 
     if(data.showStockpile){
         if(ImGui::BeginChild("Home Stockpile", childWindowSizes, 0) ){
-            draw_HomeStockpile(containers.getAmountPerCartridge(), data.selectedCartridgeRow); 
+            draw_HomeStockpile(containers.getAmountPerCartridge(), data.selectedCartridge); 
         }
         ImGui::EndChild();
     }
@@ -372,9 +372,7 @@ void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& even
     }
     ImGui::EndChild();
 }
-void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, int& selectedRow){
-    static Cartridge EMPTY_CART { "NULL" };
-    Cartridge selectedCartridge { EMPTY_CART };
+void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, Cartridge& selectedCartridge){
 
     // Size the table
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -401,7 +399,7 @@ void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, 
         for(const auto& [cartridge, amount] : amountPerCartridgeList){
             bool isCartridgeSelected { false };
 
-            if(row == selectedRow)
+            if(selectedCartridge == cartridge)
                 isCartridgeSelected = true;
             
             ImGui::PushID(std::to_string(row).c_str());
@@ -413,11 +411,8 @@ void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, 
                     case 0:
                         ImGui::Selectable(cartridge.getName().c_str(), &isCartridgeSelected, ImGuiSelectableFlags_SpanAllColumns);
 
-                        if(isCartridgeSelected){
+                        if(isCartridgeSelected)
                             selectedCartridge = cartridge;
-                            selectedRow = row;
-                        }
-
                         break;
                     case 1:
                         ImGui::Text("%d", amount);
@@ -445,7 +440,7 @@ void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, 
 
     ImGui::SeparatorText( "Selected Cartridge" );
 
-    if(selectedCartridge == EMPTY_CART) {
+    if(selectedCartridge == EMPTY_CARTRIDGE) {
         centerText("Select A Cartridge For More Information");
         return;
     }
