@@ -493,15 +493,15 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
 
 }
 
-std::weak_ptr<AssociatedGun> draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, ImVec2 size){
-    // Size table correctly
-    static std::weak_ptr<AssociatedGun> weakSelected;
+std::weak_ptr<AssociatedGun> draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, ImVec2 size, bool reset){
 
-    // Obtain lock on selected
+    static std::weak_ptr<AssociatedGun> weakSelected;
     std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
 
-    if(!selected)
+    if(!selected || reset){
         weakSelected.reset();
+        selected = nullptr;
+    }
 
     int row { 0 };
     if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {

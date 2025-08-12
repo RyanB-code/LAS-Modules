@@ -115,6 +115,6 @@ namespace ShooterCentral::View {
     void draw_View      (const Containers& containers, ScreenData_View& data);
     void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
 
-    std::weak_ptr<AssociatedGun> draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, ImVec2 size);
+    std::weak_ptr<AssociatedGun> draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, ImVec2 size, bool reset=false);
     void draw_GunInformation(std::shared_ptr<AssociatedGun> gun);
 }
