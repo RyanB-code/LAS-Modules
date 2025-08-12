@@ -100,6 +100,9 @@ namespace ShooterCentral::View {
 
     };
 
+    void centerNextItemX(float x);
+    void centerNextItemY(float y);
+
     void centerText(const std::string& text);
     void centerTextDisabled(const std::string& text);
     bool centerButton(const std::string& text, ImVec2 size);

@@ -48,6 +48,22 @@ void GUI::draw(const Containers& containers, const UnsavedChanges& unsavedChange
             break;
     }
 }
+void centerNextItemX(float x){
+    float windowWidth { ImGui::GetContentRegionAvail().x };
+    if(x < windowWidth)
+        ImGui::SetCursorPosX((windowWidth - x) * 0.5f);
+
+    return;
+}
+void centerNextItemY(float y){
+    float windowHeight { ImGui::GetContentRegionAvail().y };
+    if(y < windowHeight)
+        ImGui::SetCursorPosY((windowHeight - y) * 0.5f);
+
+    return;
+
+}
+
 void centerText(const std::string& text){
     float windowWidth { ImGui::GetWindowSize().x };
     float textWidth   { ImGui::CalcTextSize(text.c_str()).x };
@@ -140,11 +156,7 @@ void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
     ImGui::SeparatorText( "Guns In Armory" );
     ImGui::Spacing();
 
-    // Center the table
-    float windowWidth { ImGui::GetContentRegionAvail().x };
-    if(tableSize.x < windowWidth)
-        ImGui::SetCursorPosX((windowWidth - tableSize.x) * 0.5f);
-
+    centerNextItemX(tableSize.x); 
     weakSelected = draw_SelectableGunTable(guns, tableSize);
 
     // Obtain lock on selected
@@ -189,10 +201,7 @@ void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& even
     ImGui::SeparatorText( "Events" );
     ImGui::Spacing();
 
-    // Center the table
-    float windowWidth { ImGui::GetContentRegionAvail().x };
-    if(tableSize.x < windowWidth)
-        ImGui::SetCursorPosX((windowWidth - tableSize.x) * 0.5f);
+    centerNextItemX(tableSize.x);
 
     int row { 0 };
     if(ImGui::BeginTable("Event Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize )){
@@ -303,10 +312,7 @@ void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, 
     ImGui::SeparatorText( "Ammo Stockpile" );
     ImGui::Spacing();
 
-    // Center the table
-    float windowWidth { ImGui::GetContentRegionAvail().x };
-    if(tableSize.x < windowWidth)
-        ImGui::SetCursorPosX((windowWidth - tableSize.x) * 0.5f);
+    centerNextItemX(tableSize.x);
 
     int row { 0 };
     if(ImGui::BeginTable("Stockpile", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize )) {
