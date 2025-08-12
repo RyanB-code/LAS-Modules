@@ -449,13 +449,16 @@ void draw_View(const Containers& containers, ScreenData_View& data){
 
     ImGui::Unindent(20);
 
+    ImGui::Spacing();
+    ImGui::Spacing();
+
     // Show the necessary window herew
     switch(data.category){
         case Category::NONE:
 
             break;
         case Category::GUNS:
-
+            draw_ViewGuns(containers.getGunsInArmory(), data.selectedGun);
             break;
         case Category::EVENTS:
 
@@ -471,23 +474,113 @@ void draw_View(const Containers& containers, ScreenData_View& data){
 
     
 }
-void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected ){
+void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& weakSelected ){
 
     // Top left is select gun table
     // Top right is gun information
     // bottom left is events list
     // bottom right is ammo used
+    
+    // Size the 4 windows
+    ImVec2 windowSize { ImGui::GetContentRegionAvail().x / 2, ImGui::GetContentRegionAvail().y / 2};
+    if(windowSize.x < 400)
+        windowSize.x = 400;
 
-    if(ImGui::BeginChild("View Gun Table Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+    if(windowSize.y < 600)
+        windowSize.y = 600;
+
+
+    // Size the table
+    ImVec2 tableSize { windowSize.x-2, 400};
+    if(tableSize.x < 400)
+        tableSize.x = 400;
+    if(tableSize.x > 800)
+        tableSize.x = 800;
+
+    // Button size
+    static ImVec2 buttonSize { 100, 40 };
+
+    std::shared_ptr selected = weakSelected.lock();
+ 
+    if(ImGui::BeginChild("View Gun Table", windowSize, 0)){ 
+        ImGui::SeparatorText( "Select A Gun" );
+        ImGui::Spacing();
+
+        bool reset          { false };
+        bool applyYOffset   { false };
+
+        if(selected){
+            centerNextItemX(buttonSize.x);
+            if(ImGui::Button("Deselect", buttonSize)){
+                weakSelected.reset();
+                selected = nullptr;
+                reset = true;
             }
+            applyYOffset = true;
+        }
+
+        centerNextItemX(tableSize.x);
+        centerNextItemY(tableSize.y);
+        
+        if(applyYOffset)
+            ImGui::SetCursorPosY(ImGui::GetCursorPos().y + (buttonSize.y * 0.5f) + 2);
+
+        weakSelected = draw_SelectableGunTable(guns, tableSize, reset);
+        selected = weakSelected.lock();
+        
+    }
     ImGui::EndChild();
 
     ImGui::SameLine();
 
-    if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
-        ImGui::Text("Round Count:       %d", roundCount);
-        ImGui::Text("Events Used In:    %d", eventsUsed); 
-        //ImGui::Text("Last Event:        %s", 
+    if(ImGui::BeginChild("Selected Gun Details", windowSize, 0)){
+        ImGui::SeparatorText( "View Details" );
+        ImGui::Spacing();
+
+        if(selected && *selected){
+            AssociatedGun& gun { *selected };
+            ImGui::Text("Round Count:       %d", gun.getRoundCount());
+            ImGui::Text("Events Used In:    %d", gun.totalEventsUsed()); 
+        }
+        else{   
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to View Detailed Information");
+        }
+    }
+    ImGui::EndChild();
+
+
+    if(ImGui::BeginChild("Selected Gun Events", windowSize, 0)){
+        ImGui::SeparatorText( "View Events Used" );
+        ImGui::Spacing();
+
+        if(selected && *selected){
+            AssociatedGun& gun { *selected };
+            
+            
+        }
+        else{   
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to View Events");
+        }    
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Selected Gun Ammo Used", windowSize, 0)){
+        ImGui::SeparatorText( "View Ammo Used" );
+        ImGui::Spacing();
+
+        if(selected && *selected){
+            AssociatedGun& gun { *selected };
+            
+            
+        }
+        else{   
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to View Ammo Used");
+        }
     }
     ImGui::EndChild();
 
