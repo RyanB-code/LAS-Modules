@@ -157,7 +157,7 @@ void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
     ImGui::Spacing();
 
     centerNextItemX(tableSize.x); 
-    weakSelected = draw_SelectableGunTable(guns, tableSize);
+    draw_SelectableGunTable(guns, weakSelected, tableSize);
 
     // Obtain lock on selected
     std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
@@ -525,7 +525,7 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
         if(applyYOffset)
             ImGui::SetCursorPosY(ImGui::GetCursorPos().y + (buttonSize.y * 0.5f) + 2);
 
-        weakSelected = draw_SelectableGunTable(guns, tableSize, reset);
+        draw_SelectableGunTable(guns, weakSelected, tableSize);
         selected = weakSelected.lock();
         
     }
@@ -586,15 +586,8 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
 
 }
 
-std::weak_ptr<AssociatedGun> draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, ImVec2 size, bool reset){
-
-    static std::weak_ptr<AssociatedGun> weakSelected;
+void draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
     std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
-
-    if(!selected || reset){
-        weakSelected.reset();
-        selected = nullptr;
-    }
 
     int row { 0 };
     if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {
@@ -653,9 +646,6 @@ std::weak_ptr<AssociatedGun> draw_SelectableGunTable(const std::map<Cartridge, s
         }
         ImGui::EndTable();
     }
-
-    return weakSelected;
- 
 }
 void draw_GunInformation(std::shared_ptr<AssociatedGun> gunPtr){
 
