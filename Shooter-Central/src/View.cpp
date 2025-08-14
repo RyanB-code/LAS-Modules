@@ -475,34 +475,61 @@ void draw_View(const Containers& containers, ScreenData_View& data){
     
 }
 void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& weakSelected ){
-
-    // Top left is select gun table
-    // Top right is gun information
-    // bottom left is events list
-    // bottom right is ammo used
     
-    // Size the 4 windows
-    ImVec2 windowSize { ImGui::GetContentRegionAvail().x / 2, ImGui::GetContentRegionAvail().y / 2};
-    if(windowSize.x < 400)
-        windowSize.x = 400;
+    static constexpr float MIN_BOTTOM_WIN_SIZE_X { 400 };
+    static constexpr float MIN_BOTTOM_WIN_SIZE_Y { 600 };
 
-    if(windowSize.y < 600)
-        windowSize.y = 600;
+    static constexpr float MIN_TABLE_SIZE_X { 400 };
+    static constexpr float MAX_TABLE_SIZE_X { 800 };
+
+    bool verticalLayout = false;
+
+    ImVec2 topWindowSize;
+    ImVec2 bottomWindowSize;
+    ImVec2 topTableSize;
+    ImVec2 bottomTableSize;
+
+    if(ImGui::GetContentRegionAvail().x < (MIN_BOTTOM_WIN_SIZE_X * 3)){
+        verticalLayout = true;
+
+        topWindowSize  = {MIN_BOTTOM_WIN_SIZE_X * 3, MIN_BOTTOM_WIN_SIZE_X * 3};
+        bottomWindowSize = topWindowSize;
+    }
+    else{
+        topWindowSize  = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2};
+        if(topWindowSize.x < MIN_BOTTOM_WIN_SIZE_X)
+            topWindowSize.x = MIN_BOTTOM_WIN_SIZE_X;
+        if(topWindowSize.y < MIN_BOTTOM_WIN_SIZE_Y)
+            topWindowSize.y = MIN_BOTTOM_WIN_SIZE_Y;
+
+        bottomWindowSize =  { ImGui::GetContentRegionAvail().x / 3, ImGui::GetContentRegionAvail().y / 2};
+        if(bottomWindowSize.x < MIN_BOTTOM_WIN_SIZE_X)
+            bottomWindowSize.x = MIN_BOTTOM_WIN_SIZE_X;
+        if(bottomWindowSize.y < MIN_BOTTOM_WIN_SIZE_Y)
+            bottomWindowSize.y = MIN_BOTTOM_WIN_SIZE_Y;
+    }
 
 
     // Size the table
-    ImVec2 tableSize { windowSize.x-2, 400};
-    if(tableSize.x < 400)
-        tableSize.x = 400;
-    if(tableSize.x > 800)
-        tableSize.x = 800;
+    topTableSize = { topWindowSize.x-2, 400};
+    if(topTableSize.x < MIN_TABLE_SIZE_X)
+        topTableSize.x = MIN_TABLE_SIZE_X;
+    if(topTableSize.x > MAX_TABLE_SIZE_X)
+        topTableSize.x = MAX_TABLE_SIZE_X;
+
+    bottomTableSize = { bottomWindowSize.x-2, 400};
+    if(bottomTableSize.x < MIN_TABLE_SIZE_X)
+        bottomTableSize.x = MIN_TABLE_SIZE_X;
+    if(bottomTableSize.x > MAX_TABLE_SIZE_X)
+        bottomTableSize.x = MAX_TABLE_SIZE_X;
+
 
     // Button size
     static ImVec2 buttonSize { 100, 40 };
 
     std::shared_ptr selected = weakSelected.lock();
  
-    if(ImGui::BeginChild("View Gun Table", windowSize, 0)){ 
+    if(ImGui::BeginChild("View Gun Table", topWindowSize, ImGuiChildFlags_Border)){ 
         ImGui::SeparatorText( "Select A Gun" );
         ImGui::Spacing();
 
@@ -519,21 +546,19 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
             applyYOffset = true;
         }
 
-        centerNextItemX(tableSize.x);
-        centerNextItemY(tableSize.y);
+        centerNextItemX(topTableSize.x);
+        centerNextItemY(topTableSize.y);
         
         if(applyYOffset)
             ImGui::SetCursorPosY(ImGui::GetCursorPos().y + (buttonSize.y * 0.5f) + 2);
 
-        draw_SelectableGunTable(guns, weakSelected, tableSize);
+        draw_SelectableGunTable(guns, weakSelected, topTableSize);
         selected = weakSelected.lock();
         
     }
     ImGui::EndChild();
 
-    ImGui::SameLine();
-
-    if(ImGui::BeginChild("Selected Gun Details", windowSize, 0)){
+    if(ImGui::BeginChild("Selected Gun Details", bottomWindowSize, ImGuiChildFlags_Border)){
         ImGui::SeparatorText( "View Details" );
         ImGui::Spacing();
 
@@ -549,8 +574,11 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
     }
     ImGui::EndChild();
 
+    if(!verticalLayout)
+        ImGui::SameLine();
 
-    if(ImGui::BeginChild("Selected Gun Events", windowSize, 0)){
+
+    if(ImGui::BeginChild("Selected Gun Events", bottomWindowSize, ImGuiChildFlags_Border)){
         ImGui::SeparatorText( "View Events Used" );
         ImGui::Spacing();
 
@@ -566,9 +594,10 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
     }
     ImGui::EndChild();
 
-    ImGui::SameLine();
+    if(!verticalLayout)
+        ImGui::SameLine();
 
-    if(ImGui::BeginChild("Selected Gun Ammo Used", windowSize, 0)){
+    if(ImGui::BeginChild("Selected Gun Ammo Used", bottomWindowSize, ImGuiChildFlags_Border)){
         ImGui::SeparatorText( "View Ammo Used" );
         ImGui::Spacing();
 
