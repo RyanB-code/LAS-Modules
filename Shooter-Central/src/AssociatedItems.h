@@ -55,7 +55,7 @@ namespace ShooterCentral {
         bool removeEvent    (const EventMetadata& data); 
         bool wasUsedInEvent (const EventMetadata& data);
 
-        const std::map<AmmoMetadata, AmountOfAmmo>&                     getAmmoUsed()   const;
+        const std::map<AmmoMetadata, AmountOfAmmo>&               getAmmoUsed()   const;
         const std::map<EventMetadata, std::shared_ptr<Event>>&    getEventsUsed() const;
     private:
         int totalRoundCount { 0 };
