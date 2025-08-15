@@ -158,13 +158,7 @@ const ymd& Event::getDate() const{
 std::string Event::printDate() const{
     return std::format("{:%Od %b %Y}", eventMetadata.date);
 }
-std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cbegin() const{
-    return gunsUsedList.cbegin();
-}
-std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cend() const {
-    if(nextIndex > 0)
-        return gunsUsedList.cbegin() + nextIndex;
-    else
-        return gunsUsedList.cbegin();
+const std::array<GunAndAmmo, Event::MAX_NUM_GUNS>& Event::getGunsUsed() const{
+    return gunsUsedList;
 }
 

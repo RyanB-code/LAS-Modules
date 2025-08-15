@@ -53,9 +53,9 @@ namespace ShooterCentral{
     std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
 
     class Event {
-    private:
-        static constexpr int MAX_NUM_GUNS { 5 };
     public:
+        static constexpr int MAX_NUM_GUNS { 5 };
+
         Event(Location setLocation, EventType setEventType, std::string setNotes, ymd setDate);
         Event(const EventMetadata& info);
         ~Event();
@@ -73,8 +73,7 @@ namespace ShooterCentral{
 
         std::string printDate()     const;
 
-        std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cbegin() const;
-        std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cend() const;
+        const std::array<GunAndAmmo, MAX_NUM_GUNS>& getGunsUsed() const;
    private:
         EventMetadata eventMetadata;
 
