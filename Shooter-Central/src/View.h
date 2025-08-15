@@ -115,10 +115,12 @@ namespace ShooterCentral::View {
 
     void draw_View      (const Containers& containers, ScreenData_View& data);
     void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
-    void draw_ViewGuns_GunDetails   (std::shared_ptr<AssociatedGun> selected);
+    void draw_ViewGuns_Details      (std::shared_ptr<AssociatedGun> selected);
     void draw_ViewGuns_Events       (std::shared_ptr<AssociatedGun> selected);
     void draw_ViewGuns_AmmoUsed     (std::shared_ptr<AssociatedGun> selected);
 
+    void draw_ViewEvents            (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
+    void draw_ViewEvents_Details    (std::shared_ptr<Event> selected);
 
 
     void draw_SelectableGunTable(   const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, 

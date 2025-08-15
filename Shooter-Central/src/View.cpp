@@ -439,7 +439,7 @@ void draw_View(const Containers& containers, ScreenData_View& data){
             draw_ViewGuns(containers.getGunsInArmory(), data.selectedGun);
             break;
         case Category::EVENTS:
-
+            draw_ViewEvents(containers.getEvents(), data.selectedEvent);
             break;
         case Category::STOCKPILE:
             
@@ -448,9 +448,6 @@ void draw_View(const Containers& containers, ScreenData_View& data){
            
             break;
     }
-
-
-    
 }
 void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& weakSelected ){
     
@@ -540,7 +537,7 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
         ImGui::SeparatorText( "View Details" );
         ImGui::Spacing();
 
-        draw_ViewGuns_GunDetails(selected);
+        draw_ViewGuns_Details(selected);
     }
     ImGui::EndChild();
 
@@ -568,7 +565,7 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
     ImGui::EndChild();
 
 }
-void draw_ViewGuns_GunDetails(std::shared_ptr<AssociatedGun> selected){
+void draw_ViewGuns_Details(std::shared_ptr<AssociatedGun> selected){
     if(!selected || !*selected){
         centerNextItemY(5);
         centerTextDisabled("Select a Gun to View Detailed Information");
@@ -657,6 +654,140 @@ void draw_ViewGuns_AmmoUsed     (std::shared_ptr<AssociatedGun> selected){
 
     return;
 
+}
+void draw_ViewEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& weakSelected ){
+    static constexpr float MIN_WIN_BOTTOM_SIZE_X { 400 };
+    static constexpr float MIN_WIN_BOTTOM_SIZE_Y { 600 };
+
+    static constexpr float MIN_WIN_BOTTOM_INFO_SIZE_X { 200 };
+    static constexpr float MIN_WIN_BOTTOM_INFO_SIZE_Y { 600 };
+
+    static constexpr float MIN_WIN_TOP_SIZE_X { (MIN_WIN_BOTTOM_SIZE_X * 2) + MIN_WIN_BOTTOM_INFO_SIZE_X };
+
+    static constexpr float MIN_TABLE_SIZE_X { 400 };
+    static constexpr float MAX_TABLE_SIZE_X { 800 };
+
+
+    bool verticalLayout = false;
+
+    ImVec2 topWindowSize;
+    ImVec2 bottomWindowSize;
+    ImVec2 infoWindowSize;
+    ImVec2 topTableSize;
+    ImVec2 bottomTableSize;
+
+    if(ImGui::GetContentRegionAvail().x < MIN_WIN_TOP_SIZE_X){
+        verticalLayout = true;
+
+        topWindowSize  = { MIN_WIN_TOP_SIZE_X, MIN_WIN_BOTTOM_SIZE_X };
+        bottomWindowSize = topWindowSize;
+        infoWindowSize = topWindowSize;
+    }
+    else{
+        topWindowSize  = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2};
+        if(topWindowSize.x < MIN_WIN_TOP_SIZE_X)
+            topWindowSize.x = MIN_WIN_TOP_SIZE_X;
+        if(topWindowSize.y < MIN_WIN_BOTTOM_SIZE_Y)
+            topWindowSize.y = MIN_WIN_BOTTOM_SIZE_Y;
+
+        bottomWindowSize =  { (ImGui::GetContentRegionAvail().x / 3) * 2, ImGui::GetContentRegionAvail().y / 2};
+        if(bottomWindowSize.x < MIN_WIN_BOTTOM_SIZE_X)
+            bottomWindowSize.x = MIN_WIN_BOTTOM_SIZE_X;
+        if(bottomWindowSize.y < MIN_WIN_BOTTOM_SIZE_Y)
+            bottomWindowSize.y = MIN_WIN_BOTTOM_SIZE_Y;
+
+        infoWindowSize = {ImGui::GetContentRegionAvail().x / 3, ImGui::GetContentRegionAvail().y / 2};
+        if(infoWindowSize.x < MIN_WIN_BOTTOM_INFO_SIZE_X)
+            infoWindowSize.x = MIN_WIN_BOTTOM_INFO_SIZE_X;
+        if(infoWindowSize.y < MIN_WIN_BOTTOM_INFO_SIZE_Y)
+            infoWindowSize.y = MIN_WIN_BOTTOM_INFO_SIZE_Y;
+    }
+
+
+    // Size the table
+    topTableSize = { topWindowSize.x-2, 400};
+    if(topTableSize.x < MIN_TABLE_SIZE_X)
+        topTableSize.x = MIN_TABLE_SIZE_X;
+    if(topTableSize.x > MAX_TABLE_SIZE_X)
+        topTableSize.x = MAX_TABLE_SIZE_X;
+
+    bottomTableSize = { bottomWindowSize.x-2, 400};
+    if(bottomTableSize.x < MIN_TABLE_SIZE_X)
+        bottomTableSize.x = MIN_TABLE_SIZE_X;
+    if(bottomTableSize.x > MAX_TABLE_SIZE_X)
+        bottomTableSize.x = MAX_TABLE_SIZE_X;
+
+
+    // Button size
+    static ImVec2 buttonSize { 100, 40 };
+
+    std::shared_ptr<Event> selected = weakSelected.lock();
+ 
+    if(ImGui::BeginChild("View Event Table", topWindowSize, ImGuiChildFlags_Border)){ 
+        ImGui::SeparatorText( "Select An Event" );
+        ImGui::Spacing();
+
+        bool reset          { false };
+        bool applyYOffset   { false };
+
+        if(selected){
+            centerNextItemX(buttonSize.x);
+            if(ImGui::Button("Deselect", buttonSize)){
+                weakSelected.reset();
+                selected = nullptr;
+                reset = true;
+            }
+            applyYOffset = true;
+        }
+
+        centerNextItemX(topTableSize.x);
+        centerNextItemY(topTableSize.y);
+        
+        if(applyYOffset)
+            ImGui::SetCursorPosY(ImGui::GetCursorPos().y + (buttonSize.y * 0.5f) + 2);
+
+        draw_SelectableEventTable(events, weakSelected, topTableSize);
+        selected = weakSelected.lock();
+        
+    }
+    ImGui::EndChild();
+
+    if(ImGui::BeginChild("Selected Event Details", infoWindowSize, ImGuiChildFlags_Border)){
+        ImGui::SeparatorText( "View Details" );
+        ImGui::Spacing(); 
+
+        draw_ViewEvents_Details(selected);
+    }
+    ImGui::EndChild();
+
+}
+void draw_ViewEvents_Details    (std::shared_ptr<Event> selected){
+    if(!selected) {
+        centerNextItemY(5);
+        centerTextDisabled("Select an Event to View Detailed Information");
+        return;
+    }
+
+    Event& event { *selected };
+    const EventMetadata& info  { event.getInfo() };
+
+    centerNextItemX(400);
+    ImGui::BeginGroup();
+    ImGui::Text("Date:              %s", event.printDate().c_str());
+    ImGui::Text("Location:          %s", info.location.getName().c_str());
+    ImGui::Text("Event Type:        %s", info.eventType.getName().c_str()); 
+    ImGui::EndGroup();
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::SeparatorText("Notes");
+    ImGui::Spacing();
+    ImGui::TextWrapped("%s", event.getNotes().c_str());
+
+    
+    return;
 }
 
 void draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
