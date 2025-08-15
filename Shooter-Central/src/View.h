@@ -109,16 +109,27 @@ namespace ShooterCentral::View {
 
     void draw_Home      (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes);
     void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
+    void draw_HomeGuns_GunInformation(std::shared_ptr<AssociatedGun> gun);
     void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
     void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, Cartridge& selectedCartridge);
 
     void draw_View      (const Containers& containers, ScreenData_View& data);
     void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
+    void draw_ViewGuns_GunDetails   (std::shared_ptr<AssociatedGun> selected);
+    void draw_ViewGuns_Events       (std::shared_ptr<AssociatedGun> selected);
+    void draw_ViewGuns_AmmoUsed     (std::shared_ptr<AssociatedGun> selected);
 
-    void draw_SelectableGunTable(   const std::map<Cartridge, std::map<GunMetadata, 
-                                    std::shared_ptr<AssociatedGun>>>& list, 
+
+
+    void draw_SelectableGunTable(   const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, 
                                     std::weak_ptr<AssociatedGun>& selected,
                                     ImVec2 size 
                                 );
-    void draw_GunInformation(std::shared_ptr<AssociatedGun> gun);
+    void draw_SelectableEventTable( const std::map<EventMetadata, std::shared_ptr<Event>>& events, 
+                                    std::weak_ptr<Event>& selected,
+                                    ImVec2 size
+                                );
+    void draw_AmountOfAmmoTable(  const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, ImVec2 size);
+
+
 }

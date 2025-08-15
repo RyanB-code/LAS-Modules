@@ -159,8 +159,7 @@ void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
     centerNextItemX(tableSize.x); 
     draw_SelectableGunTable(guns, weakSelected, tableSize);
 
-    // Obtain lock on selected
-    std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
+    std::shared_ptr<AssociatedGun> selected { weakSelected.lock() }; // Obtain lock on selected
 
     if(!selected)
         weakSelected.reset();
@@ -176,23 +175,46 @@ void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
     ImGui::Spacing();
     ImGui::Spacing(); 
 
-    // Show selected gun information
-    draw_GunInformation(selected);
+    draw_HomeGuns_GunInformation(selected);
 
     return;
 }
+void draw_HomeGuns_GunInformation(std::shared_ptr<AssociatedGun> gunPtr){
 
+    ImGui::SeparatorText( "Selected Gun" );
+
+    if(!gunPtr || !*gunPtr) {
+        centerTextDisabled("Select A Gun For More Information");
+        return;
+    }
+
+    const AssociatedGun& gun    { *gunPtr };
+    const GunMetadata& gunInfo  { gun.getGun() };
+    int roundCount { gun.getRoundCount() };
+    int eventsUsed { gun.totalEventsUsed() };
+
+    if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+        ImGui::Indent(20);
+        ImGui::Text("Name:          %s", gunInfo.name.c_str());
+        ImGui::Text("Weapon Type:   %s", gunInfo.weaponType.getName().c_str()); 
+        ImGui::Text("Cartridge:     %s", gunInfo.cartridge.getName().c_str());
+        ImGui::Unindent(20);
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
+        ImGui::Text("Round Count:       %d", roundCount);
+        ImGui::Text("Events Used In:    %d", eventsUsed); 
+        //ImGui::Text("Last Event:        %s", 
+    }
+    ImGui::EndChild();
+}
 void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& weakSelected ){
-
-    // Obtain lock on selected
-    std::shared_ptr<Event> selected { weakSelected.lock() };
-
-    if(!selected)
-        weakSelected.reset();
 
     // Size the table
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
-
     if(tableSize.x < 400)
         tableSize.x = 400;
     if(tableSize.x > 800)
@@ -202,62 +224,18 @@ void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& even
     ImGui::Spacing();
 
     centerNextItemX(tableSize.x);
+    draw_SelectableEventTable(events, weakSelected, tableSize); 
 
-    int row { 0 };
-    if(ImGui::BeginTable("Event Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, tableSize )){
-        ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None);
-
-        ImGui::TableHeadersRow();
-
-        for(const auto& [eventMetadata, eventPtr] : events){
-            const Event& event      { *eventPtr };
-            bool isEventSelected    { false };
-
-            if(selected && selected == eventPtr)
-                isEventSelected = true;
-            
-            ImGui::PushID(std::to_string(row).c_str());
-            ImGui::TableNextRow();
-
-            for (int column{0}; column < 4; ++column){                   
-                ImGui::TableSetColumnIndex(column);
-                switch( column ){
-                    case 0:
-                        ImGui::Selectable(event.printDate().c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                        if(isEventSelected){
-                            weakSelected = eventPtr;
-                            selected = weakSelected.lock();
-                        }
-                        break;
-                    case 1:
-                        ImGui::Text("%s", event.getEventType().getName().c_str());
-                        break;
-                    case 2:
-                        ImGui::Text("%s", event.getLocation().getName().c_str());
-                        break;
-                    case 3:
-                        ImGui::Text("%d", event.totalGunsUsed());
-                        break;
-                    default:
-                        ImGui::Text("Broken table");
-                        break;
-                }
-            }
-            ImGui::PopID();
-            ++row;
-        }
-        ImGui::EndTable();
-    }
+    // Lock or reset selected
+    std::shared_ptr<Event> selected { weakSelected.lock() }; 
+    if(!selected)
+        weakSelected.reset();
 
     ImGui::Spacing();
     ImGui::Spacing();
 
     ImGui::Indent(20);
-    ImGui::Text("Events:       %d", row); 
+    ImGui::Text("Events:       %ld", events.size()); 
     ImGui::Unindent(20);
 
     ImGui::Spacing();
@@ -562,15 +540,7 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
         ImGui::SeparatorText( "View Details" );
         ImGui::Spacing();
 
-        if(selected && *selected){
-            AssociatedGun& gun { *selected };
-            ImGui::Text("Round Count:       %d", gun.getRoundCount());
-            ImGui::Text("Events Used In:    %d", gun.totalEventsUsed()); 
-        }
-        else{   
-            centerNextItemY(5);
-            centerTextDisabled("Select a Gun to View Detailed Information");
-        }
+        draw_ViewGuns_GunDetails(selected);
     }
     ImGui::EndChild();
 
@@ -582,15 +552,7 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
         ImGui::SeparatorText( "View Events Used" );
         ImGui::Spacing();
 
-        if(selected && *selected){
-            AssociatedGun& gun { *selected };
-            
-            
-        }
-        else{   
-            centerNextItemY(5);
-            centerTextDisabled("Select a Gun to View Events");
-        }    
+        draw_ViewGuns_Events(selected);    
     }
     ImGui::EndChild();
 
@@ -601,17 +563,99 @@ void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared
         ImGui::SeparatorText( "View Ammo Used" );
         ImGui::Spacing();
 
-        if(selected && *selected){
-            AssociatedGun& gun { *selected };
-            
-            
-        }
-        else{   
-            centerNextItemY(5);
-            centerTextDisabled("Select a Gun to View Ammo Used");
-        }
+        draw_ViewGuns_AmmoUsed(selected); 
     }
     ImGui::EndChild();
+
+}
+void draw_ViewGuns_GunDetails(std::shared_ptr<AssociatedGun> selected){
+    if(!selected || !*selected){
+        centerNextItemY(5);
+        centerTextDisabled("Select a Gun to View Detailed Information");
+        return;
+    }
+
+    AssociatedGun& gun { *selected };
+    const GunMetadata& gunInfo  { gun.getGun() };
+
+    centerNextItemX(200);
+    ImGui::BeginGroup();
+    ImGui::Text("Name:              %s", gunInfo.name.c_str());
+    ImGui::Text("Weapon Type:       %s", gunInfo.weaponType.getName().c_str()); 
+    ImGui::Text("Cartridge:         %s", gunInfo.cartridge.getName().c_str());
+    ImGui::Text("Round Count:       %d", gun.getRoundCount());
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Events Used In:    %d", gun.totalEventsUsed()); 
+    ImGui::Text("Ammo Types Used:   %d", gun.totalAmmoTypesUsed()); 
+    ImGui::EndGroup();
+
+    
+    return;
+}
+void draw_ViewGuns_Events       (std::shared_ptr<AssociatedGun> selected){
+    if(!selected || !*selected){
+        centerNextItemY(5);
+        centerTextDisabled("Select a Gun to View Events");
+        return;
+    }
+
+    AssociatedGun& gun { *selected };
+    const GunMetadata& gunInfo  { gun.getGun() };
+
+    static constexpr float MIN_TABLE_SIZE_X { 400 };
+    static constexpr float MAX_TABLE_SIZE_X { 800 };
+
+    ImVec2 tableSize  { ImGui::GetContentRegionAvail().x-2, 400};
+    if(tableSize.x < MIN_TABLE_SIZE_X)
+        tableSize.x = MIN_TABLE_SIZE_X;
+    if(tableSize.x > MAX_TABLE_SIZE_X)
+        tableSize.x = MAX_TABLE_SIZE_X;
+
+    std::weak_ptr<Event> buffer;
+    centerNextItemX(tableSize.x);
+    draw_SelectableEventTable(gun.getEventsUsed(), buffer, tableSize);
+    if(buffer.lock())
+        std::cout << "there was an event selected\n"; // Make command to enter change to view event with this Event
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Total Events Used: %d", gun.totalEventsUsed());
+
+    return;
+}
+void draw_ViewGuns_AmmoUsed     (std::shared_ptr<AssociatedGun> selected){
+    if(!selected || !*selected){
+        centerNextItemY(5);
+        centerTextDisabled("Select a Gun to Ammo Used");
+        return;
+    }
+
+    AssociatedGun& gun { *selected };
+    const GunMetadata& gunInfo  { gun.getGun() };
+
+    static constexpr float MIN_TABLE_SIZE_X { 400 };
+    static constexpr float MAX_TABLE_SIZE_X { 800 };
+
+    ImVec2 tableSize  { ImGui::GetContentRegionAvail().x-2, 400};
+    if(tableSize.x < MIN_TABLE_SIZE_X)
+        tableSize.x = MIN_TABLE_SIZE_X;
+    if(tableSize.x > MAX_TABLE_SIZE_X)
+        tableSize.x = MAX_TABLE_SIZE_X;
+
+    centerNextItemX(tableSize.x);
+    draw_AmountOfAmmoTable(gun.getAmmoUsed(), tableSize);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Total Ammo Types Used: %d", gun.totalAmmoTypesUsed());
+
+    return;
 
 }
 
@@ -619,7 +663,7 @@ void draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std
     std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
 
     int row { 0 };
-    if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {
+    if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {
         ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
@@ -676,37 +720,105 @@ void draw_SelectableGunTable(const std::map<Cartridge, std::map<GunMetadata, std
         ImGui::EndTable();
     }
 }
-void draw_GunInformation(std::shared_ptr<AssociatedGun> gunPtr){
+void draw_SelectableEventTable( const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& weakSelected, ImVec2 size ){
+    std::shared_ptr<Event> selected { weakSelected.lock() };
 
-    ImGui::SeparatorText( "Selected Gun" );
+    int row { 0 };
+    if(ImGui::BeginTable("Event Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )){
+        ImGui::TableSetupColumn("Date",         ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Event Type",   ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Location",     ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Guns Used",    ImGuiTableColumnFlags_None);
 
-    if(!gunPtr || !*gunPtr) {
-        centerText("Select A Gun For More Information");
-        return;
+        ImGui::TableHeadersRow();
+
+        for(const auto& [eventMetadata, eventPtr] : events){
+            const Event& event      { *eventPtr };
+            bool isEventSelected    { false };
+
+            if(selected && selected == eventPtr)
+                isEventSelected = true;
+            
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 4; ++column){                   
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        ImGui::Selectable(event.printDate().c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
+
+                        if(isEventSelected){
+                            weakSelected = eventPtr;
+                            selected = weakSelected.lock();
+                        }
+                        break;
+                    case 1:
+                        ImGui::Text("%s", event.getEventType().getName().c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%s", event.getLocation().getName().c_str());
+                        break;
+                    case 3:
+                        ImGui::Text("%d", event.totalGunsUsed());
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
     }
+}
+void draw_AmountOfAmmoTable(  const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, ImVec2 size){
 
-    const AssociatedGun& gun    { *gunPtr };
-    const GunMetadata& gunInfo  { gun.getGun() };
-    int roundCount { gun.getRoundCount() };
-    int eventsUsed { gun.totalEventsUsed() };
+    int row { 0 };
+    if(ImGui::BeginTable("Detailed Cartridge Breakdown", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
+        ImGui::TableSetupColumn("Manufacturer", 0);
+        ImGui::TableSetupColumn("Name",         0);
+        ImGui::TableSetupColumn("Grain Weight", 0);
+        ImGui::TableSetupColumn("Amount",       0);
 
-    if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
-        ImGui::Indent(20);
-        ImGui::Text("Name:          %s", gunInfo.name.c_str());
-        ImGui::Text("Weapon Type:   %s", gunInfo.weaponType.getName().c_str()); 
-        ImGui::Text("Cartridge:     %s", gunInfo.cartridge.getName().c_str());
-        ImGui::Unindent(20);
+        ImGui::TableHeadersRow();
+
+        for(const auto& [info, amountOfAmmo] : ammoUsed){
+            bool isItemSelected = false;
+
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 4; ++column) {
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        ImGui::Selectable(info.manufacturer.getName().c_str(), &isItemSelected, ImGuiSelectableFlags_SpanAllColumns);
+                        
+                        if(isItemSelected)
+                            std::cout << "Ammo type was selected\n"; // Command to jump to view this ammo next
+
+                        break;
+                    case 1:
+                        ImGui::Text("%s", info.name.c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%d", info.grainWeight);
+                        break;
+                    case 3:
+                        ImGui::Text("%d", amountOfAmmo.getAmount());
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }        
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
     }
-    ImGui::EndChild();
-
-    ImGui::SameLine();
-
-    if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
-        ImGui::Text("Round Count:       %d", roundCount);
-        ImGui::Text("Events Used In:    %d", eventsUsed); 
-        //ImGui::Text("Last Event:        %s", 
-    }
-    ImGui::EndChild();
 }
 
 
