@@ -48,6 +48,7 @@ namespace ShooterCentral{
         bool    addAmmoUsed     (const AmountOfAmmo& ammo);             // Throws in gun ptr is not set
         bool    hasUsedAmmo     (const AmmoMetadata& ammo) const;
         int     totalAmmoUsed   () const;
+        int     totalRoundsShot () const;
 
         const GunMetadata& getGun() const;                              // Throws if gun ptr is not set
 
@@ -59,6 +60,8 @@ namespace ShooterCentral{
         std::shared_ptr<const GunMetadata>                  gun { };
         std::array<AmountOfAmmo, MAX_NUM_AMMO_USED> ammoUsedList { };
         int nextIndex { 0 };
+
+        int totalRoundCount { 0 };
 
         void throwIfInvalid() const; // Throws if any operation is attempted if gun is nullptr
     };

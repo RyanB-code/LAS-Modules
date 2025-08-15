@@ -76,6 +76,7 @@ bool GunAndAmmo::addAmmoUsed(const AmountOfAmmo& ammo) {
             continue;
         if(ammo.getAmmo() == entry.getAmmo()){
             entry.addAmount(ammo.getAmount());
+            totalRoundCount += ammo.getAmount();
             return true;
         }
     }
@@ -83,6 +84,7 @@ bool GunAndAmmo::addAmmoUsed(const AmountOfAmmo& ammo) {
     // If not already used, add new entry
     if(nextIndex < MAX_NUM_AMMO_USED){
         ammoUsedList[nextIndex] = ammo;
+        totalRoundCount += ammo.getAmount();
         ++nextIndex;
         return true;
     }
@@ -99,6 +101,9 @@ bool GunAndAmmo::hasUsedAmmo(const AmmoMetadata& ammo) const {
 }
 int GunAndAmmo::totalAmmoUsed() const {
     return nextIndex;
+}
+int GunAndAmmo::totalRoundsShot() const{
+    return totalRoundCount;
 }
 const GunMetadata& GunAndAmmo::getGun() const {
     throwIfInvalid();
