@@ -102,14 +102,13 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
             std::cout << "  Gun Addr: " << &gun.getGun() << "\n";
         
-            for(auto itrEvent { gun.eventsUsed_cbegin() }; itrEvent != gun.eventsUsed_cend(); ++itrEvent){
-                std::cout << "    Event Addr: " << &itrEvent->second->getInfo() << "\n";
-            }
+            for(const auto& [info, eventPtr] : gun.getEventsUsed())
+                std::cout << "    Event Addr: " << &eventPtr->getInfo() << "\n";
 
-            for(auto itrAmmo { gun.ammoUsed_cbegin() }; itrAmmo != gun.ammoUsed_cend(); ++itrAmmo){
-                const AmmoMetadata& data { itrAmmo->second.getAmmo() };
+            for(const auto& [info, amountOfAmmo] : gun.getAmmoUsed() ){
+                const AmmoMetadata& data { amountOfAmmo.getAmmo() };
                 std::cout << "    AmmoAddr: " << &data << "\n";
-                std::cout << std::format("      Name: {}, Man: {}, Cart: {}, GW: {}, Amount: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight, itrAmmo->second.getAmount());
+                std::cout << std::format("      Name: {}, Man: {}, Cart: {}, GW: {}, Amount: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight, amountOfAmmo.getAmount());
             }
         }
     }
