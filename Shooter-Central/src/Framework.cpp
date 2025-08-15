@@ -81,10 +81,13 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", event.getLocation().getName(), event.getEventType().getName(), event.getNotes(), event.printDate());
         std::cout << "      Event Addr: " << &event << "\n";
 
-        for(auto itrGun { event.cbegin() }; itrGun != event.cend(); ++itrGun){
-            std::cout << "    Gun Addr: " << &itrGun->getGun() << "\n";
+        for(const GunAndAmmo& gunAndAmmo : event.getGunsUsed() ){
+            if(!gunAndAmmo)
+                continue;
+
+            std::cout << "    Gun Addr: " << &gunAndAmmo.getGun() << "\n";
                 
-            for(auto itrAmmo { itrGun->cbegin() }; itrAmmo != itrGun->cend(); ++itrAmmo){
+            for(auto itrAmmo { gunAndAmmo.cbegin() }; itrAmmo != gunAndAmmo.cend(); ++itrAmmo){
                 const AmmoMetadata& data { itrAmmo->getAmmo() };
                 std::cout << "      AmmoAddr: " << &data << "  Amount: " << itrAmmo->getAmount() << "\n";
 
@@ -395,8 +398,11 @@ void Framework::buildAssociations() {
         const Event& event { *eventPtr };
 
         // Go through every GunAndAmmo in the event
-        for(auto gunAndAmmoItr { event.cbegin() }; gunAndAmmoItr != event.cend(); ++gunAndAmmoItr){
-            const GunMetadata& gunInfo { gunAndAmmoItr->getGun() };
+        for(const GunAndAmmo& gunAndAmmo : event.getGunsUsed() ){
+            if(!gunAndAmmo)
+                continue;
+
+            const GunMetadata& gunInfo { gunAndAmmo.getGun() };
 
             // Add AssociatedGun object
             if(!containers.gunsInArmory_contains(gunInfo)){
@@ -411,7 +417,7 @@ void Framework::buildAssociations() {
             assocGun.addEvent(eventPtr);
  
             // Go through every Ammo used for the Gun
-            for(auto amountOfAmmoItr { gunAndAmmoItr->cbegin() }; amountOfAmmoItr != gunAndAmmoItr->cend(); ++amountOfAmmoItr){
+            for(auto amountOfAmmoItr { gunAndAmmo.cbegin() }; amountOfAmmoItr != gunAndAmmo.cend(); ++amountOfAmmoItr){
                 const AmmoMetadata& ammoInfo { amountOfAmmoItr->getAmmo()};
 
                 // Add AssociatedAmmo object ONLY IF it is set to active
@@ -642,17 +648,17 @@ bool write (std::string directory, const Event& data){
 	json gunsArray = json::array();
 
     // Write every gun and ammo used
-    for(auto itr {data.cbegin()}; itr != data.cend(); ++itr){
+    for(const GunAndAmmo& gunUsed : data.getGunsUsed()){
 
         // Add ammo used to gun
         json ammoUsed = json::array();
-        for(auto itr2 { itr->cbegin() }; itr2 != itr->cend(); ++itr2)
+        for(auto itr2 { gunUsed.cbegin() }; itr2 != gunUsed.cend(); ++itr2)
             ammoUsed.emplace_back(*itr2);
         
         // Make json for the gun
         json buffer;
         buffer = json {
-            { "gunInfo",  itr->getGun() },
+            { "gunInfo",  gunUsed.getGun() },
             { "ammoUsed", ammoUsed }
         };
         

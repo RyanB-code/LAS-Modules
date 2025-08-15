@@ -109,13 +109,12 @@ bool AssociatedGun::addEvent(std::shared_ptr<Event> event) {
 
     // Go through the event and add all the ammo used for the gun
     bool gunFound { false };
-    for(auto itr { event->cbegin()}; itr != event->cend(); ++itr){
+    for(const GunAndAmmo& gunAndAmmo : event->getGunsUsed()){
         // Verify the GunAndAmmo is pointing to a valid gun object
-        if(!*itr)
+        if(!gunAndAmmo)
             continue;
-
-        const GunAndAmmo& gunAndAmmo { *itr };
         if(gunAndAmmo.getGun() == *gun){
+
             gunFound = true;
             // Iterate over GunAndAmmo and add to ammoUsedList
             for(auto itr2 {gunAndAmmo.cbegin()}; itr2 != gunAndAmmo.cend(); ++itr2){
