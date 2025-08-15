@@ -121,12 +121,19 @@ namespace ShooterCentral::View {
 
     void draw_ViewEvents            (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
     void draw_ViewEvents_Details    (std::shared_ptr<Event> selected);
+    void draw_ViewEvents_GunsUsed   (std::shared_ptr<Event> selected);
 
 
     void draw_SelectableGunTable(   const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, 
                                     std::weak_ptr<AssociatedGun>& selected,
                                     ImVec2 size 
                                 );
+    void draw_SelectableEventGunTable(   const std::array<GunAndAmmo, Event::MAX_NUM_GUNS>& list, 
+                                    GunAndAmmo& selected,
+                                    ImVec2 size 
+                                );
+
+   
     void draw_SelectableEventTable( const std::map<EventMetadata, std::shared_ptr<Event>>& events, 
                                     std::weak_ptr<Event>& selected,
                                     ImVec2 size
