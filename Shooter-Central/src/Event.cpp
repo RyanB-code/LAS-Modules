@@ -167,22 +167,4 @@ std::array<GunAndAmmo, Event::MAX_NUM_GUNS>::const_iterator Event::cend() const 
     else
         return gunsUsedList.cbegin();
 }
-bool Event::operator==(const Event& other) const{
-    if(this->getDate() != other.getDate())
-        return false;
-
-    if(this->getEventType() != other.getEventType())
-        return false;
-
-    if(this->getLocation() != other.getLocation())
-        return false;
-    
-    return true;
-}
-bool Event::operator<(const Event& other) const{
-    // This orders with recent events first
-    return std::tuple{other.getDate(), other.getEventType().getName(), other.getLocation().getName()} < std::tuple{getDate(), getEventType().getName(), getLocation().getName()};
-}
-
-
 

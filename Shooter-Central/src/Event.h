@@ -75,9 +75,6 @@ namespace ShooterCentral{
 
         std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cbegin() const;
         std::array<GunAndAmmo, MAX_NUM_GUNS>::const_iterator cend() const;
-
-        bool operator== (const Event& other) const;
-        bool operator<  (const Event& other) const;
    private:
         EventMetadata eventMetadata;
 
