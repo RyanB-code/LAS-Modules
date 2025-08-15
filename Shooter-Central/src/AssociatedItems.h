@@ -43,28 +43,26 @@ namespace ShooterCentral {
         const GunMetadata& getGun() const;
         operator bool() const;
 
-        int getRoundCount() const;
-        int totalEventsUsed () const;
+        int getRoundCount()         const;
+        int totalEventsUsed()       const;
+        int totalAmmoTypesUsed()    const;
 
         bool addAmmoUsed    (const AmountOfAmmo& ammo);
         bool removeAmmoUsed (const AmmoMetadata& ammo);
         bool hasUsedAmmo    (const AmmoMetadata& ammo) const;
 
-        bool addEvent       (std::shared_ptr<const Event> event); // If key already exists, returns false since data is not overwritten. Iterates over the event and adds all ammo to the gun
-        bool removeEvent    (const Event& event); 
-        bool wasUsedInEvent (const Event& event);
+        bool addEvent       (std::shared_ptr<Event> event); // If key already exists, returns false since data is not overwritten. Iterates over the event and adds all ammo to the gun
+        bool removeEvent    (const EventMetadata& data); 
+        bool wasUsedInEvent (const EventMetadata& data);
 
-        std::map<AmmoMetadata, AmountOfAmmo>::const_iterator    ammoUsed_cbegin() const;
-        std::map<AmmoMetadata, AmountOfAmmo>::const_iterator    ammoUsed_cend() const;       
-
-        std::map<Event, std::shared_ptr<const Event>>::const_iterator   eventsUsed_cbegin() const;
-        std::map<Event, std::shared_ptr<const Event>>::const_iterator   eventsUsed_cend() const;
+        const std::map<AmmoMetadata, AmountOfAmmo>&                     getAmmoUsed()   const;
+        const std::map<EventMetadata, std::shared_ptr<Event>>&    getEventsUsed() const;
     private:
         int totalRoundCount { 0 };
 
-        std::shared_ptr<const GunMetadata>              gun           { };
-        std::map<AmmoMetadata, AmountOfAmmo>            ammoUsedList  { };    // Not shared_ptr because the amount is amount of rounds shot, not the amount in the stockpile 
-        std::map<Event, std::shared_ptr<const Event>>   eventsUsed    { };
+        std::shared_ptr<const GunMetadata>                      gun           { };
+        std::map<AmmoMetadata, AmountOfAmmo>                    ammoUsedList  { };    // Not shared_ptr because the amount is amount of rounds shot, not the amount in the stockpile 
+        std::map<EventMetadata, std::shared_ptr<Event>>   eventsUsed    { };
 
         void throwIfGunInvalid() const;
     };

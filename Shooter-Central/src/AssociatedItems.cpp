@@ -95,16 +95,16 @@ bool AssociatedGun::removeAmmoUsed(const AmmoMetadata& ammo){
 bool AssociatedGun::hasUsedAmmo(const AmmoMetadata& ammo) const {
     return ammoUsedList.contains(ammo);
 }
-bool AssociatedGun::addEvent(std::shared_ptr<const Event> event) {
+bool AssociatedGun::addEvent(std::shared_ptr<Event> event) {
     throwIfGunInvalid();
 
     if(!event)
         return false;
 
-    if(eventsUsed.contains(*event))
+    if(eventsUsed.contains(event->getInfo()))
         return false;
 
-    if(!eventsUsed.try_emplace(*event, event).second)
+    if(!eventsUsed.try_emplace(event->getInfo(), event).second)
         return false;
 
     // Go through the event and add all the ammo used for the gun
@@ -131,38 +131,35 @@ bool AssociatedGun::addEvent(std::shared_ptr<const Event> event) {
     else{
         // If the gun was not found in the Event's used gun list, then it should not be associated with this gun
         // Therefore, remove event from the list and exit
-        removeEvent(*event);
+        removeEvent(event->getInfo());
         return false;
     }
 }
-bool AssociatedGun::removeEvent(const Event& event) {
-   if(!eventsUsed.contains(event))
+bool AssociatedGun::removeEvent(const EventMetadata& data) {
+   if(!eventsUsed.contains(data))
         return true;
 
-    eventsUsed.erase(event);
-    return !eventsUsed.contains(event); // Return the inverse of contains()
+    eventsUsed.erase(data);
+    return !eventsUsed.contains(data); // Return the inverse of contains()
 }
-bool AssociatedGun::wasUsedInEvent(const Event& event){
-    return eventsUsed.contains(event);
+bool AssociatedGun::wasUsedInEvent(const EventMetadata& data){
+    return eventsUsed.contains(data);
 }
 int AssociatedGun::totalEventsUsed() const {
     return eventsUsed.size();
+}
+int AssociatedGun::totalAmmoTypesUsed() const {
+    return ammoUsedList.size();
 }
 void AssociatedGun::throwIfGunInvalid() const {
     if(!gun)
         throw std::invalid_argument("Associated gun cannot be null");
 }
-std::map<AmmoMetadata, AmountOfAmmo>::const_iterator AssociatedGun::ammoUsed_cbegin() const{
-    return ammoUsedList.cbegin();
+const std::map<AmmoMetadata, AmountOfAmmo>& AssociatedGun::getAmmoUsed()   const{
+    return ammoUsedList;
 }
-std::map<AmmoMetadata, AmountOfAmmo>::const_iterator AssociatedGun::ammoUsed_cend() const {
-    return ammoUsedList.cend();
-}
-std::map<Event, std::shared_ptr<const Event>>::const_iterator AssociatedGun::eventsUsed_cbegin() const{
-    return eventsUsed.cbegin();
-}
-std::map<Event, std::shared_ptr<const Event>>::const_iterator AssociatedGun::eventsUsed_cend() const{
-    return eventsUsed.cend();
+const std::map<EventMetadata, std::shared_ptr<Event>>& AssociatedGun::getEventsUsed() const{
+    return eventsUsed;
 }
 
 
