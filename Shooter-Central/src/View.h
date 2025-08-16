@@ -132,7 +132,7 @@ namespace ShooterCentral::View {
                                     GunAndAmmo& selected,
                                     ImVec2 size 
                                 );
-
+    void draw_EventAmmoUsedTable(const GunAndAmmo& selected, ImVec2 size);
    
     void draw_SelectableEventTable( const std::map<EventMetadata, std::shared_ptr<Event>>& events, 
                                     std::weak_ptr<Event>& selected,
