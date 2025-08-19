@@ -42,10 +42,9 @@ const std::map<EventType,     std::shared_ptr<EventType>>& Containers::getEventT
 const std::map<WeaponType,    std::shared_ptr<WeaponType>>& Containers::getWeaponTypes()      const{
     return weaponTypes;
 }
-std::pair<std::shared_ptr<AmmoMetadata>, bool> Containers::knownAmmo_add      (const ObjectBuffers::AmmoMetadata& data){
-
-    Manufacturer manufacturer { data.manufacturer };
-    Cartridge cartridge { data.cartridge };
+std::pair<std::shared_ptr<AmmoMetadata>, bool> Containers::knownAmmo_create      (const ObjectBuffers::AmmoMetadata& data){
+    const Manufacturer manufacturer { data.manufacturer };
+    const Cartridge cartridge       { data.cartridge };
 
     bool newManufacturer { false };
 
@@ -67,7 +66,7 @@ std::pair<std::shared_ptr<AmmoMetadata>, bool> Containers::knownAmmo_add      (c
         }
     }
 
-    AmmoMetadata buffer { 
+    const AmmoMetadata buffer { 
         .name           = data.name, 
         .grainWeight    = data.grainWeight,
         .isActive       = data.isActive,
@@ -82,9 +81,9 @@ std::pair<std::shared_ptr<AmmoMetadata>, bool> Containers::knownAmmo_add      (c
     return std::pair{ result.first->second, result.second };
 
 }
-std::pair<std::shared_ptr<GunMetadata>, bool> Containers::knownGuns_add      (const ObjectBuffers::GunMetadata& data){
-    WeaponType weaponType { data.weaponType };
-    Cartridge cartridge { data.cartridge };
+std::pair<std::shared_ptr<GunMetadata>, bool> Containers::knownGuns_create      (const ObjectBuffers::GunMetadata& data){
+    const WeaponType weaponType { data.weaponType };
+    const Cartridge cartridge { data.cartridge };
 
     bool newWeaponType { false };
 
@@ -106,7 +105,7 @@ std::pair<std::shared_ptr<GunMetadata>, bool> Containers::knownGuns_add      (co
         }
     }
 
-    GunMetadata buffer { 
+    const GunMetadata buffer { 
         .name           = data.name, 
         .isActive       = data.isActive,
         .cartridge      = *cartridges.at(cartridge),
@@ -119,9 +118,43 @@ std::pair<std::shared_ptr<GunMetadata>, bool> Containers::knownGuns_add      (co
     std::pair result { knownGuns.try_emplace(buffer, std::make_shared<GunMetadata>(buffer)) };
     return std::pair { result.first->second, result.second };
 }
-bool Containers::events_add(const Event& add){
-    return events.try_emplace(add.getInfo(), std::make_shared<Event>(add)).second;
-}       
+std::pair<std::shared_ptr<Event>, bool> Containers::events_create(const ObjectBuffers::EventMetadata& data){
+    const Location  location      { data.location };
+    const EventType eventType     { data.eventType };
+
+    bool newItem { false };
+
+    if(!locations.contains(location)) {
+        if(!locations_add(location))
+            return std::pair{nullptr, false};
+        else
+            newItem = true;
+    }
+
+    if(!eventTypes.contains(eventType)) {
+        if(!eventTypes_add(eventType)){
+
+            // Providing the strong rollback guarantee if operation fails
+            if(newItem)
+                locations.erase(location);
+
+            return std::pair{nullptr, false};
+        }
+    }
+
+    const EventMetadata buffer { 
+        .notes          = data.notes,
+        .date           = std::chrono::floor<std::chrono::days>(stringToTimepoint(data.date)),
+        .location       = *locations.at(location), 
+        .eventType      = *eventTypes.at(eventType)
+    };
+
+    if(events.contains(buffer))
+        return std::pair{events.at(buffer), true};
+
+    std::pair result { events.try_emplace(buffer, std::make_shared<Event>(buffer)) };
+    return std::pair { result.first->second, result.second };
+}
 bool Containers::ammoStockpile_add  (const AssociatedAmmo& add){
     const AmmoMetadata& info { add.getAmountOfAmmo().getAmmoInfo() };
 

@@ -52,8 +52,10 @@ namespace ShooterCentral {
         const std::map<WeaponType,    std::shared_ptr<WeaponType>>&     getWeaponTypes()      const;
 
 
-        std::pair<std::shared_ptr<AmmoMetadata>, bool> knownAmmo_add (const ObjectBuffers::AmmoMetadata& add);    // Strong rollback guarantee if any operation fails
-        std::pair<std::shared_ptr<GunMetadata>, bool> knownGuns_add  (const ObjectBuffers::GunMetadata& add);
+        std::pair<std::shared_ptr<AmmoMetadata>, bool>  knownAmmo_create   (const ObjectBuffers::AmmoMetadata& add);    // Strong rollback guarantee if any operation fails
+        std::pair<std::shared_ptr<GunMetadata>, bool>   knownGuns_create   (const ObjectBuffers::GunMetadata& add);
+        std::pair<std::shared_ptr<Event>, bool>         events_create      (const ObjectBuffers::EventMetadata& add);
+
 
         bool events_add         (const Event& add);      
         bool ammoStockpile_add  (const AssociatedAmmo& add); // Will return false if cannot add to ammoStockpile OR amountPerCartridge container
