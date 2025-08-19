@@ -27,95 +27,145 @@ const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>
 const std::map<Cartridge, int>& Containers::getAmountPerCartridge() const{
     return amountPerCartridge;
 }
-const std::set<Manufacturer>& Containers::getManufacturers()    const{
+const std::map<Manufacturer,  std::shared_ptr<Manufacturer>>& Containers::getManufacturers()    const{
     return manufacturers;
 }
-const std::set<Cartridge>& Containers::getCartridges()       const{
+const std::map<Cartridge,     std::shared_ptr<Cartridge>>& Containers::getCartridges()       const{
     return cartridges;
 }
-const std::set<Location>& Containers::getLocations()        const{
+const std::map<Location,      std::shared_ptr<Location>>& Containers::getLocations()        const{
     return locations;
 }
-const std::set<EventType>& Containers::getEventTypes()       const{
+const std::map<EventType,     std::shared_ptr<EventType>>& Containers::getEventTypes()       const{
     return eventTypes;
 }
-const std::set<WeaponType>& Containers::getWeaponTypes()      const{
+const std::map<WeaponType,    std::shared_ptr<WeaponType>>& Containers::getWeaponTypes()      const{
     return weaponTypes;
 }
-bool Containers::knownAmmo_add      (std::shared_ptr<AmmoMetadata> add){
-    if(!add)
-        return false;
+std::pair<std::shared_ptr<AmmoMetadata>, bool> Containers::knownAmmo_add      (const ObjectBuffers::AmmoMetadata& data){
 
-    return knownAmmo.try_emplace(*add, add).second;
+    Manufacturer manufacturer { data.manufacturer };
+    Cartridge cartridge { data.cartridge };
+
+    bool newManufacturer { false };
+
+    if(!manufacturers.contains(manufacturer)) {
+        if(!manufacturers_add(manufacturer))
+            return std::pair{nullptr, false};
+        else
+            newManufacturer = true;
+    }
+
+    if(!cartridges.contains(cartridge)) {
+        if(!cartridges_add(cartridge)){
+
+            // Strong rollback guarantee erasure if  operator fails
+            if(newManufacturer)
+                manufacturers.erase(manufacturer);
+
+            return std::pair{nullptr, false};
+        }
+    }
+
+    AmmoMetadata buffer { 
+        .name           = data.name, 
+        .grainWeight    = data.grainWeight,
+        .isActive       = data.isActive,
+        .manufacturer   = *manufacturers.at(manufacturer),
+        .cartridge      = *cartridges.at(cartridge)
+    };
+
+    if(knownAmmo.contains(buffer))
+        return std::pair{knownAmmo.at(buffer), true};
+
+    std::pair result { knownAmmo.try_emplace(buffer, std::make_shared<AmmoMetadata>(buffer)) };
+    return std::pair{ result.first->second, result.second };
+
 }
-bool Containers::knownGuns_add      (std::shared_ptr<GunMetadata> add){
-    if(!add)
-        return false;
+std::pair<std::shared_ptr<GunMetadata>, bool> Containers::knownGuns_add      (const ObjectBuffers::GunMetadata& data){
+    WeaponType weaponType { data.weaponType };
+    Cartridge cartridge { data.cartridge };
 
-    return knownGuns.try_emplace(*add, add).second;
+    bool newWeaponType { false };
+
+    if(!weaponTypes.contains(weaponType)) {
+        if(!weaponTypes_add(weaponType))
+            return std::pair{nullptr, false};
+        else
+            newWeaponType = true;
+    }
+
+    if(!cartridges.contains(cartridge)) {
+        if(!cartridges_add(cartridge)){
+
+            // Providing the strong rollback guarantee if operation fails
+            if(newWeaponType)
+                weaponTypes.erase(weaponType);
+
+            return std::pair{nullptr, false};
+        }
+    }
+
+    GunMetadata buffer { 
+        .name           = data.name, 
+        .isActive       = data.isActive,
+        .cartridge      = *cartridges.at(cartridge),
+        .weaponType     = *weaponTypes.at(weaponType)
+    };
+
+    if(knownGuns.contains(buffer))
+        return std::pair{knownGuns.at(buffer), true};
+
+    std::pair result { knownGuns.try_emplace(buffer, std::make_shared<GunMetadata>(buffer)) };
+    return std::pair { result.first->second, result.second };
 }
-bool Containers::events_add(std::shared_ptr<Event> add){
-    if(!add)
-        return false;
-
-    return events.try_emplace(add->getInfo(), add).second;
+bool Containers::events_add(const Event& add){
+    return events.try_emplace(add.getInfo(), std::make_shared<Event>(add)).second;
 }       
-bool Containers::ammoStockpile_add  (std::shared_ptr<AssociatedAmmo> add){
-    if(!add)
-        return false;
-
-    if(!*add)           // Checks to see if Assoc item is pointing to a valid object
-        return false;
-
-    const AmmoMetadata& info { add->getAmountOfAmmo().getAmmo() };
+bool Containers::ammoStockpile_add  (const AssociatedAmmo& add){
+    const AmmoMetadata& info { add.getAmountOfAmmo().getAmmoInfo() };
 
     if(!ammoStockpile.contains(info.cartridge)){
         if(!ammoStockpile.try_emplace(info.cartridge).second)
             return false;
     }
     
-    if(!ammoStockpile.at(info.cartridge).try_emplace(info, add).second)
+    if(!ammoStockpile.at(info.cartridge).try_emplace(info, std::make_shared<AssociatedAmmo>(add)).second)
         return false;
 
     // Add to amount per cartridge list
-    if(!addAmountPerCartridge(info.cartridge, add->getAmountOfAmmo().getAmount() )){
+    if(!addAmountPerCartridge(info.cartridge, add.getAmountOfAmmo().getAmount() )){
         ammoStockpile.at(info.cartridge).erase(info);
         return false;
     }
     
     return true;
 }
-bool Containers::gunsInArmory_add   (std::shared_ptr<AssociatedGun> add){
-    if(!add)
-        return false;
-
-    if(!*add)           // Checks to see if Assoc item is pointing to a valid objects
-        return false;
-
-    const GunMetadata& info { add->getGun() };
+bool Containers::gunsInArmory_add   (const AssociatedGun& add){
+    const GunMetadata& info { add.getGunInfo() };
 
     if(gunsInArmory.contains(info.cartridge))
-        return gunsInArmory.at(info.cartridge).try_emplace(info, add).second;
+        return gunsInArmory.at(info.cartridge).try_emplace(info, std::make_shared<AssociatedGun>(add)).second;
 
     if(gunsInArmory.try_emplace(info.cartridge).second)
-        return gunsInArmory.at(info.cartridge).try_emplace(info, add).second;
+        return gunsInArmory.at(info.cartridge).try_emplace(info, std::make_shared<AssociatedGun>(add)).second;
 
     return false;
 }
 bool Containers::manufacturers_add  (const Manufacturer& add){
-    return manufacturers.emplace(add).second;
+    return manufacturers.try_emplace(add, std::make_shared<Manufacturer>(add)).second;
 }
 bool Containers::cartridges_add     (const Cartridge& add){
-    return cartridges.emplace(add).second;
+    return cartridges.try_emplace(add, std::make_shared<Cartridge>(add)).second;
 }
 bool Containers::eventTypes_add     (const EventType& add){
-    return eventTypes.emplace(add).second;
+    return eventTypes.try_emplace(add, std::make_shared<EventType>(add)).second;
 }
 bool Containers::weaponTypes_add    (const WeaponType& add){
-    return weaponTypes.emplace(add).second;
+    return weaponTypes.try_emplace(add, std::make_shared<WeaponType>(add)).second;
 }
 bool Containers::locations_add      (const Location& add){
-    return locations.emplace(add).second;
+    return locations.try_emplace(add, std::make_shared<Location>(add)).second;
 }
 std::shared_ptr<AmmoMetadata> Containers::knownAmmo_at    (const AmmoMetadata& key){
     return knownAmmo.at(key);

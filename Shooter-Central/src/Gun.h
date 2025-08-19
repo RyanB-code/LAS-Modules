@@ -4,9 +4,10 @@
 
 #include <LAS/json.h>
 
-#include <array>
+#include <vector>
 #include <string>
 #include <memory>
+#include <stdexcept>
 
 namespace ShooterCentral{
 
@@ -25,45 +26,35 @@ namespace ShooterCentral{
     };
 
     struct GunMetadata {
-        std::string name        { "N/A" };
-        WeaponType  weaponType  { };
-        Cartridge   cartridge   { };
-        bool        isActive    { false }; 
+        std::string         name        { "N/A" };
+        bool                isActive    { false }; 
+        const Cartridge&    cartridge;
+        const WeaponType&   weaponType;
 
         bool operator== (const GunMetadata& other) const;
         bool operator<  (const GunMetadata& other) const;
     };
 
     void to_json(LAS::json& j, const GunMetadata& gun);
-    void from_json(const LAS::json& j, GunMetadata& gun);
-
 
     class GunAndAmmo {
-    private:
-        static constexpr int MAX_NUM_AMMO_USED { 10 };
     public:
-        GunAndAmmo(std::shared_ptr<const GunMetadata> setGun=nullptr);
+        GunAndAmmo(const GunMetadata& setGun);
         ~GunAndAmmo();
 
-        bool    addAmmoUsed     (const AmountOfAmmo& ammo);             // Throws in gun ptr is not set
+        bool    addAmmoUsed     (const AmountOfAmmo& ammo);
         bool    hasUsedAmmo     (const AmmoMetadata& ammo) const;
         int     totalAmmoUsed   () const;
         int     totalRoundsShot () const;
 
-        const GunMetadata& getGun() const;                              // Throws if gun ptr is not set
+        const GunMetadata& getGunInfo() const;
 
-        operator bool() const;
-
-        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cbegin() const;
-        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED>::const_iterator cend() const;
+        const std::vector<AmountOfAmmo>& getAmmoUsedList() const;
     private:
-        std::shared_ptr<const GunMetadata>                  gun { };
-        std::array<AmountOfAmmo, MAX_NUM_AMMO_USED> ammoUsedList { };
-        int nextIndex { 0 };
+        const GunMetadata&        gun;
+        std::vector<AmountOfAmmo> ammoUsedList { };
 
         int totalRoundCount { 0 };
-
-        void throwIfInvalid() const; // Throws if any operation is attempted if gun is nullptr
     };
 
 }

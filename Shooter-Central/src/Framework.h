@@ -41,21 +41,21 @@ namespace ShooterCentral{
         static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
 
     private:
-        Containers      containers      { };
-        View::GUI       view            { };
-        UnsavedChanges  unsavedChanges  { };
+        Containers          containers      { };
+        UI::UIController    view            { };
+        UnsavedChanges      unsavedChanges  { };
 
         std::shared_ptr<bool> shown;
 
         static constexpr char FILENAME_DESCRIPTORS[] = "ItemDescriptors.json";
 
 
-        bool readGuns           (const std::string& dir);
-        bool readAmmo           (const std::string& dir);
-        bool readEvents         (const std::string& dir);
-        bool readDescriptors    (const std::string& dir);
+        bool readDir_Guns            (const std::string& dir);
+        bool readDir_Ammo            (const std::string& dir);
+        bool readDir_Events          (const std::string& dir);
+        bool readFile_Descriptors    (const std::string& dir);
 
-        bool writeDescriptors   (std::string dirrectory);
+        bool writeFile_Descriptors   (std::string dirrectory);
 
         void buildAssociations();
         void addItemDescriptors(); // Things like Cartridge, Manufacuter, Location, etc
@@ -65,13 +65,20 @@ namespace ShooterCentral{
         bool    setupFilesystem(Framework::Filepaths& paths); // Needs parentDir set first
     }
 
-    namespace FileIO {
+    namespace FileIO { 
+
         std::string makeFileName    (std::string directory, const GunMetadata& data);
         std::string makeFileName    (std::string directory, const AmmoMetadata& data);
-        std::string makeFileName    (std::string directory, const Event& data);
+        std::string makeFileName    (std::string directory, const EventMetadata& data);
 
         bool write (std::string directory, const GunMetadata& data);
         bool write (std::string directory, const AmountOfAmmo& data);
         bool write (std::string directory, const Event& data);
+
+        void read_GunMetadata   (const LAS::json& j, ObjectBuffers::GunMetadata& buffer);
+        void read_AmmoMetadata  (const LAS::json& j, ObjectBuffers::AmmoMetadata& buffer);
+        void read_EventMetadata (const LAS::json& j, ObjectBuffers::EventMetadata& buffer);
+ 
+
     }
 }

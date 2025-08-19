@@ -10,6 +10,28 @@
 
 namespace ShooterCentral {
 
+    namespace ObjectBuffers {
+        struct GunMetadata {
+            std::string name        { };
+            std::string weaponType  { };
+            std::string cartridge   { };
+            bool        isActive    { false };
+        };
+        struct AmmoMetadata {
+            std::string name            { };
+            std::string manufacturer    { };
+            std::string cartridge       { };
+            int         grainWeight     { 0 };
+            bool        isActive        { false };
+        };
+        struct EventMetadata {
+            std::string location    { };
+            std::string eventType   { };
+            std::string notes       { };
+            std::string date        { };
+        };
+    }
+
     class Containers {
     public:
         Containers();
@@ -23,18 +45,19 @@ namespace ShooterCentral {
         const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     getGunsInArmory()     const;
         const std::map<Cartridge, int>& getAmountPerCartridge() const;
 
-        const std::set<Manufacturer>&   getManufacturers()    const;
-        const std::set<Cartridge>&      getCartridges()       const;
-        const std::set<Location>&       getLocations()        const;
-        const std::set<EventType>&      getEventTypes()       const;
-        const std::set<WeaponType>&     getWeaponTypes()      const;
+        const std::map<Manufacturer,  std::shared_ptr<Manufacturer>>&   getManufacturers()    const;
+        const std::map<Cartridge,     std::shared_ptr<Cartridge>>&      getCartridges()       const;
+        const std::map<Location,      std::shared_ptr<Location>>&       getLocations()        const;
+        const std::map<EventType,     std::shared_ptr<EventType>>&      getEventTypes()       const;
+        const std::map<WeaponType,    std::shared_ptr<WeaponType>>&     getWeaponTypes()      const;
 
 
-        bool knownAmmo_add      (std::shared_ptr<AmmoMetadata> add);
-        bool knownGuns_add      (std::shared_ptr<GunMetadata> add);
-        bool events_add         (std::shared_ptr<Event> add);      
-        bool ammoStockpile_add  (std::shared_ptr<AssociatedAmmo> add); // Will return false if cannot add to ammoStockpile OR amountPerCartridge container
-        bool gunsInArmory_add   (std::shared_ptr<AssociatedGun> add);
+        std::pair<std::shared_ptr<AmmoMetadata>, bool> knownAmmo_add (const ObjectBuffers::AmmoMetadata& add);    // Strong rollback guarantee if any operation fails
+        std::pair<std::shared_ptr<GunMetadata>, bool> knownGuns_add  (const ObjectBuffers::GunMetadata& add);
+
+        bool events_add         (const Event& add);      
+        bool ammoStockpile_add  (const AssociatedAmmo& add); // Will return false if cannot add to ammoStockpile OR amountPerCartridge container
+        bool gunsInArmory_add   (const AssociatedGun& add);
 
         bool manufacturers_add  (const Manufacturer& add);
         bool cartridges_add     (const Cartridge& add);
@@ -54,21 +77,23 @@ namespace ShooterCentral {
         int getAmountOfCartridge(const Cartridge& cartridge) const;
 
     private:
-        std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>   knownAmmo;
-        std::map<GunMetadata, std::shared_ptr<GunMetadata>>     knownGuns;
+        std::map<AmmoMetadata,  std::shared_ptr<AmmoMetadata>>  knownAmmo;
+        std::map<GunMetadata,   std::shared_ptr<GunMetadata>>   knownGuns;
         std::map<EventMetadata, std::shared_ptr<Event>>         events;
+
+        std::map<Manufacturer,  std::shared_ptr<Manufacturer>>  manufacturers;
+        std::map<Cartridge,     std::shared_ptr<Cartridge>>     cartridges;
+        std::map<Location,      std::shared_ptr<Location>>      locations;
+        std::map<EventType,     std::shared_ptr<EventType>>     eventTypes;
+        std::map<WeaponType,    std::shared_ptr<WeaponType>>    weaponTypes;
+
 
         std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>> ammoStockpile;
         std::map<Cartridge, int> amountPerCartridge;
 
         std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>  gunsInArmory;
 
-        std::set<Manufacturer>  manufacturers;
-        std::set<Cartridge>     cartridges;
-        std::set<Location>      locations;
-        std::set<EventType>     eventTypes;
-        std::set<WeaponType>    weaponTypes;
-
+        
         bool addAmountPerCartridge(const Cartridge& cartridge, int amount);
     };
 

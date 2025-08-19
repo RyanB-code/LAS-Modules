@@ -33,98 +33,59 @@ bool GunMetadata::operator==(const GunMetadata& other) const{
         return false;
 }
 bool GunMetadata::operator<(const GunMetadata& other) const{
-    return std::tuple{std::string{weaponType}, std::string{cartridge}, name} < std::tuple{std::string{other.weaponType}, std::string{other.cartridge}, other.name}; 
+    return std::tuple{weaponType, cartridge, name} < std::tuple{other.weaponType, other.cartridge, other.name}; 
 }
 void ShooterCentral::to_json(LAS::json& j, const GunMetadata& gun){
     using LAS::json;
 
     j = LAS::json{
-        { "name",           gun.name                },
-        { "weaponType",     gun.weaponType.getName()},
-        { "cartridge",      gun.cartridge.getName() },
-        { "isActive",       gun.isActive           }
+        { "name",           gun.name        },
+        { "weaponType",     gun.weaponType  },
+        { "cartridge",      gun.cartridge   },
+        { "isActive",       gun.isActive    }
     };
 }
-void ShooterCentral::from_json(const LAS::json& j, GunMetadata& gun){
-    using LAS::json;
-
-    std::string nameBuf, weaponTypeBuf, cartBuf; 
-    bool isActiveBuf { false };
-
-    j.at("name").get_to(nameBuf);
-    j.at("weaponType").get_to(weaponTypeBuf);
-    j.at("cartridge").get_to(cartBuf);
-
-    j["isActive"].get_to(isActiveBuf);
-
-    gun = GunMetadata {nameBuf, WeaponType {weaponTypeBuf}, Cartridge {cartBuf}, isActiveBuf };
-}
 
 
-GunAndAmmo::GunAndAmmo(std::shared_ptr<const GunMetadata> setGun) : gun {setGun} {
-
+GunAndAmmo::GunAndAmmo(const GunMetadata& setGun) : gun {setGun} {
+    ammoUsedList.reserve(5);
 }
 GunAndAmmo::~GunAndAmmo(){
 
 }
 bool GunAndAmmo::addAmmoUsed(const AmountOfAmmo& ammo) {
-    throwIfInvalid();
-
     // Check if ammo already in list then add
     for(auto& entry : ammoUsedList){
-        if(!entry)
-            continue;
-        if(ammo.getAmmo() == entry.getAmmo()){
+        if(ammo.getAmmoInfo() == entry.getAmmoInfo()){
             entry.addAmount(ammo.getAmount());
             totalRoundCount += ammo.getAmount();
             return true;
         }
     }
 
-    // If not already used, add new entry
-    if(nextIndex < MAX_NUM_AMMO_USED){
-        ammoUsedList[nextIndex] = ammo;
-        totalRoundCount += ammo.getAmount();
-        ++nextIndex;
-        return true;
-    }
+    ammoUsedList.emplace_back(ammo);
+    totalRoundCount += ammo.getAmount();
 
-    return false;
+    return true;
 }
 bool GunAndAmmo::hasUsedAmmo(const AmmoMetadata& ammo) const {
     for(const auto& entry : ammoUsedList){
-        if(ammo == entry.getAmmo())
+        if(ammo == entry.getAmmoInfo())
             return true;
     }
     
     return false;
 }
 int GunAndAmmo::totalAmmoUsed() const {
-    return nextIndex;
+    return ammoUsedList.size();
 }
 int GunAndAmmo::totalRoundsShot() const{
     return totalRoundCount;
 }
-const GunMetadata& GunAndAmmo::getGun() const {
-    throwIfInvalid();
-    return *gun;
+const GunMetadata& GunAndAmmo::getGunInfo() const {
+    return gun;
 }
-GunAndAmmo::operator bool() const{
-    if(gun)
-        return true;
-    else
-        return false;
+const std::vector<AmountOfAmmo>& GunAndAmmo::getAmmoUsedList() const{
+    return ammoUsedList;
 }
-std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAmmo::cbegin() const{
-    return ammoUsedList.cbegin();
-}
-std::array<AmountOfAmmo, GunAndAmmo::MAX_NUM_AMMO_USED>::const_iterator GunAndAmmo::cend() const {
-     if(nextIndex > 0)
-        return ammoUsedList.cbegin() + nextIndex;
-    else
-        return ammoUsedList.cbegin();
-}
-void GunAndAmmo::throwIfInvalid() const {
-    if(!gun)
-        throw std::invalid_argument("GunMetadata cannot be null");
-}
+

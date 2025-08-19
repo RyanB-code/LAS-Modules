@@ -8,12 +8,6 @@ AssociatedAmmo::AssociatedAmmo(AmountOfAmmo setAmountOfAmmo) : amountOfAmmo {set
 AssociatedAmmo::~AssociatedAmmo() {
 
 }
-AssociatedAmmo::operator bool() const {
-    if(amountOfAmmo)
-        return true;
-    else
-        return false;
-}
 bool AssociatedAmmo::addGun(std::shared_ptr<const GunMetadata> gun) {
     if(gunsAssociated.contains(*gun))
         return false;
@@ -34,51 +28,35 @@ int AssociatedAmmo::totalGuns() const {
     return gunsAssociated.size();
 }
 const AmountOfAmmo& AssociatedAmmo::getAmountOfAmmo() const {
-    throwIfInvalid();
     return amountOfAmmo;
 }
-std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator AssociatedAmmo::cbegin() const {
-    return gunsAssociated.cbegin();
-}
-std::map<GunMetadata, std::shared_ptr<const GunMetadata>>::const_iterator AssociatedAmmo::cend() const {
-    return gunsAssociated.cend();
-}
-void AssociatedAmmo::throwIfInvalid() const {
-    if(!amountOfAmmo)
-        throw std::invalid_argument("Associated ammo cannot be null");
+const std::map<GunMetadata, std::shared_ptr<const GunMetadata>>& AssociatedAmmo::getGunsUsed() const {
+    return gunsAssociated;
 }
 
 
-AssociatedGun::AssociatedGun(std::shared_ptr<const GunMetadata> setGun) : gun {setGun} {
+AssociatedGun::AssociatedGun(const GunMetadata& setGun) : gun {setGun} {
 
 }
 AssociatedGun::~AssociatedGun(){
 
 }
-const GunMetadata& AssociatedGun::getGun() const {
-    throwIfGunInvalid();
-
-    return *gun;
-}
-AssociatedGun::operator bool() const{
-    if(gun)
-        return true;
-    else
-        return false;
+const GunMetadata& AssociatedGun::getGunInfo() const {
+    return gun;
 }
 int AssociatedGun::getRoundCount() const {
     return totalRoundCount;
 }
 bool AssociatedGun::addAmmoUsed(const AmountOfAmmo& addAmmo) {
-    throwIfGunInvalid();
+    const AmmoMetadata& ammoInfo {addAmmo.getAmmoInfo()};
 
-    if(ammoUsedList.contains(addAmmo.getAmmo())){
-        ammoUsedList.at(addAmmo.getAmmo()).addAmount(addAmmo.getAmount());
+    if(ammoUsedList.contains(ammoInfo)){
+        ammoUsedList.at(ammoInfo).addAmount(addAmmo.getAmount());
         totalRoundCount += addAmmo.getAmount();
         return true;
     }
 
-    if(ammoUsedList.try_emplace(addAmmo.getAmmo(), addAmmo).second){
+    if(ammoUsedList.try_emplace(ammoInfo, addAmmo).second){
         totalRoundCount += addAmmo.getAmount();
         return true;
     }
@@ -96,11 +74,6 @@ bool AssociatedGun::hasUsedAmmo(const AmmoMetadata& ammo) const {
     return ammoUsedList.contains(ammo);
 }
 bool AssociatedGun::addEvent(std::shared_ptr<Event> event) {
-    throwIfGunInvalid();
-
-    if(!event)
-        return false;
-
     if(eventsUsed.contains(event->getInfo()))
         return false;
 
@@ -111,16 +84,13 @@ bool AssociatedGun::addEvent(std::shared_ptr<Event> event) {
     bool gunFound { false };
     for(const GunAndAmmo& gunAndAmmo : event->getGunsUsed()){
         // Verify the GunAndAmmo is pointing to a valid gun object
-        if(!gunAndAmmo)
-            continue;
-        if(gunAndAmmo.getGun() == *gun){
-
+        if(gunAndAmmo.getGunInfo() == gun){
             gunFound = true;
+
             // Iterate over GunAndAmmo and add to ammoUsedList
-            for(auto itr2 {gunAndAmmo.cbegin()}; itr2 != gunAndAmmo.cend(); ++itr2){
-                const AmountOfAmmo& amountOfAmmo {*itr2};
+            for(auto& amountOfAmmo : gunAndAmmo.getAmmoUsedList())
                 addAmmoUsed(amountOfAmmo);
-            }
+
             break;
         }
     }
@@ -150,14 +120,10 @@ int AssociatedGun::totalEventsUsed() const {
 int AssociatedGun::totalAmmoTypesUsed() const {
     return ammoUsedList.size();
 }
-void AssociatedGun::throwIfGunInvalid() const {
-    if(!gun)
-        throw std::invalid_argument("Associated gun cannot be null");
-}
 const std::map<AmmoMetadata, AmountOfAmmo>& AssociatedGun::getAmmoUsed()   const{
     return ammoUsedList;
 }
-const std::map<EventMetadata, std::shared_ptr<Event>>& AssociatedGun::getEventsUsed() const{
+const std::map<EventMetadata, std::shared_ptr<const Event>>& AssociatedGun::getEventsUsed() const{
     return eventsUsed;
 }
 

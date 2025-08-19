@@ -22,13 +22,13 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     shown = setShown;
 
     // TESTING
-    if(!readGuns(paths.gunsDir))
+    if(!readDir_Guns(paths.gunsDir))
         log_error("Failed reading Guns");
-    if(!readAmmo(paths.ammoDir))
+    if(!readDir_Ammo(paths.ammoDir))
         log_error("Failed reading Ammo");
-    if(!readEvents(paths.eventsDir))
+    if(!readDir_Events(paths.eventsDir))
         log_error("Failed reading Events");
-    if(!readDescriptors(paths.miscDir))
+    if(!readFile_Descriptors(paths.miscDir))
         log_error("Failed reading Events");
 
     /*
@@ -55,41 +55,37 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         std::cout << "    Gun Addr: " << &*value << "\n";
     }
     std::cout << "\n\nKnown Ammo:\n";
-    for(const auto& [data, value ] : containers.getKnownAmmo() ) {
-        std::cout << std::format("  Name: {}, Man: {}, Cart: {}, GW: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight );
+    for(const auto& [ammoMetadata, value ] : containers.getKnownAmmo() ) {
+        std::cout << std::format("  Name: {}, Man: {}, Cart: {}, GW: {}\n",  ammoMetadata.name, ammoMetadata.manufacturer.getName(), ammoMetadata.cartridge.getName(), ammoMetadata.grainWeight );
         std::cout << "    AmmoAddr: " << &*value << "\n";
     }
     std::cout << "\n\nAmmo Stockpile (Assoc Ammo) :\n";
     for(const auto& [cartridge, map] : containers.getAmmoStockpile() ) {
         
-        for(auto mapItr {map.cbegin()}; mapItr != map.cend(); ++mapItr){
-            const auto& [key, value] { *mapItr };
+        for(const auto& [ammoMetadata, assocAmmoPtr] : map){
+            const AmmoMetadata& data {assocAmmoPtr->getAmountOfAmmo().getAmmoInfo() };
+            std::cout << "    Ammo Addr: " << &data << "  Amount: " << assocAmmoPtr->getAmountOfAmmo().getAmount() << "\n";
 
-            const AmmoMetadata& data {value->getAmountOfAmmo().getAmmo() };
-            std::cout << "    Ammo Addr: " << &value->getAmountOfAmmo().getAmmo() << "  Amount: " << value->getAmountOfAmmo().getAmount() << "\n";
-
-            for(auto itr2 {value->cbegin() }; itr2 != value->cend(); ++itr2){
-                std::cout << "      Gun Addr: " << &*itr2->second << "\n";
+            for(const auto& [gunMetadata, gunPtr] : assocAmmoPtr->getGunsUsed()){
+                std::cout << "      Gun Addr: " << &gunPtr << "\n";
             }
         }
         
     }
     std::cout << "\n\nEvents:\n";
-    for(const auto& [evntMetadata, eventPtr] :containers.getEvents() ) {
+    for(const auto& [eventMetadata, eventPtr] : containers.getEvents() ) {
         const Event& event {*eventPtr};
+        const EventMetadata& info { event.getInfo() };
 
-        std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", event.getLocation().getName(), event.getEventType().getName(), event.getNotes(), event.printDate());
+        std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", info.location.getName(), info.eventType.getName(), info.notes, event.printDate());
         std::cout << "      Event Addr: " << &event << "\n";
 
         for(const GunAndAmmo& gunAndAmmo : event.getGunsUsed() ){
-            if(!gunAndAmmo)
-                continue;
-
-            std::cout << "    Gun Addr: " << &gunAndAmmo.getGun() << "\n";
+            std::cout << "    Gun Addr: " << &gunAndAmmo.getGunInfo() << "\n";
                 
-            for(auto itrAmmo { gunAndAmmo.cbegin() }; itrAmmo != gunAndAmmo.cend(); ++itrAmmo){
-                const AmmoMetadata& data { itrAmmo->getAmmo() };
-                std::cout << "      AmmoAddr: " << &data << "  Amount: " << itrAmmo->getAmount() << "\n";
+            for(const auto& amountOfAmmo : gunAndAmmo.getAmmoUsedList() ){
+                const AmmoMetadata& data { amountOfAmmo.getAmmoInfo() };
+                std::cout << "      AmmoAddr: " << &data << "  Amount: " << amountOfAmmo.getAmount() << "\n";
 
             }
         }
@@ -103,13 +99,13 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         for(auto mapItr {map.cbegin()}; mapItr != map.cend(); ++mapItr){
             const AssociatedGun& gun {*mapItr->second};
 
-            std::cout << "  Gun Addr: " << &gun.getGun() << "\n";
+            std::cout << "  Gun Addr: " << &gun.getGunInfo() << "\n";
         
             for(const auto& [info, eventPtr] : gun.getEventsUsed())
                 std::cout << "    Event Addr: " << &eventPtr->getInfo() << "\n";
 
             for(const auto& [info, amountOfAmmo] : gun.getAmmoUsed() ){
-                const AmmoMetadata& data { amountOfAmmo.getAmmo() };
+                const AmmoMetadata& data { amountOfAmmo.getAmmoInfo() };
                 std::cout << "    AmmoAddr: " << &data << "\n";
                 std::cout << std::format("      Name: {}, Man: {}, Cart: {}, GW: {}, Amount: {}\n",  data.name, data.manufacturer.getName(), data.cartridge.getName(), data.grainWeight, amountOfAmmo.getAmount());
             }
@@ -117,32 +113,28 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     }
 
     std::cout << "\n\nManufacturers:\n";
-    for(auto itr{containers.getManufacturers().cbegin()}; itr != containers.getManufacturers().cend(); ++itr){
-        std::cout << "  " << itr->getName() << "\n";
+    for(const auto& [manufacturer, ptr] : containers.getManufacturers() ){
+        std::cout << "  Addr: " << &ptr << "  " << manufacturer.getName() << "\n";
     }
-
     std::cout << "\n\nLocations:\n";
-    for(auto itr{containers.getLocations().cbegin()}; itr != containers.getLocations().cend(); ++itr){
-        std::cout << "  " << itr->getName() << "\n";
+    for(const auto& [location, ptr] : containers.getLocations() ){
+        std::cout << "  Addr: " << &ptr << "  " << location.getName() << "\n";
     }
-
     std::cout << "\n\nEventTypes:\n";
-    for(auto itr{containers.getEventTypes().cbegin()}; itr != containers.getEventTypes().cend(); ++itr){
-        std::cout << "  " << itr->getName() << "\n";
+    for(const auto& [et, ptr] : containers.getEventTypes() ){
+        std::cout << "  Addr: " << &ptr << "  " << et.getName() << "\n";
     }
-
     std::cout << "\n\nCartridges:\n";
-    for(auto itr{containers.getCartridges().cbegin()}; itr != containers.getCartridges().cend(); ++itr){
-        std::cout << "  " << itr->getName() << "\n";
+    for(const auto& [c, ptr] : containers.getCartridges() ){
+        std::cout << "  Addr: " << &ptr << "  " << c.getName() << "\n";
     }
-
     std::cout << "\n\nWeaponTypes:\n";
-    for(auto itr{containers.getWeaponTypes().cbegin()}; itr != containers.getWeaponTypes().cend(); ++itr){
-        std::cout << "  " << itr->getName() << "\n";
+    for(const auto& [wt, ptr] : containers.getWeaponTypes() ){
+        std::cout << "  Addr: " << &ptr << "  " << wt.getName() << "\n";
     }
 
-    // DONE TESTING
-   
+    // DONE TESTING   
+ 
     log_info("SC Setup sucessful");
     return true;
 }
@@ -160,7 +152,7 @@ void Framework::draw() {
 
     ImGui::End();
 }
-bool Framework::readGuns(const std::string& dir) {
+bool Framework::readDir_Guns(const std::string& dir) {
     if(!std::filesystem::exists(dir))
         return false;
 
@@ -170,14 +162,13 @@ bool Framework::readGuns(const std::string& dir) {
             std::ifstream inputFile{ dirEntry.path(), std::ios::in };
             json j = json::parse(inputFile);
 
-            GunMetadata gunBuf {j.template get<ShooterCentral::GunMetadata>()};
+            ObjectBuffers::GunMetadata gunInfoBuffer;
+            FileIO::read_GunMetadata(j, gunInfoBuffer);
 
-            if(!containers.getKnownGuns().contains(gunBuf)){
-                if(!containers.knownGuns_add(std::make_shared<GunMetadata>(gunBuf))){
-                    log_error("Could not insert GunMetadata from file [" + dirEntry.path().string() + ']');
-                    continue;
-                }
-            }            
+            if(!containers.knownGuns_add(gunInfoBuffer).second){
+                log_error("Could not add GunMetadata from file [" + dirEntry.path().string() + ']');
+                continue;
+            }
 		}
 		catch(std::exception& e){
             log_error("Failed to create GunMetadata object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
@@ -186,7 +177,7 @@ bool Framework::readGuns(const std::string& dir) {
     
 	return true;
 }
-bool Framework::readAmmo(const std::string& dir) {
+bool Framework::readDir_Ammo(const std::string& dir) {
     if(!std::filesystem::exists(dir))
         return false;
 
@@ -195,29 +186,33 @@ bool Framework::readAmmo(const std::string& dir) {
 		try{
             std::ifstream inputFile{ dirEntry.path(), std::ios::in };
             json j = json::parse(inputFile);
+            json ammoInfoJson = j.at("ammoInfo");
 
-            AmmoMetadata ammoInfo {j.at("ammoInfo").template get<ShooterCentral::AmmoMetadata>()};
+            ObjectBuffers::AmmoMetadata ammoInfoBuffer;
+            FileIO::read_AmmoMetadata(ammoInfoJson, ammoInfoBuffer);
 
-            if(!containers.getKnownAmmo().contains(ammoInfo)){
-                if(!containers.knownAmmo_add(std::make_shared<AmmoMetadata>(ammoInfo))){
-                    log_error("Could not insert AmmoMetadata from file [" + dirEntry.path().string() + ']');
-                    continue;
-                }
+            const auto& [ammoMetadataPtr, addSuccessful] { containers.knownAmmo_add(ammoInfoBuffer) };
+
+            if(!addSuccessful){
+                log_error("Could not add AmmoMetadata from file [" + dirEntry.path().string() + ']');
+                continue;
             }
 
+            const AmmoMetadata& ammoInfo { *ammoMetadataPtr };
+
             // Make the AmountOfAmmo object and add to stockpile ONLY if it is set to active
-            if(!ammoInfo.isActive)
+            if(!ammoInfoBuffer.isActive)
                 continue;
 
             int amountBuf { 0 };
             j.at("amount").get_to(amountBuf);
-            if(!containers.ammoStockpile_contains(ammoInfo)){
-                if(!containers.ammoStockpile_add(
-                                std::make_shared<AssociatedAmmo>(AmountOfAmmo{containers.knownAmmo_at(ammoInfo), amountBuf}) ) )
-                { 
-                    log_error("Could not add AssociatedAmmo to stockpile from file [" + dirEntry.path().string() + ']');
-                    continue;
-                }
+
+            AmountOfAmmo amountOfAmmoBuffer(*ammoMetadataPtr);
+            amountOfAmmoBuffer.addAmount(amountBuf);
+
+            if(!containers.ammoStockpile_add(amountOfAmmoBuffer)) { 
+                log_error("Could not add AssociatedAmmo to stockpile from file [" + dirEntry.path().string() + ']');
+                continue;
             }
 		}
 		catch(std::exception& e){
@@ -227,7 +222,7 @@ bool Framework::readAmmo(const std::string& dir) {
     
 	return true;
 }
-bool Framework::readEvents(const std::string& dir) {
+bool Framework::readDir_Events(const std::string& dir) {
     if(!std::filesystem::exists(dir))
         return false;
 
@@ -236,49 +231,83 @@ bool Framework::readEvents(const std::string& dir) {
 		try{
             std::ifstream inputFile{ dirEntry.path(), std::ios::in };
             json j = json::parse(inputFile);
+            json eventInfoJson = j.at("eventInfo");
 
-            Event eventBuf { EventMetadata {j.at("eventInfo").template get<ShooterCentral::EventMetadata>() } };
+            ObjectBuffers::EventMetadata eventInfoBuffer;
+            FileIO::read_EventMetadata(eventInfoJson, eventInfoBuffer);
 
+            // Convert buffer to eventMetadata
+            Location location { eventInfoBuffer.location };
+            if(!containers.getLocations().contains(location)) {
+                if(!containers.locations_add(location)){
+                    log_error("Could not add Location when reading Event from file [" + dirEntry.path().string() + ']');
+                    continue;
+                }  
+            }
+            EventType eventType { eventInfoBuffer.eventType };
+            if(!containers.getEventTypes().contains(eventType)) {
+                if(!containers.eventTypes_add(eventType)){
+                    log_error("Could not add EventType when reading Event from file [" + dirEntry.path().string() + ']');
+                    continue;
+                }  
+            }
+
+            const EventMetadata eventInfo { 
+                .notes      = eventInfoBuffer.notes,
+                .date       = std::chrono::floor<std::chrono::days>(stringToTimepoint(eventInfoBuffer.date)),
+                .location   = *containers.getLocations().at(location),
+                .eventType  = *containers.getEventTypes().at(eventType)
+            };
+
+            Event eventBuf { eventInfo };
+                
             // Go over all guns used
 	        for (auto& gunElm : j.at("gunsUsed").items()) {
-                GunMetadata gunInfoBuf  {gunElm.value().at("gunInfo").template get<ShooterCentral::GunMetadata>() };
+
+                ObjectBuffers::GunMetadata gunInfoBuffer;
+                FileIO::read_GunMetadata(gunElm.value().at("gunInfo"), gunInfoBuffer);
                 
                 // Add to known Guns
-                if(!containers.getKnownGuns().contains(gunInfoBuf)){
-                    if(!containers.knownGuns_add(std::make_shared<GunMetadata>(gunInfoBuf))){
-                        log_error("Could not insert GunMetadata when reading Event from file [" + dirEntry.path().string() + ']');
-                        continue;
-                    }
+                const auto& [gunMetadataPtr, addResult] {containers.knownGuns_add(gunInfoBuffer)};
+
+                if(!addResult){
+                    log_error("Could not insert GunMetadata when reading Event from file [" + dirEntry.path().string() + ']');
+                    continue;
                 }
 
                 // Get all ammo used for the gun
-                GunAndAmmo gunAndAmmoBuf {containers.knownGuns_at(gunInfoBuf)};
-                for(auto& ammoElm : gunElm.value().at("ammoUsed").items()){
-                    AmmoMetadata infoBuf {ammoElm.value().at("ammoInfo").template get<ShooterCentral::AmmoMetadata>() };
+                GunAndAmmo gunAndAmmoBuf {*gunMetadataPtr};
 
-                    if(!containers.getKnownAmmo().contains(infoBuf)){
-                        if(!containers.knownAmmo_add(std::make_shared<AmmoMetadata>(infoBuf))){
-                            log_error("Could not insert AmmoMetadata when reading Event from file [" + dirEntry.path().string() + ']');
-                            continue;
-                        }
+                for(auto& ammoElm : gunElm.value().at("ammoUsed").items()){
+                    ObjectBuffers::AmmoMetadata ammoInfoBuffer;
+                    FileIO::read_AmmoMetadata(ammoElm.value().at("ammoInfo"), ammoInfoBuffer);
+
+                    const auto& [ammoMetadataPtr, addSuccessful] { containers.knownAmmo_add(ammoInfoBuffer) };
+
+                    if(!addSuccessful){
+                        log_error("Could not add AmmoMetadata when reading Event from file [" + dirEntry.path().string() + ']');
+                        continue;
                     }
 
                     int amountBuf { 0 };
                     ammoElm.value().at("amount").get_to(amountBuf);
 
-                    if(!gunAndAmmoBuf.addAmmoUsed(AmountOfAmmo{containers.knownAmmo_at(infoBuf), amountBuf})) {
-                        log_error(std::format("Could not add AmountOfAmmo [{}] to Gun [{}] when reading Event from file [{}]", infoBuf.name, gunInfoBuf.name, dirEntry.path().string()));
+                    AmountOfAmmo amountOfAmmoBuffer{*ammoMetadataPtr};
+                    amountOfAmmoBuffer.addAmount(amountBuf);
+
+                    if(!gunAndAmmoBuf.addAmmoUsed(amountOfAmmoBuffer)) {
+                        log_error(std::format("Could not add AmountOfAmmo [{}] to Gun [{}] when reading Event from file [{}]", ammoMetadataPtr->name, gunMetadataPtr->name, dirEntry.path().string()));
                         continue;
                     }
                 } // End of all Ammo elements
 
                 if(!eventBuf.addGun(gunAndAmmoBuf)){
-                    log_error(std::format("Could not add Gun [{}] when reading Event from file [{}]", gunInfoBuf.name, dirEntry.path().string()));
+                    log_error(std::format("Could not add Gun [{}] when reading Event from file [{}]", gunMetadataPtr->name, dirEntry.path().string()));
                     continue;
                 }
 	        } // End of all Gun elements
 
-            if(!containers.events_add(std::make_shared<Event>(eventBuf))){
+            if(!containers.events_add(eventBuf)){
                 log_error(std::format("Could not add Event to containers. Event file [{}]", dirEntry.path().string()));
                 continue;
             }
@@ -290,7 +319,7 @@ bool Framework::readEvents(const std::string& dir) {
     
 	return true;
 }
-bool Framework::readDescriptors(const std::string& dir){
+bool Framework::readFile_Descriptors(const std::string& dir){
     if(!std::filesystem::exists(dir))
         return false;
 
@@ -306,33 +335,53 @@ bool Framework::readDescriptors(const std::string& dir){
 
             // Parse all items here
 	        for (auto& elm : j.at("manufacturers").items()) {
-                std::string nameBuf { elm.value() };
-                if(!containers.manufacturers_add( Manufacturer{nameBuf} ))
-                    log_error(std::format("Could not add Manufacturer [{}]", nameBuf));
+                Manufacturer buffer { elm.value() };
+
+                if(containers.getManufacturers().contains(buffer))
+                    continue;
+
+                if(!containers.manufacturers_add( buffer ))
+                    log_error(std::format("Could not add Manufacturer [{}]", buffer.getName()));
             }
 
 	        for (auto& elm : j.at("cartridges").items()) {
-                std::string nameBuf { elm.value() };
-                if(!containers.cartridges_add( Cartridge {nameBuf} ))
-                    log_error(std::format("Could not add Cartridge [{}]", nameBuf));
+                Cartridge buffer { elm.value() };
+
+                if(containers.getCartridges().contains(buffer))
+                    continue;
+
+                if(!containers.cartridges_add(buffer))
+                    log_error(std::format("Could not add Cartridge [{}]", buffer.getName()));
             }
 
             for (auto& elm : j.at("locations").items()) {
-                std::string nameBuf { elm.value() };
-                if(!containers.locations_add( Location {nameBuf} ))
-                    log_error(std::format("Could not add Location [{}]", nameBuf));
+                Location buffer { elm.value() };
+
+                if(containers.getLocations().contains(buffer))
+                    continue;
+
+                if(!containers.locations_add(buffer))
+                    log_error(std::format("Could not add Location [{}]", buffer.getName()));
             }
 
             for (auto& elm : j.at("eventTypes").items()) {
-                std::string nameBuf { elm.value() };
-                if(!containers.eventTypes_add( EventType {nameBuf} ))
-                    log_error(std::format("Could not add EventType [{}]", nameBuf));
+                EventType buffer { elm.value() };
+
+                if(containers.getEventTypes().contains(buffer))
+                    continue;
+
+                if(!containers.eventTypes_add(buffer))
+                    log_error(std::format("Could not add EventType [{}]", buffer.getName()));
             }
 
             for (auto& elm : j.at("weaponTypes").items()) {
-                std::string nameBuf { elm.value() };
-                if(!containers.weaponTypes_add( WeaponType {nameBuf} ))
-                    log_error(std::format("Could not add WeaponType [{}]", nameBuf));
+                WeaponType buffer { elm.value() };
+
+                if(containers.getWeaponTypes().contains(buffer))
+                    continue;
+
+                if(!containers.weaponTypes_add(buffer))
+                    log_error(std::format("Could not add WeaponType [{}]", buffer.getName()));
             }
           
 		} // End of all file elements
@@ -343,7 +392,7 @@ bool Framework::readDescriptors(const std::string& dir){
     
 	return true;
 }
-bool Framework::writeDescriptors(std::string directory) {
+bool Framework::writeFile_Descriptors(std::string directory) {
     using LAS::json;
 
     if(directory.empty())
@@ -356,24 +405,24 @@ bool Framework::writeDescriptors(std::string directory) {
 
 
     json manufacturersArray = json::array();
-    for(const auto& man : containers.getManufacturers() )
-        manufacturersArray.emplace_back(man);
+    for(const auto& [info, ptr] : containers.getManufacturers() )
+        manufacturersArray.emplace_back(*ptr);
 
     json cartridgesArray = json::array();
-    for(const auto cart : containers.getCartridges() )
-        cartridgesArray.emplace_back(cart);
+    for(const auto& [info, ptr] : containers.getCartridges() )
+        cartridgesArray.emplace_back(*ptr);
 
     json locationsArray = json::array();
-    for(const auto loc : containers.getLocations() )
-        locationsArray.emplace_back(loc);
+    for(const auto& [info, ptr] : containers.getLocations() )
+        locationsArray.emplace_back(*ptr);
 
     json eventTypesArray = json::array();
-    for(const auto& et : containers.getEventTypes() )
-        eventTypesArray.emplace_back(et);
+    for(const auto& [info, ptr] : containers.getEventTypes() )
+        eventTypesArray.emplace_back(*ptr);
 
     json weaponTypesArray = json::array();
-    for(const auto& wt : containers.getWeaponTypes() )
-        weaponTypesArray.emplace_back(wt);
+    for(const auto& [info, ptr] : containers.getWeaponTypes() )
+        weaponTypesArray.emplace_back(*ptr);
 
 
     json j;
@@ -399,14 +448,11 @@ void Framework::buildAssociations() {
 
         // Go through every GunAndAmmo in the event
         for(const GunAndAmmo& gunAndAmmo : event.getGunsUsed() ){
-            if(!gunAndAmmo)
-                continue;
-
-            const GunMetadata& gunInfo { gunAndAmmo.getGun() };
+            const GunMetadata& gunInfo { gunAndAmmo.getGunInfo() };
 
             // Add AssociatedGun object
             if(!containers.gunsInArmory_contains(gunInfo)){
-                if(!containers.gunsInArmory_add(std::make_shared<AssociatedGun>(containers.knownGuns_at(gunInfo)))){ 
+                if(!containers.gunsInArmory_add(AssociatedGun{*containers.knownGuns_at(gunInfo)})){ 
                     log_error("Could not add AssociatedGun to armory when associating Event");
                     continue;
                 }
@@ -417,17 +463,16 @@ void Framework::buildAssociations() {
             assocGun.addEvent(eventPtr);
  
             // Go through every Ammo used for the Gun
-            for(auto amountOfAmmoItr { gunAndAmmo.cbegin() }; amountOfAmmoItr != gunAndAmmo.cend(); ++amountOfAmmoItr){
-                const AmmoMetadata& ammoInfo { amountOfAmmoItr->getAmmo()};
-
-                // Add AssociatedAmmo object ONLY IF it is set to active
-                if(!ammoInfo.isActive)
-                    continue;
+            for(const auto& amountOfAmmo : gunAndAmmo.getAmmoUsedList() ){
+                const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo()};
 
                 if(!containers.ammoStockpile_contains(ammoInfo)){
-                    if(!containers.ammoStockpile_add(
-                                std::make_shared<AssociatedAmmo>(AssociatedAmmo{AmountOfAmmo{containers.knownAmmo_at(ammoInfo), 0} }))) // Do not add ammo amount since the amount here is for what was used during the Event
-                    { 
+
+                    // Do not add ammo amount since the amount here is for what was used during the Event
+                    AmountOfAmmo amountBuf {*containers.knownAmmo_at(ammoInfo), 0};
+                    AssociatedAmmo assocAmmoBuffer {amountBuf};
+
+                    if(!containers.ammoStockpile_add(assocAmmoBuffer)) {
                         log_error("Could not add AssociatedAmmo to stockpile when associating Event");
                         continue;
                     }
@@ -568,12 +613,12 @@ std::string makeFileName (std::string directory, const AmmoMetadata& ammo) {
 
     return fileName.str();
 }
-std::string makeFileName(std::string directory, const Event& event){
+std::string makeFileName(std::string directory, const EventMetadata& event){
     // Output fileName
     std::ostringstream fileName;
-    fileName << directory << std::format("{:%Y-%m-%d}", event.getDate()) << '_';
+    fileName << directory << std::format("{:%Y-%m-%d}", event.date) << '_';
 
-    for(const auto& c : event.getEventType().getName()){     // Remove spaces, make sure alnum
+    for(const auto& c : event.eventType.getName()){     // Remove spaces, make sure alnum
         if(c == ' ' || c == '\t')
             fileName << '-';
         else if(isalnum(c))
@@ -582,7 +627,7 @@ std::string makeFileName(std::string directory, const Event& event){
 
     fileName << '_';
 
-    for(const auto& c : event.getLocation().getName()){     // Remove spaces, make sure alnum
+    for(const auto& c : event.location.getName()){     // Remove spaces, make sure alnum
         if(c == ' ' || c == '\t')
             fileName << '-';
         else if(isalnum(c))
@@ -627,7 +672,7 @@ bool write(std::string directory, const AmountOfAmmo& data) {
     LAS::json j = data;
 
     // Write to file
-    std::ofstream file{ makeFileName(directory, data.getAmmo()) };
+    std::ofstream file{ makeFileName(directory, data.getAmmoInfo()) };
     file << std::setw(1) << std::setfill('\t') << j;
     file.close();
    
@@ -652,13 +697,13 @@ bool write (std::string directory, const Event& data){
 
         // Add ammo used to gun
         json ammoUsed = json::array();
-        for(auto itr2 { gunUsed.cbegin() }; itr2 != gunUsed.cend(); ++itr2)
-            ammoUsed.emplace_back(*itr2);
+        for(const auto& amountOfAmmo : gunUsed.getAmmoUsedList())
+            ammoUsed.emplace_back(amountOfAmmo);
         
         // Make json for the gun
         json buffer;
         buffer = json {
-            { "gunInfo",  gunUsed.getGun() },
+            { "gunInfo",  gunUsed.getGunInfo() },
             { "ammoUsed", ammoUsed }
         };
         
@@ -666,7 +711,7 @@ bool write (std::string directory, const Event& data){
     }
     
     std::ostringstream timeBuf;
-    timeBuf << std::chrono::system_clock::time_point{std::chrono::sys_days{data.getDate()}};
+    timeBuf << std::chrono::system_clock::time_point{std::chrono::sys_days{data.getInfo().date}};
     
     // Make JSON
     eventJson = json{
@@ -674,13 +719,35 @@ bool write (std::string directory, const Event& data){
         { "gunsUsed",   gunsArray      }
     };
 
-    std::ofstream file{makeFileName(directory, data)};
+    std::ofstream file{makeFileName(directory, data.getInfo())};
     file << std::setw(1) << std::setfill('\t') << eventJson;
     file.close();
    
     return true;
 
 }
+void read_GunMetadata   (const json& j, ObjectBuffers::GunMetadata& buffer){
+    using LAS::json;
+
+    j.at("name").get_to(buffer.name);
+    j.at("weaponType").get_to(buffer.weaponType);
+    j.at("cartridge").get_to(buffer.cartridge);
+    j.at("isActive").get_to(buffer.isActive);
+}
+void read_AmmoMetadata  (const json& j, ObjectBuffers::AmmoMetadata& buffer){
+    j.at("name").get_to(buffer.name);
+    j.at("manufacturer").get_to(buffer.manufacturer);
+    j.at("cartridge").get_to(buffer.cartridge);
+    j.at("grain").get_to(buffer.grainWeight);
+    j.at("isActive").get_to(buffer.isActive);
+}
+void read_EventMetadata (const json& j, ObjectBuffers::EventMetadata& buffer){
+    j.at("date").get_to(buffer.date);
+    j.at("eventType").get_to(buffer.eventType);
+    j.at("location").get_to(buffer.location);
+    j.at("notes").get_to(buffer.notes);
+}
+
 
 } // End FileIO namespace
 
