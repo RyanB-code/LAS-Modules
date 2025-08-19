@@ -12,7 +12,7 @@
 #include <iostream>
 
 
-namespace ShooterCentral::View {
+namespace ShooterCentral::UI {
 
     enum class Screen {
         HOME,
@@ -44,51 +44,67 @@ namespace ShooterCentral::View {
         GUN_TYPE
     };
 
-    static const Cartridge EMPTY_CARTRIDGE { "NULL" };
-
-    struct ScreenData_Home {
-        bool showGuns       { true };
-        bool showEvents     { true };
-        bool showStockpile  { true };
-
-        std::weak_ptr<Event>            selectedEvent;
-        std::weak_ptr<AssociatedGun>    selectedGun;
-        Cartridge                       selectedCartridge { EMPTY_CARTRIDGE };
-    };
-    struct ScreenData_View {
-        Category category { Category::NONE }; 
-
-        std::weak_ptr<Event>            selectedEvent;
-        std::weak_ptr<AssociatedAmmo>   selectedAmmo;
-        std::weak_ptr<AssociatedGun>    selectedGun;
-    };
-    struct ScreenData_Add {
-        Category category   { Category::NONE }; 
-        SubItem  subItem    { SubItem::NONE };
-    };
-    struct ScreenData_Edit {
-        Category category { Category::NONE }; 
-
-        std::weak_ptr<Event>            selectedEvent;
-        std::weak_ptr<AssociatedAmmo>   selectedAmmo;
-        std::weak_ptr<AssociatedGun>    selectedGun;
+    // To iterate over categories
+    static constexpr std::array<Category, static_cast<size_t>(Category::SIZE)> CATEGORY_LIST {
+        Category::NONE,
+        Category::GUNS,
+        Category::EVENTS,
+        Category::STOCKPILE
     };
 
 
-    class GUI {
+    static const Cartridge  EMPTY_CARTRIDGE { "NULL" };
+
+    // Holds data for what is shown that remains between frames
+    namespace ScreenData{
+        struct Home{
+            bool showGuns       { true };
+            bool showEvents     { true };
+            bool showStockpile  { true };
+
+            std::weak_ptr<Event>            selectedEvent;
+            std::weak_ptr<AssociatedGun>    selectedGun;
+//            Cartridge&                      selectedCartridge { };
+        };
+        struct View {
+            Category category { Category::NONE }; 
+
+            std::weak_ptr<Event>            selectedEvent;
+            std::weak_ptr<GunMetadata>      selectedEvent_selectedGunUsed;
+            std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+            std::weak_ptr<AssociatedGun>    selectedGun;
+
+            std::string categoryComboBoxText { };
+        };
+        struct Add {
+            Category category   { Category::NONE }; 
+            SubItem  subItem    { SubItem::NONE };
+        };
+        struct Edit {
+            Category category { Category::NONE }; 
+
+            std::weak_ptr<Event>            selectedEvent;
+            std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+            std::weak_ptr<AssociatedGun>    selectedGun;
+        };
+    }
+
+
+
+    class UIController {
     public:
-        GUI();
-        ~GUI();
+        UIController();
+        ~UIController();
 
         void draw(const Containers& containers, const UnsavedChanges& unsavedChanges);
 
     private:
         Screen currentScreen { Screen::HOME };
 
-        ScreenData_Home homeData    { };
-        ScreenData_View viewData    { };
-        ScreenData_Add  addData     { };
-        ScreenData_Edit editData    { };
+        ScreenData::Home homeData    { };
+        ScreenData::View viewData    { };
+        ScreenData::Add  addData     { };
+        ScreenData::Edit editData    { };
 
 
         void resetAllScreens();
@@ -97,48 +113,73 @@ namespace ShooterCentral::View {
         void resetGuns();
         void resetAmmo();
         void resetEvents();
-
     };
 
+
+    namespace Home {
+        void main                               (const Containers& containers, ScreenData::Home& data, const UnsavedChanges& changes);
+
+        void gunWindow                          (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
+        void gunWindow_selectedGunInformation   (std::shared_ptr<AssociatedGun> selected);
+        void eventsWindow                       (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
+        void stockpileWindow                    (const std::map<Cartridge, int>& cartridgeList, const Cartridge& selected);
+    }
+
+    namespace View {
+        void main                           (const Containers& containers, ScreenData::View& data);
+
+        void gunTab                         (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, 
+                                             std::weak_ptr<AssociatedGun>& selected );
+        void gunTab_selectedGunInformation  (std::shared_ptr<AssociatedGun> selected);
+        void gunTab_eventsWindow            (std::shared_ptr<AssociatedGun> selected);
+        void gunTab_ammoUsedWindow          (std::shared_ptr<AssociatedGun> selected);
+
+        void eventsTab                          (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
+        void eventsTab_selectedEventInformation (std::shared_ptr<Event> selected);
+        void eventsTab_gunsUsed                 (std::shared_ptr<Event> selected);
+
+        void stockpileTab   (const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
+                             const std::set<Cartridge>& cartridgeList,
+                             std::weak_ptr<AssociatedAmmo>& selected
+                            );
+    }
+
+    // Helper functions
     void centerNextItemX(float x);
     void centerNextItemY(float y);
 
-    void centerText(const std::string& text);
-    void centerTextDisabled(const std::string& text);
-    bool centerButton(const std::string& text, ImVec2 size);
-
-    void draw_Home      (const Containers& containers, ScreenData_Home& data, const UnsavedChanges& changes);
-    void draw_HomeGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
-    void draw_HomeGuns_GunInformation(std::shared_ptr<AssociatedGun> gun);
-    void draw_HomeEvents(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
-    void draw_HomeStockpile(const std::map<Cartridge, int>& amountPerCartridgeList, Cartridge& selectedCartridge);
-
-    void draw_View      (const Containers& containers, ScreenData_View& data);
-    void draw_ViewGuns  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
-    void draw_ViewGuns_Details      (std::shared_ptr<AssociatedGun> selected);
-    void draw_ViewGuns_Events       (std::shared_ptr<AssociatedGun> selected);
-    void draw_ViewGuns_AmmoUsed     (std::shared_ptr<AssociatedGun> selected);
-
-    void draw_ViewEvents            (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
-    void draw_ViewEvents_Details    (std::shared_ptr<Event> selected);
-    void draw_ViewEvents_GunsUsed   (std::shared_ptr<Event> selected);
+    void centerText         (const std::string& text);
+    void centerTextDisabled (const std::string& text);
+    bool centerButton       (const std::string& text, ImVec2 size);
 
 
-    void draw_SelectableGunTable(   const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, 
-                                    std::weak_ptr<AssociatedGun>& selected,
-                                    ImVec2 size 
-                                );
-    void draw_SelectableEventGunTable(   const std::array<GunAndAmmo, Event::MAX_NUM_GUNS>& list, 
-                                    GunAndAmmo& selected,
-                                    ImVec2 size 
-                                );
-    void draw_EventAmmoUsedTable(const GunAndAmmo& selected, ImVec2 size);
-   
-    void draw_SelectableEventTable( const std::map<EventMetadata, std::shared_ptr<Event>>& events, 
-                                    std::weak_ptr<Event>& selected,
-                                    ImVec2 size
-                                );
-    void draw_AmountOfAmmoTable(  const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, ImVec2 size);
+    // Table drawing
+    namespace Tables{
+        void selectable_Cartridges(
+                const std::map<Cartridge, int>& cartridges, 
+                Cartridge& selectedCartridge,
+                ImVec2 size
+            );
+        void selectable_Guns(
+                const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, 
+                std::weak_ptr<AssociatedGun>& selected,
+                ImVec2 size 
+            );
+        void selectable_Events( 
+                const std::map<EventMetadata, std::shared_ptr<Event>>& events, 
+                std::weak_ptr<Event>& selected,
+                ImVec2 size
+            );
+        void selectable_EventGunsUsed(
+                const std::vector<GunAndAmmo>& list, 
+                GunAndAmmo& selected,
+                ImVec2 size     
+            );
+
+
+        void eventAmmoUsed  (const GunAndAmmo& selected, ImVec2 size);
+        void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, ImVec2 size);
+    }
 
 
 }
