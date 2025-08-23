@@ -58,7 +58,6 @@ namespace ShooterCentral{
         bool writeFile_Descriptors   (std::string dirrectory);
 
         void buildAssociations();
-        void addItemDescriptors(); // Things like Cartridge, Manufacuter, Location, etc
     };
 
     namespace Setup {
@@ -78,7 +77,5 @@ namespace ShooterCentral{
         void read_GunMetadata   (const LAS::json& j, ObjectBuffers::GunMetadata& buffer);
         void read_AmmoMetadata  (const LAS::json& j, ObjectBuffers::AmmoMetadata& buffer);
         void read_EventMetadata (const LAS::json& j, ObjectBuffers::EventMetadata& buffer);
- 
-
     }
 }
