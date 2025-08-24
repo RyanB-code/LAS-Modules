@@ -18,16 +18,16 @@ namespace ShooterCentral {
 
         const AmountOfAmmo& getAmountOfAmmo() const;
 
-        bool addGun     (std::shared_ptr<const GunMetadata> gun); // If key already exists, returns false since data is not overwritten
+        bool addGun     (std::shared_ptr<GunMetadata> gun); // If key already exists, returns false since data is not overwritten
         bool removeGun  (const GunMetadata& gun);
         bool hasGun     (const GunMetadata& gun) const;
 
         int totalGuns   () const;
 
-        const std::map<GunMetadata, std::shared_ptr<const GunMetadata>>& getGunsUsed() const;
+        const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& getGunsUsed() const;
    private:
-        AmountOfAmmo                                                amountOfAmmo;    
-        std::map<GunMetadata, std::shared_ptr<const GunMetadata>>   gunsAssociated    { };
+        AmountOfAmmo                                          amountOfAmmo;    
+        std::map<GunMetadata, std::shared_ptr<GunMetadata>>   gunsAssociated    { };
     };
 
 
@@ -51,13 +51,13 @@ namespace ShooterCentral {
         bool wasUsedInEvent (const EventMetadata& data);
 
         const std::map<AmmoMetadata, AmountOfAmmo>&                     getAmmoUsed()   const;
-        const std::map<EventMetadata, std::shared_ptr<const Event>>&    getEventsUsed() const;
+        const std::map<EventMetadata, std::shared_ptr<Event>>&    getEventsUsed() const;
     private:
         int totalRoundCount { 0 };
 
         const GunMetadata&                                      gun;
         std::map<AmmoMetadata, AmountOfAmmo>                    ammoUsedList  { };    // Not shared_ptr because the amount is amount of rounds shot, not the amount in the stockpile 
-        std::map<EventMetadata, std::shared_ptr<const Event>>   eventsUsed    { };
+        std::map<EventMetadata, std::shared_ptr<Event>>   eventsUsed    { };
     };
 
 }

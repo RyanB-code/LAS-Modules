@@ -8,7 +8,7 @@ AssociatedAmmo::AssociatedAmmo(AmountOfAmmo setAmountOfAmmo) : amountOfAmmo {set
 AssociatedAmmo::~AssociatedAmmo() {
 
 }
-bool AssociatedAmmo::addGun(std::shared_ptr<const GunMetadata> gun) {
+bool AssociatedAmmo::addGun(std::shared_ptr<GunMetadata> gun) {
     if(gunsAssociated.contains(*gun))
         return false;
 
@@ -30,7 +30,7 @@ int AssociatedAmmo::totalGuns() const {
 const AmountOfAmmo& AssociatedAmmo::getAmountOfAmmo() const {
     return amountOfAmmo;
 }
-const std::map<GunMetadata, std::shared_ptr<const GunMetadata>>& AssociatedAmmo::getGunsUsed() const {
+const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& AssociatedAmmo::getGunsUsed() const {
     return gunsAssociated;
 }
 
@@ -123,7 +123,7 @@ int AssociatedGun::totalAmmoTypesUsed() const {
 const std::map<AmmoMetadata, AmountOfAmmo>& AssociatedGun::getAmmoUsed()   const{
     return ammoUsedList;
 }
-const std::map<EventMetadata, std::shared_ptr<const Event>>& AssociatedGun::getEventsUsed() const{
+const std::map<EventMetadata, std::shared_ptr<Event>>& AssociatedGun::getEventsUsed() const{
     return eventsUsed;
 }
 
