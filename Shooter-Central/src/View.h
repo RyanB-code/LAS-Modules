@@ -64,15 +64,24 @@ namespace ShooterCentral::UI {
 
             std::weak_ptr<Event>            selectedEvent;
             std::weak_ptr<AssociatedGun>    selectedGun;
-//            Cartridge&                      selectedCartridge { };
+            std::weak_ptr<Cartridge>        selectedCartridge;
         };
         struct View {
+            struct EventTab {
+                std::weak_ptr<Event>            selectedEvent;
+                std::weak_ptr<GunMetadata>      selectedGun;
+            };
+            struct GunTab{
+                std::weak_ptr<AssociatedGun>    selectedGun;
+                std::weak_ptr<Event>            selectedEvent;
+            };
+
             Category category { Category::NONE }; 
 
-            std::weak_ptr<Event>            selectedEvent;
-            std::weak_ptr<GunMetadata>      selectedEvent_selectedGunUsed;
-            std::weak_ptr<AssociatedAmmo>   selectedAmmo;
-            std::weak_ptr<AssociatedGun>    selectedGun;
+            EventTab eventTab { };
+            GunTab   gunTab { };
+
+            std::weak_ptr<AssociatedAmmo>       selectedAmmo;
 
             std::string categoryComboBoxText { };
         };
@@ -122,20 +131,19 @@ namespace ShooterCentral::UI {
         void gunWindow                          (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
         void gunWindow_selectedGunInformation   (std::shared_ptr<AssociatedGun> selected);
         void eventsWindow                       (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
-        void stockpileWindow                    (const std::map<Cartridge, int>& cartridgeList, const Cartridge& selected);
+        void stockpileWindow                    (const std::map<Cartridge, int>& cartridgeList, std::weak_ptr<Cartridge> selected);
     }
 
     namespace View {
         void main                           (const Containers& containers, ScreenData::View& data);
 
-        void gunTab                         (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, 
-                                             std::weak_ptr<AssociatedGun>& selected );
+        void gunTab                         (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, ScreenData::View::GunTab& data );
+        void gunTab_eventsWindow            (std::shared_ptr<AssociatedGun> selectedGun, std::weak_ptr<Event>& selectedEvent);
         void gunTab_selectedGunInformation  (std::shared_ptr<AssociatedGun> selected);
-        void gunTab_eventsWindow            (std::shared_ptr<AssociatedGun> selected);
         void gunTab_ammoUsedWindow          (std::shared_ptr<AssociatedGun> selected);
 
-        void eventsTab                          (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
-        void eventsTab_selectedEventInformation (std::shared_ptr<Event> selected);
+        void eventsTab                          (const std::map<EventMetadata, std::shared_ptr<Event>>& events, ScreenData::View::EventTab& data);
+        void eventsTab_selectedEventInformation (std::shared_ptr<Event> selectedEvent, std::weak_ptr<GunAndAmmo> selectedGun);
         void eventsTab_gunsUsed                 (std::shared_ptr<Event> selected);
 
         void stockpileTab   (const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
@@ -157,7 +165,7 @@ namespace ShooterCentral::UI {
     namespace Tables{
         void selectable_Cartridges(
                 const std::map<Cartridge, int>& cartridges, 
-                Cartridge& selectedCartridge,
+                std::weak_ptr<Cartridge>& selected,
                 ImVec2 size
             );
         void selectable_Guns(
