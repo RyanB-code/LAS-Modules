@@ -53,8 +53,6 @@ namespace ShooterCentral::UI {
     };
 
 
-    static const Cartridge  EMPTY_CARTRIDGE { "NULL" };
-
     // Holds data for what is shown that remains between frames
     namespace ScreenData{
         struct Home{
@@ -129,7 +127,7 @@ namespace ShooterCentral::UI {
         void main                               (const Containers& containers, ScreenData::Home& data, const UnsavedChanges& changes);
 
         void gunWindow                          (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
-        void gunWindow_selectedGunInformation   (std::shared_ptr<AssociatedGun> selected);
+        void gunWindow_selectedGunInformation   (const AssociatedGun& gun);
         void eventsWindow                       (const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& selected );
         void stockpileWindow                    (const std::map<Cartridge, int>& cartridgeList, std::weak_ptr<Cartridge> selected);
     }
@@ -138,13 +136,13 @@ namespace ShooterCentral::UI {
         void main                           (const Containers& containers, ScreenData::View& data);
 
         void gunTab                         (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, ScreenData::View::GunTab& data );
-        void gunTab_eventsWindow            (std::shared_ptr<AssociatedGun> selectedGun, std::weak_ptr<Event>& selectedEvent);
-        void gunTab_selectedGunInformation  (std::shared_ptr<AssociatedGun> selected);
-        void gunTab_ammoUsedWindow          (std::shared_ptr<AssociatedGun> selected);
+        void gunTab_eventsWindow            (const AssociatedGun& gun, std::weak_ptr<Event>& selectedEvent);
+        void gunTab_selectedGunInformation  (const AssociatedGun& gun);
+        void gunTab_ammoUsedWindow          (const AssociatedGun& gun);
 
         void eventsTab                          (const std::map<EventMetadata, std::shared_ptr<Event>>& events, ScreenData::View::EventTab& data);
-        void eventsTab_selectedEventInformation (std::shared_ptr<Event> selectedEvent, std::weak_ptr<GunAndAmmo> selectedGun);
-        void eventsTab_gunsUsed                 (std::shared_ptr<Event> selected);
+        void eventsTab_selectedEventInformation (const Event& event);
+        void eventsTab_gunsUsed                 (const Event& event, GunMetadata& selectedGun);
 
         void stockpileTab   (const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
                              const std::set<Cartridge>& cartridgeList,
@@ -180,7 +178,7 @@ namespace ShooterCentral::UI {
             );
         void selectable_EventGunsUsed(
                 const std::vector<GunAndAmmo>& list, 
-                GunAndAmmo& selected,
+                GunMetadata& selected,
                 ImVec2 size     
             );
 

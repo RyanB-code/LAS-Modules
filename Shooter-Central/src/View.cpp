@@ -126,20 +126,18 @@ void Home::gunWindow  (const std::map<Cartridge, std::map<GunMetadata, std::shar
     ImGui::Spacing();
     ImGui::Spacing();
 
-    Home::gunWindow_selectedGunInformation(selected);
-
-    return;
-}
-void Home::gunWindow_selectedGunInformation(std::shared_ptr<AssociatedGun> gunPtr){
 
     ImGui::SeparatorText( "Selected Gun" );
-
-    if(!gunPtr) {
+    if(!selected) {
         centerTextDisabled("Select A Gun For More Information");
         return;
     }
 
-    const AssociatedGun& gun    { *gunPtr };
+    Home::gunWindow_selectedGunInformation(*selected);
+
+    return;
+}
+void Home::gunWindow_selectedGunInformation(const AssociatedGun& gun){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
@@ -403,7 +401,7 @@ void View::gunTab  (const std::map<Cartridge, std::map<GunMetadata, std::shared_
     // Button size
     static const ImVec2 buttonSize { 100, 40 };
 
-    std::shared_ptr selected { data.gunTab.selectedGun };
+    std::shared_ptr selected { data.selectedGun.lock() };
  
     if(ImGui::BeginChild("View Gun Table", topWindowSize, ImGuiChildFlags_Border)){ 
         ImGui::SeparatorText( "Select A Gun" );
@@ -415,7 +413,7 @@ void View::gunTab  (const std::map<Cartridge, std::map<GunMetadata, std::shared_
         if(selected){
             centerNextItemX(buttonSize.x);
             if(ImGui::Button("Deselect", buttonSize)){
-                weakSelected.reset();
+                data.selectedGun.reset();
                 selected = nullptr;
                 reset = true;
             }
@@ -428,8 +426,8 @@ void View::gunTab  (const std::map<Cartridge, std::map<GunMetadata, std::shared_
         if(applyYOffset)
             ImGui::SetCursorPosY(ImGui::GetCursorPos().y + (buttonSize.y * 0.5f) + 2);
 
-        Tables::selectable_Guns(guns, weakSelected, topTableSize);
-        selected = weakSelected.lock();
+        Tables::selectable_Guns(guns, data.selectedGun, topTableSize);
+        selected = data.selectedGun.lock();
         
     }
     ImGui::EndChild();
@@ -438,7 +436,12 @@ void View::gunTab  (const std::map<Cartridge, std::map<GunMetadata, std::shared_
         ImGui::SeparatorText( "Details" );
         ImGui::Spacing();
 
-        View::gunTab_selectedGunInformation(selected);
+        if(!selected){
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to View Detailed Information");
+        }
+        else
+            View::gunTab_selectedGunInformation(*selected);
     }
     ImGui::EndChild();
 
@@ -449,7 +452,12 @@ void View::gunTab  (const std::map<Cartridge, std::map<GunMetadata, std::shared_
         ImGui::SeparatorText( "Events Used" );
         ImGui::Spacing();
 
-        View::gunTab_eventsWindow(selectedGun, data.gunTab.selectedEvent);    
+        if(!selected){
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to View Events");
+        }
+        else
+            View::gunTab_eventsWindow(*selected, data.selectedEvent);    
     }
     ImGui::EndChild();
 
@@ -460,19 +468,17 @@ void View::gunTab  (const std::map<Cartridge, std::map<GunMetadata, std::shared_
         ImGui::SeparatorText( "Ammo Used" );
         ImGui::Spacing();
 
-        View::gunTab_ammoUsedWindow(selected); 
+        if(!selected){
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to Ammo Used");
+        }
+        else
+            View::gunTab_ammoUsedWindow(*selected); 
     }
     ImGui::EndChild();
 
 }
-void View::gunTab_selectedGunInformation(std::shared_ptr<AssociatedGun> selected){
-    if(!selected){
-        centerNextItemY(5);
-        centerTextDisabled("Select a Gun to View Detailed Information");
-        return;
-    }
-
-    AssociatedGun& gun { *selected };
+void View::gunTab_selectedGunInformation(const AssociatedGun& gun){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     centerNextItemX(200);
@@ -492,14 +498,7 @@ void View::gunTab_selectedGunInformation(std::shared_ptr<AssociatedGun> selected
     
     return;
 }
-void View::gunTab_eventsWindow(std::shared_ptr<AssociatedGun> selectedGun, std::weak_ptr<Event>& selectedEvent){
-    if(!selectedGun){
-        centerNextItemY(5);
-        centerTextDisabled("Select a Gun to View Events");
-        return;
-    }
-
-    AssociatedGun& gun { *selected };
+void View::gunTab_eventsWindow(const AssociatedGun& gun, std::weak_ptr<Event>& selectedEvent){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -524,14 +523,7 @@ void View::gunTab_eventsWindow(std::shared_ptr<AssociatedGun> selectedGun, std::
 
     return;
 }
-void View::gunTab_ammoUsedWindow(std::shared_ptr<AssociatedGun> selected){
-    if(!selected){
-        centerNextItemY(5);
-        centerTextDisabled("Select a Gun to Ammo Used");
-        return;
-    }
-
-    AssociatedGun& gun { *selected };
+void View::gunTab_ammoUsedWindow(const AssociatedGun& gun){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -631,7 +623,7 @@ void View::eventsTab(const std::map<EventMetadata, std::shared_ptr<Event>>& even
         if(selected){
             centerNextItemX(buttonSize.x);
             if(ImGui::Button("Deselect", buttonSize)){
-                weakSelected.reset();
+                data.selectedEvent.reset();
                 selected = nullptr;
                 reset = true;
             }
@@ -644,8 +636,8 @@ void View::eventsTab(const std::map<EventMetadata, std::shared_ptr<Event>>& even
         if(applyYOffset)
             ImGui::SetCursorPosY(ImGui::GetCursorPos().y + (buttonSize.y * 0.5f) + 2);
 
-        Tables::selectable_Events(events, weakSelected, topTableSize);
-        selected = weakSelected.lock();
+        Tables::selectable_Events(events, data.selectedEvent, topTableSize);
+        selected = data.selectedEvent.lock();
         
     }
     ImGui::EndChild();
@@ -654,7 +646,12 @@ void View::eventsTab(const std::map<EventMetadata, std::shared_ptr<Event>>& even
         ImGui::SeparatorText( "Details" );
         ImGui::Spacing(); 
 
-        View::eventsTab_selectedEventInformation(selected);
+        if(!selected){
+            centerNextItemY(5);
+            centerTextDisabled("Select an Event to View Detailed Information");
+        }
+        else
+            View::eventsTab_selectedEventInformation(*selected);
     }
     ImGui::EndChild();
 
@@ -665,19 +662,17 @@ void View::eventsTab(const std::map<EventMetadata, std::shared_ptr<Event>>& even
         ImGui::SeparatorText( "Guns Used" );
         ImGui::Spacing(); 
 
-        View::eventsTab_gunsUsed(selected);
+        if(!selected) {
+            centerNextItemY(5);
+            centerTextDisabled("Select an Event to View Detailed Information");
+        }
+        else
+            View::eventsTab_gunsUsed(*selected);
     }
     ImGui::EndChild();
 
 }
-void View::eventsTab_selectedEventInformation(std::shared_ptr<Event> selected){
-    if(!selected) {
-        centerNextItemY(5);
-        centerTextDisabled("Select an Event to View Detailed Information");
-        return;
-    }
-
-    Event& event { *selected };
+void View::eventsTab_selectedEventInformation(const Event& event){
     const EventMetadata& info  { event.getInfo() };
 
     centerNextItemX(400);
@@ -697,18 +692,7 @@ void View::eventsTab_selectedEventInformation(std::shared_ptr<Event> selected){
     
     return;
 }
-void View::eventsTab_gunsUsed(std::shared_ptr<Event> selected){
-    if(!selected) {
-        centerNextItemY(5);
-        centerTextDisabled("Select an Event to View Detailed Information");
-        return;
-    }
-
-    ImGui::Spacing();
-    centerTextDisabled("Select a Gun to View Ammo Used");
-    ImGui::Spacing();
-
-    Event& event { *selected };
+void View::eventsTab_gunsUsed(const Event& event, GunMetadata& selectedGun){
     const EventMetadata& info  { event.getInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -720,10 +704,15 @@ void View::eventsTab_gunsUsed(std::shared_ptr<Event> selected){
     if(tableSize.x > MAX_TABLE_SIZE_X)
         tableSize.x = MAX_TABLE_SIZE_X;
  
-    centerNextItemX(tableSize.x);
-    Tables::selectable_EventGunsUsed(selected->getGunsUsed(), selectedGunAndAmmo, tableSize);
+    ImGui::Spacing();
+    centerTextDisabled("Select a Gun to View Ammo Used");
+    ImGui::Spacing();
 
-    if(!selectedGunAndAmmo)
+    centerNextItemX(tableSize.x);
+
+    Tables::selectable_EventGunsUsed(event.getGunsUsed(), selectedGun, tableSize);
+
+    if(selectedGun == EMPTY_GUN_METADATA)
         return;
 
     ImGui::Spacing();
@@ -975,7 +964,7 @@ void Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std
         ImGui::EndTable();
     }
 }
-void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, GunAndAmmo& selected, ImVec2 size ){
+void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, GunMetadata& selected, ImVec2 size ){
     int row { 0 };
     if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {
         ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
@@ -989,7 +978,7 @@ void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, GunAn
             const GunMetadata& gun {gunAndAmmo.getGunInfo()};
             bool isGunSelected { false };
         
-            if(selected.getGunInfo() == gun)
+            if(selected == gun)
                 isGunSelected = true;
         
             ImGui::PushID(std::to_string(row).c_str());
@@ -1002,7 +991,7 @@ void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, GunAn
                         ImGui::Selectable(gun.weaponType.getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
 
                         if(isGunSelected)
-                            selected = gunAndAmmo;
+                            selected = gun;
 
                         break;
                     case 1:
