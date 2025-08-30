@@ -195,7 +195,7 @@ namespace ShooterCentral::UI {
             );
 
 
-        void eventAmmoUsed  (const GunAndAmmo& selected, ImVec2 size);
+        void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed, ImVec2 size);
         void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, ImVec2 size);
     }
 
