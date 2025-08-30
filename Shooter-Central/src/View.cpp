@@ -223,7 +223,7 @@ void Home::eventsWindow(const std::map<EventMetadata, std::shared_ptr<Event>>& e
     }
     ImGui::EndChild();
 }
-void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, std::weak_ptr<Cartridge> weakSelected){
+void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartridge& selected){
 
     // Size the table
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -237,7 +237,7 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, std::w
 
     ImGui::Spacing();
     centerNextItemX(tableSize.x);
-    Tables::selectable_Cartridges(cartridgeList, weakSelected, tableSize);
+    Tables::selectable_Cartridges(cartridgeList, selected, tableSize);
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -251,10 +251,7 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, std::w
 
     ImGui::SeparatorText( "Selected Cartridge" );
 
-
-    std::shared_ptr selected { weakSelected.lock() };
-
-    if(!selected) {
+    if(selected == EMPTY_CARTRIDGE) {
         centerText("Select A Cartridge For More Information");
         return;
     }
@@ -546,7 +543,10 @@ void View::gunTab_ammoUsedWindow(const AssociatedGun& gun){
     return;
 
 }
-void View::eventsTab(const std::map<EventMetadata, std::shared_ptr<Event>>& events, ScreenData::View::EventTab& data ){
+void View::eventsTab(
+        const std::map<EventMetadata, std::shared_ptr<Event>>& events, 
+        ScreenData::View::EventTab& data 
+){
     static constexpr float MIN_WIN_BOTTOM_SIZE_X { 400 };
     static constexpr float MIN_WIN_BOTTOM_SIZE_Y { 600 };
 
@@ -667,7 +667,7 @@ void View::eventsTab(const std::map<EventMetadata, std::shared_ptr<Event>>& even
             centerTextDisabled("Select an Event to View Detailed Information");
         }
         else
-            View::eventsTab_gunsUsed(*selected);
+            View::eventsTab_gunsUsed(*selected, data.selectedGun);
     }
     ImGui::EndChild();
 
@@ -692,7 +692,7 @@ void View::eventsTab_selectedEventInformation(const Event& event){
     
     return;
 }
-void View::eventsTab_gunsUsed(const Event& event, GunMetadata& selectedGun){
+void View::eventsTab_gunsUsed(const Event& event, std::reference_wrapper<const GunAndAmmo>& selectedGunReference){
     const EventMetadata& info  { event.getInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -703,16 +703,15 @@ void View::eventsTab_gunsUsed(const Event& event, GunMetadata& selectedGun){
         tableSize.x = MIN_TABLE_SIZE_X;
     if(tableSize.x > MAX_TABLE_SIZE_X)
         tableSize.x = MAX_TABLE_SIZE_X;
- 
+
     ImGui::Spacing();
     centerTextDisabled("Select a Gun to View Ammo Used");
     ImGui::Spacing();
 
     centerNextItemX(tableSize.x);
+    Tables::selectable_EventGunsUsed(event.getGunsUsed(), selectedGunReference, tableSize);
 
-    Tables::selectable_EventGunsUsed(event.getGunsUsed(), selectedGun, tableSize);
-
-    if(selectedGun == EMPTY_GUN_METADATA)
+    if(selectedGunReference.get().getGunInfo() == EMPTY_GUN_AND_AMMO.getGunInfo())
         return;
 
     ImGui::Spacing();
@@ -720,7 +719,7 @@ void View::eventsTab_gunsUsed(const Event& event, GunMetadata& selectedGun){
     ImGui::Spacing();
 
     centerNextItemX(tableSize.x);
-    Tables::eventAmmoUsed(selectedGunAndAmmo, tableSize);
+    Tables::eventAmmoUsed(selectedGunReference.get(), tableSize);
 }
 void View::stockpileTab(const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList, const std::set<Cartridge>& cartridgeList, std::weak_ptr<AssociatedAmmo>& weakSelected){
     static constexpr float MIN_WIN_BOTTOM_SIZE_X { 400 };
@@ -964,7 +963,7 @@ void Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std
         ImGui::EndTable();
     }
 }
-void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, GunMetadata& selected, ImVec2 size ){
+void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, std::reference_wrapper<const GunAndAmmo>& selected, ImVec2 size ){
     int row { 0 };
     if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {
         ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
@@ -975,10 +974,10 @@ void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, GunMe
         ImGui::TableHeadersRow();
 
         for(const GunAndAmmo& gunAndAmmo : list){
-            const GunMetadata& gun {gunAndAmmo.getGunInfo()};
+            const GunMetadata& gunInfo {gunAndAmmo.getGunInfo()};
             bool isGunSelected { false };
         
-            if(selected == gun)
+            if(selected.get().getGunInfo() == gunInfo)
                 isGunSelected = true;
         
             ImGui::PushID(std::to_string(row).c_str());
@@ -988,17 +987,17 @@ void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, GunMe
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(gun.weaponType.getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
+                        ImGui::Selectable(gunInfo.weaponType.getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
 
                         if(isGunSelected)
-                            selected = gun;
+                            selected = gunAndAmmo;
 
                         break;
                     case 1:
-                        ImGui::Text("%s", gun.cartridge.getName().c_str());
+                        ImGui::Text("%s", gunInfo.cartridge.getName().c_str());
                         break;
                     case 2:
-                        ImGui::Text("%s", gun.name.c_str());
+                        ImGui::Text("%s", gunInfo.name.c_str());
                         break;
                     case 3:
                         ImGui::Text("%d", gunAndAmmo.totalRoundsShot());
@@ -1112,10 +1111,8 @@ void Tables::selectable_Events( const std::map<EventMetadata, std::shared_ptr<Ev
         ImGui::EndTable();
     }
 }
-void Tables::selectable_Cartridges(const std::map<Cartridge, int>& cartridges, std::weak_ptr<Cartridge>& weakSelected, ImVec2 size){
+void Tables::selectable_Cartridges(const std::map<Cartridge, int>& cartridges, Cartridge& selected, ImVec2 size){
     int row { 0 };
-
-    std::shared_ptr<Cartridge> selected { weakSelected.lock() };
 
     if(ImGui::BeginTable("Cartridge Table", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
         ImGui::TableSetupColumn("Cartridge",    0);
@@ -1123,10 +1120,10 @@ void Tables::selectable_Cartridges(const std::map<Cartridge, int>& cartridges, s
         ImGui::TableHeadersRow();
 
         for(const auto& [cartridge, amount] : cartridges){
-            bool isCartridgeSelected { false };
+            bool isSelected { false };
 
-            if(selectedCartridge == cartridge)
-                isCartridgeSelected = true;
+            if(selected == cartridge)
+                isSelected = true;
 
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -1135,12 +1132,10 @@ void Tables::selectable_Cartridges(const std::map<Cartridge, int>& cartridges, s
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(cartridge.getName().c_str(), &isCartridgeSelected, ImGuiSelectableFlags_SpanAllColumns);
+                        ImGui::Selectable(cartridge.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
 
-                        if(isCartridgeSelected){
-                            weakSelected = eventPtr; // Need to find way to select proper cartridge from list
-                            selected = weakSelected.lock();
-                        }
+                        if(isSelected)
+                            selected = cartridge;
                         break;
                     case 1:
                         ImGui::Text("%d", amount);
