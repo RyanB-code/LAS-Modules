@@ -199,6 +199,4 @@ namespace ShooterCentral::UI {
         void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, ImVec2 size);
     }
 
-
-
 }
