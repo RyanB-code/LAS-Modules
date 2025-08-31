@@ -85,15 +85,18 @@ namespace ShooterCentral::UI {
                 std::weak_ptr<AssociatedGun>    selectedGun;
                 std::weak_ptr<Event>            selectedEvent;
             };
+            struct StockpileTab{
+                Cartridge                       selectedCartridge { };
+                std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+            };
 
-            Category category { Category::NONE }; 
+            Category        category                { Category::NONE }; 
+            std::string     categoryComboBoxText    { };
 
-            EventTab eventTab { };
-            GunTab   gunTab { };
+            EventTab        eventTab                { };
+            GunTab          gunTab                  { };
+            StockpileTab    stockpileTab            { };
 
-            std::weak_ptr<AssociatedAmmo>       selectedAmmo;
-
-            std::string categoryComboBoxText { };
         };
         struct Add {
             Category category   { Category::NONE }; 
@@ -145,22 +148,25 @@ namespace ShooterCentral::UI {
     }
 
     namespace View {
-        void main                           (const Containers& containers, ScreenData::View& data);
+        void main                               (const Containers& containers, ScreenData::View& data);
 
-        void gunTab                         (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, ScreenData::View::GunTab& data );
-        void gunTab_eventsWindow            (const AssociatedGun& gun, std::weak_ptr<Event>& selectedEvent);
-        void gunTab_selectedGunInformation  (const AssociatedGun& gun);
-        void gunTab_ammoUsedWindow          (const AssociatedGun& gun);
+        void gunTab                             (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, ScreenData::View::GunTab& data );
+        void gunTab_eventsWindow                (const AssociatedGun& gun, std::weak_ptr<Event>& selectedEvent);
+        void gunTab_selectedGunInformation      (const AssociatedGun& gun);
+        void gunTab_ammoUsedWindow              (const AssociatedGun& gun);
 
         void eventsTab                          (const std::map<EventMetadata, std::shared_ptr<Event>>& events, ScreenData::View::EventTab& data);
         void eventsTab_selectedEventInformation (const Event& event);
         void eventsTab_gunsUsed                 (const Event& event, std::reference_wrapper<const GunAndAmmo>& selectedGun );
 
-        void stockpileTab   (const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
-                             const std::set<Cartridge>& cartridgeList,
-                             std::weak_ptr<AssociatedAmmo>& selected
-                            );
+        void stockpileTab(
+                const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
+                const std::map<Cartridge, int>& cartridgeList,
+                ScreenData::View::StockpileTab& selected
+            );
+
     }
+
 
     // Helper functions
     void centerNextItemX(float x);
@@ -193,10 +199,16 @@ namespace ShooterCentral::UI {
                 std::reference_wrapper<const GunAndAmmo>& gun,
                 ImVec2 size     
             );
+        void selectable_Ammo(
+                const std::map<AmmoMetadata, std::shared_ptr<AssociatedAmmo>>& list, 
+                std::weak_ptr<AssociatedAmmo>& selected,
+                ImVec2 size 
+            );
+        
+        void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed,                         ImVec2 size);
+        void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,              ImVec2 size);
 
-
-        void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed, ImVec2 size);
-        void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, ImVec2 size);
+        void ammoGunsUsed   (const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list,   ImVec2 size);
     }
 
 }
