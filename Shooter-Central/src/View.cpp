@@ -37,7 +37,7 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
             View::main(containers, viewData);
             break;
         case Screen::ADD:
-
+            Add::main(containers, addData);
             break;
         case Screen::EDIT:
 
@@ -269,8 +269,8 @@ void View::main(const Containers& containers, ScreenData::View& data){
     ImGui::Spacing();
     ImGui::Spacing();
 
-    centerNextComboBoxTextX("Select A Category", 200);
-    categoryComboBox(data.category); 
+    centerNextComboBoxX("Select A Category", 200);
+    ComboBoxes::category(data.category); 
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -789,6 +789,121 @@ void View::stockpileTab(
     }
     ImGui::EndChild();
 }
+void Add::main(const Containers& containers, ScreenData::Add& data){
+
+    static constexpr float MIN_WIN_SIZE_X { 400 };
+    static constexpr float MIN_WIN_SIZE_Y { 600 };
+
+    static constexpr float MIN_TABLE_SIZE_X { 200 };
+    static constexpr float MAX_TABLE_SIZE_X { 400 };
+
+    bool verticalLayout {false};
+
+    ImVec2 topWindowSize;
+    ImVec2 bottomWindowSize;
+    ImVec2 topTableSize;
+
+    if(ImGui::GetContentRegionAvail().x < (MIN_WIN_SIZE_X * 2)){
+        verticalLayout = true;
+
+        topWindowSize  = {MIN_WIN_SIZE_X * 3, 800};
+        bottomWindowSize = topWindowSize;
+    }
+    else{
+        topWindowSize  = {ImGui::GetContentRegionAvail().x / 2, ImGui::GetContentRegionAvail().y / 2};
+        if(topWindowSize.x < MIN_WIN_SIZE_X)
+            topWindowSize.x = MIN_WIN_SIZE_X;
+        if(topWindowSize.y < MIN_WIN_SIZE_Y)
+            topWindowSize.y = MIN_WIN_SIZE_Y;
+
+        bottomWindowSize =  { ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2};
+        if(bottomWindowSize.x < MIN_WIN_SIZE_X)
+            bottomWindowSize.x = MIN_WIN_SIZE_X;
+        if(bottomWindowSize.y < MIN_WIN_SIZE_Y)
+            bottomWindowSize.y = MIN_WIN_SIZE_Y;
+    }
+
+    // Size the table
+    topTableSize = { topWindowSize.x-2, 400};
+    if(topTableSize.x < MIN_TABLE_SIZE_X)
+        topTableSize.x = MIN_TABLE_SIZE_X;
+    if(topTableSize.x > MAX_TABLE_SIZE_X)
+        topTableSize.x = MAX_TABLE_SIZE_X;
+
+
+    if(ImGui::BeginChild("Select Category", topWindowSize, ImGuiChildFlags_Border)){ 
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        centerNextItemY(20);
+        ImGui::BeginGroup();
+
+        centerNextComboBoxX("Select A Category", 200);
+        ComboBoxes::category(data.category); 
+
+        centerNextComboBoxX("   Select An Item", 200);
+        ComboBoxes::subItem(data.subItem);
+
+        ImGui::EndGroup();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+    }
+    ImGui::EndChild();
+
+    if(!verticalLayout)
+        ImGui::SameLine();
+
+    if(ImGui::BeginChild("Existing Items View", topWindowSize, ImGuiChildFlags_Border)){ 
+        ImGui::SeparatorText("View Existing Items"); 
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        centerText("All Cartridges");
+
+        centerNextItemX(topTableSize.x);
+        centerNextItemY(topTableSize.y);
+        showCorrectListBox(containers, data.subItem, topTableSize);
+    }
+    ImGui::EndChild();
+
+    if(ImGui::BeginChild("Add Item Window", bottomWindowSize, ImGuiChildFlags_Border)){ 
+        ImGui::Text("test");
+    }
+    ImGui::EndChild();
+
+}
+void Add::showCorrectListBox (const Containers& containers, const SubItem& selected, ImVec2 size){
+    switch(selected){
+        case SubItem::EVENT_EVENT:
+
+            break;
+        case SubItem::EVENT_TYPE:
+
+            break;
+        case SubItem::EVENT_LOCATION:
+
+            break;
+        case SubItem::AMMO_AMMO:
+
+            break;
+        case SubItem::AMMO_MANUFACTURER:
+
+            break;
+        case SubItem::GUN_AMMO_CARTRIDGE:
+            ListBoxes::cartridges(containers.getCartridges(), size);
+            break;
+        case SubItem::GUN_GUN:
+
+            break;
+        case SubItem::GUN_WEAPON_TYPE:
+
+            break;
+        default:
+            centerTextDisabled("Select an Item");
+            break;
+    }
+}
 void centerNextItemX(float x){
     float windowWidth { ImGui::GetContentRegionAvail().x };
     if(x < windowWidth)
@@ -804,7 +919,7 @@ void centerNextItemY(float y){
     return;
 
 }
-void centerNextComboBoxTextX(const std::string& text, float comboBoxWidth){
+void centerNextComboBoxX(const std::string& text, float comboBoxWidth){
     centerNextItemX(ImGui::CalcTextSize(text.c_str()).x + comboBoxWidth );
     ImGui::Text("%s", text.c_str()); 
     ImGui::SameLine();
@@ -853,23 +968,45 @@ std::string categoryToString(const Category& category, const std::string& noneSt
             break;
     }
 }
-void categoryComboBox(Category& selected) {
-    std::string text { categoryToString(selected, "Select A Category") };
-
-    if (ImGui::BeginCombo("##Category Select Combo", text.c_str(), ImGuiComboFlags_HeightSmall)) {
-        for (const Category& category : CATEGORY_LIST) {
-            const bool isSelected = (selected == category);
-
-            if(ImGui::Selectable(categoryToString(category, "Select A Category").c_str(), isSelected))
-                selected = category;
-
-            if (isSelected)
-                ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
+std::string subItemToString (const SubItem& item, const std::string& noneStr){
+    switch(item){
+        case SubItem::NONE:
+            if(noneStr.empty())
+                return std::string {"None"};
+            else
+                return noneStr;
+            break;
+        case SubItem::EVENT_EVENT:
+            return std::string {"Event"};
+            break;
+        case SubItem::EVENT_TYPE:
+            return std::string {"Event Type"};
+            break;
+        case SubItem::EVENT_LOCATION:
+            return std::string {"Event Location"};
+            break;
+        case SubItem::AMMO_AMMO:
+            return std::string {"Ammo"};
+            break;
+        case SubItem::AMMO_MANUFACTURER:
+            return std::string {"Manufacuter"};
+            break;
+        case SubItem::GUN_AMMO_CARTRIDGE:
+            return std::string {"Cartridge"};
+            break;
+        case SubItem::GUN_GUN:
+            return  std::string {"Gun"};
+            break;
+        case SubItem::GUN_WEAPON_TYPE:
+            return std::string {"Weapon Type"};
+            break;
+        default:
+            return std::string {"NOT HANDLED"}; 
+            break;
     }
 }
-void Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
+
+void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
     std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
 
     int row { 0 };
@@ -1263,6 +1400,44 @@ void Tables::ammoGunsUsed (
         ImGui::EndTable();
     }
 }
+void ListBoxes::cartridges(const std::map<Cartridge, std::shared_ptr<Cartridge>>& list, ImVec2 size){
+    if(ImGui::BeginListBox("##Cartridge List Box", size)){
+        for(const auto& [key, ptr] : list) {
+            bool isSelected { false };
+            ImGui::Selectable(key.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
+        }
+        ImGui::EndListBox();
+    }
+}
+void ComboBoxes::category(Category& selected) {
+    std::string text { categoryToString(selected, "Select A Category") };
 
+    if (ImGui::BeginCombo("##Category Select Combo", text.c_str(), ImGuiComboFlags_HeightSmall)) {
+        for (const Category& category : CATEGORY_LIST) {
+            const bool isSelected = (selected == category);
+
+            if(ImGui::Selectable(categoryToString(category, "Select A Category").c_str(), isSelected)){
+                selected = category;
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
+void ComboBoxes::subItem(SubItem& selected){
+    std::string text { subItemToString(selected, "Select A Category") };
+
+    if (ImGui::BeginCombo("##Sub Item Select Combo", text.c_str(), ImGuiComboFlags_HeightSmall)) {
+        for (const SubItem& item : SUB_ITEM_LIST) {
+            const bool isSelected = (selected == item);
+
+            if(ImGui::Selectable(subItemToString(item, "Select A Category").c_str(), isSelected)){
+                selected = item;
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
 
 } // End view namespace

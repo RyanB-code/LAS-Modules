@@ -37,12 +37,15 @@ namespace ShooterCentral::UI {
         EVENT_TYPE,
         EVENT_LOCATION,
 
-        AMMO_EXISTING,
+        AMMO_AMMO,
         AMMO_MANUFACTURER,
-        AMMO_CARTRIDGE,
+
+        GUN_AMMO_CARTRIDGE,
 
         GUN_GUN,
-        GUN_TYPE
+        GUN_WEAPON_TYPE,
+
+        SIZE
     };
 
 
@@ -63,6 +66,22 @@ namespace ShooterCentral::UI {
         Category::EVENTS,
         Category::STOCKPILE
     };
+    static constexpr std::array<SubItem, static_cast<size_t>(SubItem::SIZE)> SUB_ITEM_LIST {
+        SubItem::NONE,
+
+        SubItem::EVENT_EVENT,
+        SubItem::EVENT_TYPE,
+        SubItem::EVENT_LOCATION,
+
+        SubItem::AMMO_AMMO,
+        SubItem::AMMO_MANUFACTURER,
+
+        SubItem::GUN_AMMO_CARTRIDGE,
+
+        SubItem::GUN_GUN,
+        SubItem::GUN_WEAPON_TYPE,
+    };
+
 
 
     // Holds data for what is shown that remains between frames
@@ -172,19 +191,24 @@ namespace ShooterCentral::UI {
             );
 
     }
+    namespace Add {
+        void    main                    (const Containers& containers, ScreenData::Add& data);
+        void    showCorrectListBox      (const Containers& containers, const SubItem& selected, ImVec2 size); 
+    }
 
 
     // Helper functions
     void centerNextItemX            (float x);
     void centerNextItemY            (float y);
-    void centerNextComboBoxTextX    (const std::string& text, float comboBoxWidth);
+    void centerNextComboBoxX    (const std::string& text, float comboBoxWidth);
 
     void centerText         (const std::string& text);
     void centerTextDisabled (const std::string& text);
     bool centerButton       (const std::string& text, ImVec2 size);
 
-    void        categoryComboBox    (Category& selected);
-    std::string categoryToString    (const Category& category, const std::string& noneText=""); // noneText - Choose what to display when none is selected
+    std::string categoryToString    (const Category& category,  const std::string& noneText=""); // noneText - Choose what to display when none is selected
+    std::string subItemToString     (const SubItem& item,       const std::string& noneText=""); // noneText - Choose what to display when none is selected
+                                                                                               
 
 
     // Table drawing
@@ -219,6 +243,14 @@ namespace ShooterCentral::UI {
         void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,              ImVec2 size);
 
         void ammoGunsUsed   (const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list,   ImVec2 size);
+    }
+
+    namespace ListBoxes{
+        void cartridges (const std::map<Cartridge, std::shared_ptr<Cartridge>>& list, ImVec2 size);
+    }
+    namespace ComboBoxes{
+        void  category    (Category& selected);
+        void  subItem     (SubItem& selected);
     }
 
 }
