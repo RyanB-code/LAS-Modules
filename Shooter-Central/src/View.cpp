@@ -265,64 +265,15 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartri
 
 }
 void View::main(const Containers& containers, ScreenData::View& data){
-    
-    switch(data.category){
-        case Category::NONE:
-            data.categoryComboBoxText = "Select A Category";
-            break;
-        case Category::GUNS:
-            data.categoryComboBoxText = "Armory";
-            break;
-        case Category::EVENTS:
-            data.categoryComboBoxText = "Events";
-            break;
-        case Category::STOCKPILE:
-            data.categoryComboBoxText = "Stockpile";
-            break;
-        default:
-            data.categoryComboBoxText = "Select A Category";
-            break;
-    }
 
     ImGui::Spacing();
     ImGui::Spacing();
 
     ImGui::Indent(20);
-    ImGui::Text("Select Category"); 
+    ImGui::Text("Select A Category"); 
     ImGui::SameLine();
     
-    if (ImGui::BeginCombo("##Category Select Combo", data.categoryComboBoxText.c_str(), ImGuiComboFlags_HeightSmall)) {
-        for (const Category& category : CATEGORY_LIST) {
-            const bool isSelected = (data.category == category);
-
-            switch(category){
-                case Category::NONE:
-                    if (ImGui::Selectable("Select A Category", isSelected))
-                        data.category = category;
-                        break;
-                case Category::GUNS:
-                    if (ImGui::Selectable("Armory", isSelected))
-                         data.category = category;
-                    break;
-                case Category::EVENTS:
-                    if (ImGui::Selectable("Events", isSelected))
-                         data.category = category;
-                    break;
-                case Category::STOCKPILE:
-                    if (ImGui::Selectable("Stockpile", isSelected))
-                         data.category = category;
-                    break;
-                default:
-                    if (ImGui::Selectable("Select A Category", isSelected))
-                         data.category = category;
-                    break;
-            }
-
-            if (isSelected)
-                ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
+    categoryComboBox(data.category); 
 
     ImGui::Unindent(20);
 
@@ -878,6 +829,44 @@ bool centerButton(const std::string& text, ImVec2 size){
 
     ImGui::SetCursorPosX((windowWidth - size.x) * 0.5f);
     return ImGui::Button(text.c_str(), size);
+}
+std::string categoryToString(const Category& category, const std::string& noneStr){
+    switch(category){
+        case Category::NONE:
+            if(noneStr.empty())
+                return std::string {"None"};
+            else
+                return noneStr;
+            break;
+        case Category::GUNS:
+            return std::string {"Guns"};
+            break;
+        case Category::EVENTS:
+            return std::string {"Events"};
+            break;
+        case Category::STOCKPILE:
+            return std::string {"Stockpile"};
+            break;
+        default:
+            return std::string {"NOT HANDLED"};
+            break;
+    }
+}
+void categoryComboBox(Category& selected) {
+    std::string text { categoryToString(selected, "Select A Category") };
+
+    if (ImGui::BeginCombo("##Category Select Combo", text.c_str(), ImGuiComboFlags_HeightSmall)) {
+        for (const Category& category : CATEGORY_LIST) {
+            const bool isSelected = (selected == category);
+
+            if(ImGui::Selectable(categoryToString(category, "Select A Category").c_str(), isSelected))
+                selected = category;
+
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
 }
 void Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
     std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };

@@ -76,19 +76,23 @@ namespace ShooterCentral::UI {
             std::weak_ptr<AssociatedGun>    selectedGun;
             Cartridge                       selectedCartridge { };
         };
+
         struct View {
             struct EventTab {
                 std::weak_ptr<Event>                        selectedEvent;
                 std::reference_wrapper<const GunAndAmmo>    selectedGun     { std::cref(EMPTY_GUN_AND_AMMO) };
             };
+
             struct GunTab{
                 std::weak_ptr<AssociatedGun>    selectedGun;
                 std::weak_ptr<Event>            selectedEvent;
             };
+
             struct StockpileTab{
                 Cartridge                       selectedCartridge { };
                 std::weak_ptr<AssociatedAmmo>   selectedAmmo;
             };
+
 
             Category        category                { Category::NONE }; 
             std::string     categoryComboBoxText    { };
@@ -98,10 +102,12 @@ namespace ShooterCentral::UI {
             StockpileTab    stockpileTab            { };
 
         };
+
         struct Add {
             Category category   { Category::NONE }; 
             SubItem  subItem    { SubItem::NONE };
         };
+
         struct Edit {
             Category category { Category::NONE }; 
 
@@ -175,6 +181,9 @@ namespace ShooterCentral::UI {
     void centerText         (const std::string& text);
     void centerTextDisabled (const std::string& text);
     bool centerButton       (const std::string& text, ImVec2 size);
+
+    void        categoryComboBox    (Category& selected);
+    std::string categoryToString    (const Category& category, const std::string& noneText=""); // noneText - Choose what to display when none is selected
 
 
     // Table drawing
