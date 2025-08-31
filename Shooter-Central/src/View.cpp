@@ -269,13 +269,8 @@ void View::main(const Containers& containers, ScreenData::View& data){
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Indent(20);
-    ImGui::Text("Select A Category"); 
-    ImGui::SameLine();
-    
+    centerNextComboBoxTextX("Select A Category", 200);
     categoryComboBox(data.category); 
-
-    ImGui::Unindent(20);
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -808,6 +803,12 @@ void centerNextItemY(float y){
 
     return;
 
+}
+void centerNextComboBoxTextX(const std::string& text, float comboBoxWidth){
+    centerNextItemX(ImGui::CalcTextSize(text.c_str()).x + comboBoxWidth );
+    ImGui::Text("%s", text.c_str()); 
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(comboBoxWidth);
 }
 
 void centerText(const std::string& text){

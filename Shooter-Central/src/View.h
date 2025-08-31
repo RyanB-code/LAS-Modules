@@ -175,8 +175,9 @@ namespace ShooterCentral::UI {
 
 
     // Helper functions
-    void centerNextItemX(float x);
-    void centerNextItemY(float y);
+    void centerNextItemX            (float x);
+    void centerNextItemY            (float y);
+    void centerNextComboBoxTextX    (const std::string& text, float comboBoxWidth);
 
     void centerText         (const std::string& text);
     void centerTextDisabled (const std::string& text);
