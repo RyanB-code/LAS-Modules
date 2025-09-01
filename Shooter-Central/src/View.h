@@ -192,8 +192,8 @@ namespace ShooterCentral::UI {
 
     }
     namespace Add {
-        void    main                    (const Containers& containers, ScreenData::Add& data);
-        void    showCorrectListBox      (const Containers& containers, const SubItem& selected, ImVec2 size); 
+        void    main                (const Containers& containers, ScreenData::Add& data);
+        void    showExistingItems   (const Containers& containers, const SubItem& selected, ImVec2 size); 
     }
 
 
@@ -218,6 +218,16 @@ namespace ShooterCentral::UI {
                 Cartridge& selected,
                 ImVec2 size
             );
+        void selectable_SingleCartridgeAmmo(
+                const std::map<AmmoMetadata, std::shared_ptr<AssociatedAmmo>>& list, 
+                std::weak_ptr<AssociatedAmmo>& selected,
+                ImVec2 size 
+                );
+        void selectable_KnownAmmo(
+                const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>& list,       
+                std::weak_ptr<AmmoMetadata>& selected,
+                ImVec2 size
+            );
         void selectable_Guns(
                 const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, 
                 std::weak_ptr<AssociatedGun>& selected,
@@ -233,11 +243,6 @@ namespace ShooterCentral::UI {
                 std::reference_wrapper<const GunAndAmmo>& gun,
                 ImVec2 size     
             );
-        void selectable_Ammo(
-                const std::map<AmmoMetadata, std::shared_ptr<AssociatedAmmo>>& list, 
-                std::weak_ptr<AssociatedAmmo>& selected,
-                ImVec2 size 
-            );
         
         void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed,                         ImVec2 size);
         void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,              ImVec2 size);
@@ -246,7 +251,11 @@ namespace ShooterCentral::UI {
     }
 
     namespace ListBoxes{
-        void cartridges (const std::map<Cartridge, std::shared_ptr<Cartridge>>& list, ImVec2 size);
+        void cartridges     (const std::map<Cartridge, std::shared_ptr<Cartridge>>& list,       ImVec2 size);
+        void manufacturers  (const std::map<Manufacturer, std::shared_ptr<Manufacturer>>& list, ImVec2 size);
+        void eventLocations (const std::map<Location, std::shared_ptr<Location>>& list,         ImVec2 size);
+        void eventTypes     (const std::map<EventType, std::shared_ptr<EventType>>& list,       ImVec2 size); 
+        void weaponTypes    (const std::map<WeaponType, std::shared_ptr<WeaponType>>& list,     ImVec2 size);
     }
     namespace ComboBoxes{
         void  category    (Category& selected);
