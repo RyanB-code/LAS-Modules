@@ -858,17 +858,21 @@ void Add::main(const Containers& containers, ScreenData::Add& data){
 
         centerNextItemX(topTableSize.x);
         centerNextItemY(topTableSize.y);
-        showExistingItems(containers, data.subItem, topTableSize);
+        showExistingItemsWindow(containers, data.subItem, topTableSize);
     }
     ImGui::EndChild();
 
     if(ImGui::BeginChild("Add Item Window", bottomWindowSize, ImGuiChildFlags_Border)){ 
-        ImGui::Text("test");
+        ImGui::SeparatorText("Add Item"); 
+
+        ImGui::Dummy(ImVec2{0.0f, 20.0f});
+
+        addItemWindow(data.subItem);
     }
     ImGui::EndChild();
 
 }
-void Add::showExistingItems (const Containers& containers, const SubItem& selected, ImVec2 size){
+void Add::showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size){
     ImGui::BeginGroup();
 
     std::weak_ptr<Event> selectedEvent;
@@ -926,6 +930,61 @@ void Add::showExistingItems (const Containers& containers, const SubItem& select
     }
     ImGui::EndGroup();
 }
+void Add::addItemWindow(const SubItem& selectedItem){
+    switch(selectedItem){
+        case SubItem::EVENT_EVENT:
+            
+
+            break;
+        case SubItem::EVENT_TYPE:
+           
+          
+            break;
+        case SubItem::EVENT_LOCATION:
+         
+        
+            break;
+        case SubItem::AMMO_AMMO:
+       
+            break;
+        case SubItem::AMMO_MANUFACTURER:
+
+            break;
+        case SubItem::GUN_AMMO_CARTRIDGE:
+
+            break;
+        case SubItem::GUN_GUN:
+
+            break;
+        case SubItem::GUN_WEAPON_TYPE:
+            Add::add_WeaponType();
+            break;
+        default:
+            centerTextDisabled("Select an Item");
+            break;
+    }
+ 
+}
+void Add::add_WeaponType(){
+    static char textBuf[ScreenData::Add::MAX_CHAR_INPUT] = "New Weapon Type";
+
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Weapon Type to choose from when creating a gun.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+    
+    ImGui::Text("Weapon Type");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input New Weapon Type", textBuf, ScreenData::Add::MAX_CHAR_INPUT, ImGuiInputTextFlags_CharsUppercase);
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    if(centerButton("Add New Weapon Type", ImVec2{200,50})){
+        std::cout << "Command add weapon type\n";
+    }
+}
+
 void centerNextItemX(float x){
     float windowWidth { ImGui::GetContentRegionAvail().x };
     if(x < windowWidth)

@@ -123,6 +123,7 @@ namespace ShooterCentral::UI {
         };
 
         struct Add {
+            static constexpr int MAX_CHAR_INPUT { 64 };
             Category category   { Category::NONE }; 
             SubItem  subItem    { SubItem::NONE };
         };
@@ -192,8 +193,11 @@ namespace ShooterCentral::UI {
 
     }
     namespace Add {
-        void    main                (const Containers& containers, ScreenData::Add& data);
-        void    showExistingItems   (const Containers& containers, const SubItem& selected, ImVec2 size); 
+        void    main                    (const Containers& containers, ScreenData::Add& data);
+        void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
+        void    addItemWindow           (const SubItem& selected);
+
+        void    add_WeaponType          ();
     }
 
 
