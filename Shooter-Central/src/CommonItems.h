@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AssociatedItems.h"
+#include "Container Items/AssociatedItems.h"
 
 namespace ShooterCentral {
 
