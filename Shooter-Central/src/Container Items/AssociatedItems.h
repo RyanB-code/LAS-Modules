@@ -46,18 +46,18 @@ namespace ShooterCentral {
         bool removeAmmoUsed (const AmmoMetadata& ammo);
         bool hasUsedAmmo    (const AmmoMetadata& ammo) const;
 
-        bool addEvent       (std::shared_ptr<Event> event); // If key already exists, returns false since data is not overwritten. Iterates over the event and adds all ammo to the gun
-        bool removeEvent    (const EventMetadata& data); 
-        bool wasUsedInEvent (const EventMetadata& data);
+        bool addEvent       (std::shared_ptr<ShootingEvent> event); // If key already exists, returns false since data is not overwritten. Iterates over the event and adds all ammo to the gun
+        bool removeEvent    (const ShootingEventMetadata& data); 
+        bool wasUsedInEvent (const ShootingEventMetadata& data);
 
         const std::map<AmmoMetadata, AmountOfAmmo>&                     getAmmoUsed()   const;
-        const std::map<EventMetadata, std::shared_ptr<Event>>&    getEventsUsed() const;
+        const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>&    getEventsUsed() const;
     private:
         int totalRoundCount { 0 };
 
         const GunMetadata&                                      gun;
         std::map<AmmoMetadata, AmountOfAmmo>                    ammoUsedList  { };    // Not shared_ptr because the amount is amount of rounds shot, not the amount in the stockpile 
-        std::map<EventMetadata, std::shared_ptr<Event>>   eventsUsed    { };
+        std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>   eventsUsed    { };
     };
 
 }

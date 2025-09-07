@@ -68,14 +68,14 @@ namespace ShooterCentral{
 
         std::string makeFileName    (std::string directory, const GunMetadata& data);
         std::string makeFileName    (std::string directory, const AmmoMetadata& data);
-        std::string makeFileName    (std::string directory, const EventMetadata& data);
+        std::string makeFileName    (std::string directory, const ShootingEventMetadata& data);
 
         bool write (std::string directory, const GunMetadata& data);
         bool write (std::string directory, const AmountOfAmmo& data);
-        bool write (std::string directory, const Event& data);
+        bool write (std::string directory, const ShootingEvent& data);
 
         void read_GunMetadata   (const LAS::json& j, ObjectBuffers::GunMetadata& buffer);
         void read_AmmoMetadata  (const LAS::json& j, ObjectBuffers::AmmoMetadata& buffer);
-        void read_EventMetadata (const LAS::json& j, ObjectBuffers::EventMetadata& buffer);
+        void read_EventMetadata (const LAS::json& j, ObjectBuffers::ShootingEventMetadata& buffer);
     }
 }

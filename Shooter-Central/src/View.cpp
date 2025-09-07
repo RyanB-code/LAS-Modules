@@ -158,7 +158,7 @@ void Home::gunWindow_selectedGunInformation(const AssociatedGun& gun){
     }
     ImGui::EndChild();
 }
-void Home::eventsWindow(const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& weakSelected ){
+void Home::eventsWindow(const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, std::weak_ptr<ShootingEvent>& weakSelected ){
 
     // Size the table
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -174,7 +174,7 @@ void Home::eventsWindow(const std::map<EventMetadata, std::shared_ptr<Event>>& e
     Tables::selectable_Events(events, weakSelected, tableSize); 
 
     // Lock or reset selected
-    std::shared_ptr<Event> selected { weakSelected.lock() }; 
+    std::shared_ptr<ShootingEvent> selected { weakSelected.lock() }; 
     if(!selected)
         weakSelected.reset();
 
@@ -196,8 +196,8 @@ void Home::eventsWindow(const std::map<EventMetadata, std::shared_ptr<Event>>& e
     }
 
     // Show selected event information
-    const Event& selectedEvent          { *selected };
-    const EventMetadata& selectedInfo   { selectedEvent.getInfo() };
+    const ShootingEvent& selectedEvent          { *selected };
+    const ShootingEventMetadata& selectedInfo   { selectedEvent.getInfo() };
 
     if(ImGui::BeginChild("Selected Event Details", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
@@ -441,7 +441,7 @@ void View::gunTab_selectedGunInformation(const AssociatedGun& gun){
     
     return;
 }
-void View::gunTab_eventsWindow(const AssociatedGun& gun, std::weak_ptr<Event>& selectedEvent){
+void View::gunTab_eventsWindow(const AssociatedGun& gun, std::weak_ptr<ShootingEvent>& selectedEvent){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -492,7 +492,7 @@ void View::gunTab_ammoUsedWindow(const AssociatedGun& gun){
 
 }
 void View::eventsTab(
-        const std::map<EventMetadata, std::shared_ptr<Event>>& events, 
+        const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, 
         ScreenData::View::EventTab& data 
 ){
     static constexpr float MIN_WIN_BOTTOM_SIZE_X { 400 };
@@ -559,7 +559,7 @@ void View::eventsTab(
     // Button size
     static const ImVec2 buttonSize { 100, 40 };
 
-    std::shared_ptr<Event> selected { data.selectedEvent.lock() };
+    std::shared_ptr<ShootingEvent> selected { data.selectedEvent.lock() };
  
     if(ImGui::BeginChild("View Event Table", topWindowSize, ImGuiChildFlags_Border)){ 
         ImGui::SeparatorText( "Select An Event" );
@@ -618,8 +618,8 @@ void View::eventsTab(
     ImGui::EndChild();
 
 }
-void View::eventsTab_selectedEventInformation(const Event& event){
-    const EventMetadata& info  { event.getInfo() };
+void View::eventsTab_selectedEventInformation(const ShootingEvent& event){
+    const ShootingEventMetadata& info  { event.getInfo() };
 
     centerNextItemX(400);
     ImGui::BeginGroup();
@@ -638,8 +638,8 @@ void View::eventsTab_selectedEventInformation(const Event& event){
     
     return;
 }
-void View::eventsTab_gunsUsed(const Event& event, std::reference_wrapper<const GunAndAmmo>& selectedGunReference){
-    const EventMetadata& info  { event.getInfo() };
+void View::eventsTab_gunsUsed(const ShootingEvent& event, std::reference_wrapper<const GunAndAmmo>& selectedGunReference){
+    const ShootingEventMetadata& info  { event.getInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
     static constexpr float MAX_TABLE_SIZE_X { 800 };
@@ -875,7 +875,7 @@ void Add::main(const Containers& containers, ScreenData::Add& data){
 void Add::showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size){
     ImGui::BeginGroup();
 
-    std::weak_ptr<Event> selectedEvent;
+    std::weak_ptr<ShootingEvent> selectedEvent;
     std::weak_ptr<AssociatedGun> selectedGun;
     std::weak_ptr<AmmoMetadata> selectedAmmo;
  
@@ -1195,8 +1195,8 @@ void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, std::
     }
 }
 
-void Tables::selectable_Events( const std::map<EventMetadata, std::shared_ptr<Event>>& events, std::weak_ptr<Event>& weakSelected, ImVec2 size ){
-    std::shared_ptr<Event> selected { weakSelected.lock() };
+void Tables::selectable_Events( const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, std::weak_ptr<ShootingEvent>& weakSelected, ImVec2 size ){
+    std::shared_ptr<ShootingEvent> selected { weakSelected.lock() };
 
     int row { 0 };
     if(ImGui::BeginTable("Event Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )){
@@ -1208,8 +1208,8 @@ void Tables::selectable_Events( const std::map<EventMetadata, std::shared_ptr<Ev
         ImGui::TableHeadersRow();
 
         for(const auto& [eventMetadata, eventPtr] : events){
-            const Event& event              { *eventPtr };
-            const EventMetadata& eventInfo  { event.getInfo() };
+            const ShootingEvent& event              { *eventPtr };
+            const ShootingEventMetadata& eventInfo  { event.getInfo() };
             bool isEventSelected    { false };
 
             if(selected && selected == eventPtr)
@@ -1563,7 +1563,7 @@ void ListBoxes::eventLocations (const std::map<Location, std::shared_ptr<Locatio
         ImGui::EndListBox();
     }
 }
-void ListBoxes::eventTypes(const std::map<EventType, std::shared_ptr<EventType>>& list,       ImVec2 size){
+void ListBoxes::eventTypes(const std::map<ShootingEventType, std::shared_ptr<ShootingEventType>>& list,       ImVec2 size){
     if(ImGui::BeginListBox("##Event Type List Box", size)){
         for(const auto& [key, ptr] : list) {
             bool isSelected { false };

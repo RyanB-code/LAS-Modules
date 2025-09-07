@@ -76,8 +76,8 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     }
     std::cout << "\n\nEvents:\n";
     for(const auto& [eventMetadata, eventPtr] : containers.getEvents() ) {
-        const Event& event {*eventPtr};
-        const EventMetadata& info { event.getInfo() };
+        const ShootingEvent& event {*eventPtr};
+        const ShootingEventMetadata& info { event.getInfo() };
 
         std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", info.location.getName(), info.eventType.getName(), info.notes, event.printDate());
         std::cout << "      Event Addr: " << &event << "\n";
@@ -234,7 +234,7 @@ bool Framework::readDir_Events(const std::string& dir) {
             std::ifstream inputFile{ dirEntry.path(), std::ios::in };
             json j = json::parse(inputFile);
 
-            ObjectBuffers::EventMetadata eventInfoBuffer;
+            ObjectBuffers::ShootingEventMetadata eventInfoBuffer;
             FileIO::read_EventMetadata(j.at("eventInfo"), eventInfoBuffer);
 
             const auto& [eventPtr, addSuccessful] { containers.events_create(eventInfoBuffer) };
@@ -345,7 +345,7 @@ bool Framework::readFile_Descriptors(const std::string& dir){
             }
 
             for (auto& elm : j.at("eventTypes").items()) {
-                EventType buffer { elm.value() };
+                ShootingEventType buffer { elm.value() };
 
                 if(containers.getEventTypes().contains(buffer))
                     continue;
@@ -424,7 +424,7 @@ bool Framework::writeFile_Descriptors(std::string directory) {
 void Framework::buildAssociations() {
     // Go through every event
     for(const auto& [eventMetadata, eventPtr] : containers.getEvents() ){
-        const Event& event { *eventPtr };
+        const ShootingEvent& event { *eventPtr };
 
         // Go through every GunAndAmmo in the event
         for(const GunAndAmmo& gunAndAmmo : event.getGunsUsed() ){
@@ -572,7 +572,7 @@ std::string makeFileName (std::string directory, const AmmoMetadata& ammo) {
 
     return fileName.str();
 }
-std::string makeFileName(std::string directory, const EventMetadata& event){
+std::string makeFileName(std::string directory, const ShootingEventMetadata& event){
     // Output fileName
     std::ostringstream fileName;
     fileName << directory << std::format("{:%Y-%m-%d}", event.date) << '_';
@@ -637,7 +637,7 @@ bool write(std::string directory, const AmountOfAmmo& data) {
    
     return true;
 }
-bool write (std::string directory, const Event& data){
+bool write (std::string directory, const ShootingEvent& data){
     using LAS::json;
 
     if(directory.empty())
@@ -700,7 +700,7 @@ void read_AmmoMetadata  (const json& j, ObjectBuffers::AmmoMetadata& buffer){
     j.at("grain").get_to(buffer.grainWeight);
     j.at("isActive").get_to(buffer.isActive);
 }
-void read_EventMetadata (const json& j, ObjectBuffers::EventMetadata& buffer){
+void read_EventMetadata (const json& j, ObjectBuffers::ShootingEventMetadata& buffer){
     j.at("date").get_to(buffer.date);
     j.at("eventType").get_to(buffer.eventType);
     j.at("location").get_to(buffer.location);

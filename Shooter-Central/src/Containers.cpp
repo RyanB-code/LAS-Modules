@@ -15,7 +15,7 @@ const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>& Containers::getKnow
 const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& Containers::getKnownGuns()    const{
     return knownGuns;
 }
-const std::map<EventMetadata, std::shared_ptr<Event>>& Containers::getEvents()       const{
+const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& Containers::getEvents()       const{
     return events;
 }
 const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& Containers::getAmmoStockpile()    const{
@@ -36,7 +36,7 @@ const std::map<Cartridge,     std::shared_ptr<Cartridge>>& Containers::getCartri
 const std::map<Location,      std::shared_ptr<Location>>& Containers::getLocations()        const{
     return locations;
 }
-const std::map<EventType,     std::shared_ptr<EventType>>& Containers::getEventTypes()       const{
+const std::map<ShootingEventType,     std::shared_ptr<ShootingEventType>>& Containers::getEventTypes()       const{
     return eventTypes;
 }
 const std::map<WeaponType,    std::shared_ptr<WeaponType>>& Containers::getWeaponTypes()      const{
@@ -118,9 +118,9 @@ std::pair<std::shared_ptr<GunMetadata>, bool> Containers::knownGuns_create      
     std::pair result { knownGuns.try_emplace(buffer, std::make_shared<GunMetadata>(buffer)) };
     return std::pair { result.first->second, result.second };
 }
-std::pair<std::shared_ptr<Event>, bool> Containers::events_create(const ObjectBuffers::EventMetadata& data){
+std::pair<std::shared_ptr<ShootingEvent>, bool> Containers::events_create(const ObjectBuffers::ShootingEventMetadata& data){
     const Location  location      { data.location };
-    const EventType eventType     { data.eventType };
+    const ShootingEventType eventType     { data.eventType };
 
     bool newItem { false };
 
@@ -142,7 +142,7 @@ std::pair<std::shared_ptr<Event>, bool> Containers::events_create(const ObjectBu
         }
     }
 
-    const EventMetadata buffer { 
+    const ShootingEventMetadata buffer { 
         .notes          = data.notes,
         .date           = std::chrono::floor<std::chrono::days>(stringToTimepoint(data.date)),
         .location       = *locations.at(location), 
@@ -152,7 +152,7 @@ std::pair<std::shared_ptr<Event>, bool> Containers::events_create(const ObjectBu
     if(events.contains(buffer))
         return std::pair{events.at(buffer), true};
 
-    std::pair result { events.try_emplace(buffer, std::make_shared<Event>(buffer)) };
+    std::pair result { events.try_emplace(buffer, std::make_shared<ShootingEvent>(buffer)) };
     return std::pair { result.first->second, result.second };
 }
 bool Containers::ammoStockpile_add  (const AssociatedAmmo& add){
@@ -191,8 +191,8 @@ bool Containers::manufacturers_add  (const Manufacturer& add){
 bool Containers::cartridges_add     (const Cartridge& add){
     return cartridges.try_emplace(add, std::make_shared<Cartridge>(add)).second;
 }
-bool Containers::eventTypes_add     (const EventType& add){
-    return eventTypes.try_emplace(add, std::make_shared<EventType>(add)).second;
+bool Containers::eventTypes_add     (const ShootingEventType& add){
+    return eventTypes.try_emplace(add, std::make_shared<ShootingEventType>(add)).second;
 }
 bool Containers::weaponTypes_add    (const WeaponType& add){
     return weaponTypes.try_emplace(add, std::make_shared<WeaponType>(add)).second;
@@ -206,7 +206,7 @@ std::shared_ptr<AmmoMetadata> Containers::knownAmmo_at    (const AmmoMetadata& k
 std::shared_ptr<GunMetadata> Containers::knownGuns_at    (const GunMetadata& key){
     return knownGuns.at(key);
 }
-std::shared_ptr<Event> Containers::events_at       (const Event& key){
+std::shared_ptr<ShootingEvent> Containers::events_at       (const ShootingEvent& key){
     return events.at(key.getInfo());
 }
 std::shared_ptr<AssociatedAmmo> Containers::ammoStockpile_at(const AmmoMetadata& key){

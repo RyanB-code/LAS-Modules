@@ -27,31 +27,31 @@ bool Location::operator<(const Location& other) const{
 
 
 
-EventType::EventType(std::string setName) : name { setName } {
+ShootingEventType::ShootingEventType(std::string setName) : name { setName } {
 
 }
-EventType::~EventType(){
+ShootingEventType::~ShootingEventType(){
 
 }
-std::string EventType::getName() const {
+std::string ShootingEventType::getName() const {
     return name;
 }
-EventType::operator std::string() const {
+ShootingEventType::operator std::string() const {
     return name;
 }
-bool EventType::operator==(const EventType& other) const{
+bool ShootingEventType::operator==(const ShootingEventType& other) const{
     if(this->getName() == other.getName())
         return true;
     else
         return false;
 }
-bool EventType::operator<(const EventType& other) const{
+bool ShootingEventType::operator<(const ShootingEventType& other) const{
     return name < other.getName();
 }
 
 
 
-bool EventMetadata::operator==(const EventMetadata& other) const{
+bool ShootingEventMetadata::operator==(const ShootingEventMetadata& other) const{
     if(date != other.date)
         return false;
 
@@ -63,10 +63,10 @@ bool EventMetadata::operator==(const EventMetadata& other) const{
 
     return true;
 }
-bool EventMetadata::operator<(const EventMetadata& other) const{
+bool ShootingEventMetadata::operator<(const ShootingEventMetadata& other) const{
     return std::tuple(other.date, other.eventType, other.location) < std::tuple(date, eventType, location);
 }
-void ShooterCentral::to_json(LAS::json& j, const EventMetadata& data){
+void ShooterCentral::to_json(LAS::json& j, const ShootingEventMetadata& data){
     std::ostringstream timeString;
     timeString << std::chrono::system_clock::time_point{std::chrono::sys_days{data.date}};
 
@@ -85,13 +85,13 @@ std::chrono::system_clock::time_point ShooterCentral::stringToTimepoint(const st
     return std::chrono::system_clock::from_time_t(std::mktime(&time));
 }
 
-Event::Event(const EventMetadata& info) : eventMetadata {info} {
+ShootingEvent::ShootingEvent(const ShootingEventMetadata& info) : eventMetadata {info} {
     gunsUsedList.reserve(5);
 }
-Event::~Event(){
+ShootingEvent::~ShootingEvent(){
 
 }
-bool Event::addGun(const GunAndAmmo& gun) {
+bool ShootingEvent::addGun(const GunAndAmmo& gun) {
     for(auto& entry : gunsUsedList){
         if(gun.getGunInfo() == entry.getGunInfo())
             return false;
@@ -100,7 +100,7 @@ bool Event::addGun(const GunAndAmmo& gun) {
     gunsUsedList.emplace_back(gun);
     return true;
 }
-bool Event::hasUsedGun(const GunMetadata& gun) const {
+bool ShootingEvent::hasUsedGun(const GunMetadata& gun) const {
     for(const auto& entry : gunsUsedList){
         if(entry.getGunInfo() == gun)
             return true;
@@ -108,15 +108,15 @@ bool Event::hasUsedGun(const GunMetadata& gun) const {
     
     return false;
 }
-int Event::totalGunsUsed() const {
+int ShootingEvent::totalGunsUsed() const {
     return gunsUsedList.size();
 }
-const EventMetadata& Event::getInfo() const {
+const ShootingEventMetadata& ShootingEvent::getInfo() const {
     return eventMetadata;
 }
-std::string Event::printDate() const{
+std::string ShootingEvent::printDate() const{
     return std::format("{:%Od %b %Y}", eventMetadata.date);
 }
-const std::vector<GunAndAmmo>& Event::getGunsUsed() const{
+const std::vector<GunAndAmmo>& ShootingEvent::getGunsUsed() const{
     return gunsUsedList;
 }

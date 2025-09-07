@@ -73,7 +73,7 @@ bool AssociatedGun::removeAmmoUsed(const AmmoMetadata& ammo){
 bool AssociatedGun::hasUsedAmmo(const AmmoMetadata& ammo) const {
     return ammoUsedList.contains(ammo);
 }
-bool AssociatedGun::addEvent(std::shared_ptr<Event> event) {
+bool AssociatedGun::addEvent(std::shared_ptr<ShootingEvent> event) {
     if(eventsUsed.contains(event->getInfo()))
         return false;
 
@@ -104,14 +104,14 @@ bool AssociatedGun::addEvent(std::shared_ptr<Event> event) {
         return false;
     }
 }
-bool AssociatedGun::removeEvent(const EventMetadata& data) {
+bool AssociatedGun::removeEvent(const ShootingEventMetadata& data) {
    if(!eventsUsed.contains(data))
         return true;
 
     eventsUsed.erase(data);
     return !eventsUsed.contains(data); // Return the inverse of contains()
 }
-bool AssociatedGun::wasUsedInEvent(const EventMetadata& data){
+bool AssociatedGun::wasUsedInEvent(const ShootingEventMetadata& data){
     return eventsUsed.contains(data);
 }
 int AssociatedGun::totalEventsUsed() const {
@@ -123,7 +123,7 @@ int AssociatedGun::totalAmmoTypesUsed() const {
 const std::map<AmmoMetadata, AmountOfAmmo>& AssociatedGun::getAmmoUsed()   const{
     return ammoUsedList;
 }
-const std::map<EventMetadata, std::shared_ptr<Event>>& AssociatedGun::getEventsUsed() const{
+const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& AssociatedGun::getEventsUsed() const{
     return eventsUsed;
 }
 

@@ -25,41 +25,41 @@ namespace ShooterCentral{
         std::string name;
     };
 
-    class EventType{
+    class ShootingEventType{
     public:
-        explicit EventType(std::string setName="NULL");
-        ~EventType();
+        explicit ShootingEventType(std::string setName="NULL");
+        ~ShootingEventType();
 
         std::string getName() const;
         operator std::string() const;
-        bool operator== (const EventType& other) const;
-        bool operator<  (const EventType& other) const;
+        bool operator== (const ShootingEventType& other) const;
+        bool operator<  (const ShootingEventType& other) const;
 
     private:
         std::string name;
     };
 
 
-    struct EventMetadata {
+    struct ShootingEventMetadata {
         std::string notes       { };
         ymd         date        { std::chrono::sys_days{std::chrono::year_month_day{std::chrono::year{0}, std::chrono::month{0}, std::chrono::day{0}}}};
 
         const Location&    location;
-        const EventType&   eventType;
+        const ShootingEventType&   eventType;
 
-        bool operator== (const EventMetadata& other) const;
-        bool operator<  (const EventMetadata& other) const;
+        bool operator== (const ShootingEventMetadata& other) const;
+        bool operator<  (const ShootingEventMetadata& other) const;
     };
 
-    void to_json(LAS::json& j, const EventMetadata& data);
+    void to_json(LAS::json& j, const ShootingEventMetadata& data);
     std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
 
-    class Event {
+    class ShootingEvent {
     public:
-        Event(const EventMetadata& setInfo);
-        ~Event();
+        ShootingEvent(const ShootingEventMetadata& setInfo);
+        ~ShootingEvent();
 
-        const EventMetadata& getInfo() const;                   // Throws if eventMetadata is invalid
+        const ShootingEventMetadata& getInfo() const;                   // Throws if eventMetadata is invalid
 
         bool    addGun          (const GunAndAmmo& gun);        // Will not amend existing entries if a gun is already in the container
         bool    hasUsedGun      (const GunMetadata& gun) const;
@@ -69,7 +69,7 @@ namespace ShooterCentral{
 
         const std::vector<GunAndAmmo>& getGunsUsed() const;
    private:
-        EventMetadata eventMetadata;
+        ShootingEventMetadata eventMetadata;
 
         std::vector<GunAndAmmo> gunsUsedList;
     };
