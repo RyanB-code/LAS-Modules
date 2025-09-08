@@ -1,23 +1,40 @@
+/*
 #pragma once
+
+#include "Containers.h"
+
+#include <queue>
 
 namespace ShooterCentral {
 
-struct EventStatus {
+struct Status {
     bool didSucceed { false };
-    char msg[256];
+    char msg[256] = { };
 };
 
 
-class Event {
+class ModelEvent {
 public:
-    Event::Event();
-    virtual ~Event();
+    ModelEvent();
+    virtual ~ModelEvent();
 
-    virtual EventStatus execute   
-    
-private:
-
+    virtual Status execute (Container& container) = 0;
 };
 
+class UIEvent {
+public:
+    UIEvent();
+    virtual ~UIEvent();
+
+    virtual Status execute (UIController& controller) = 0;
+};
+
+
+Status pushEvent    (std::unique_ptr<ModelEvent> event);
+Status pushEvent    (std::unique_ptr<UIEvent> event);
+
+void pollEvent      (std::unique_ptr<ModelEvent>& event);
+void pollEvent      (std::unique_ptr<UI>& event);
 
 }
+*/
