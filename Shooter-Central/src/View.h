@@ -91,20 +91,20 @@ namespace ShooterCentral::UI {
             bool showEvents     { true };
             bool showStockpile  { true };
 
-            std::weak_ptr<ShootingEvent>            selectedEvent;
+            std::weak_ptr<ShootingEvent>    selectedEvent;
             std::weak_ptr<AssociatedGun>    selectedGun;
             Cartridge                       selectedCartridge { };
         };
 
         struct View {
             struct EventTab {
-                std::weak_ptr<ShootingEvent>                        selectedEvent;
+                std::weak_ptr<ShootingEvent>                selectedEvent;
                 std::reference_wrapper<const GunAndAmmo>    selectedGun     { std::cref(EMPTY_GUN_AND_AMMO) };
             };
 
             struct GunTab{
                 std::weak_ptr<AssociatedGun>    selectedGun;
-                std::weak_ptr<ShootingEvent>            selectedEvent;
+                std::weak_ptr<ShootingEvent>    selectedEvent;
             };
 
             struct StockpileTab{
@@ -131,7 +131,7 @@ namespace ShooterCentral::UI {
         struct Edit {
             Category category { Category::NONE }; 
 
-            std::weak_ptr<ShootingEvent>            selectedEvent;
+            std::weak_ptr<ShootingEvent>    selectedEvent;
             std::weak_ptr<AssociatedAmmo>   selectedAmmo;
             std::weak_ptr<AssociatedGun>    selectedGun;
         };
@@ -202,13 +202,13 @@ namespace ShooterCentral::UI {
 
 
     // Helper functions
-    void centerNextItemX            (float x);
-    void centerNextItemY            (float y);
+    void centerNextItemX        (float x);
+    void centerNextItemY        (float y);
     void centerNextComboBoxX    (const std::string& text, float comboBoxWidth);
 
-    void centerText         (const std::string& text);
-    void centerTextDisabled (const std::string& text);
-    bool centerButton       (const std::string& text, ImVec2 size);
+    void centerText             (const std::string& text);
+    void centerTextDisabled     (const std::string& text);
+    bool centerButton           (const std::string& text, ImVec2 size);
 
     std::string categoryToString    (const Category& category,  const std::string& noneText=""); // noneText - Choose what to display when none is selected
     std::string subItemToString     (const SubItem& item,       const std::string& noneText=""); // noneText - Choose what to display when none is selected
@@ -255,11 +255,11 @@ namespace ShooterCentral::UI {
     }
 
     namespace ListBoxes{
-        void cartridges     (const std::map<Cartridge, std::shared_ptr<Cartridge>>& list,       ImVec2 size);
-        void manufacturers  (const std::map<Manufacturer, std::shared_ptr<Manufacturer>>& list, ImVec2 size);
-        void eventLocations (const std::map<Location, std::shared_ptr<Location>>& list,         ImVec2 size);
-        void eventTypes     (const std::map<ShootingEventType, std::shared_ptr<ShootingEventType>>& list,       ImVec2 size); 
-        void weaponTypes    (const std::map<WeaponType, std::shared_ptr<WeaponType>>& list,     ImVec2 size);
+        void cartridges     (const std::map<Cartridge, std::shared_ptr<Cartridge>>& list,                   ImVec2 size);
+        void manufacturers  (const std::map<Manufacturer, std::shared_ptr<Manufacturer>>& list,             ImVec2 size);
+        void eventLocations (const std::map<Location, std::shared_ptr<Location>>& list,                     ImVec2 size);
+        void eventTypes     (const std::map<ShootingEventType, std::shared_ptr<ShootingEventType>>& list,   ImVec2 size); 
+        void weaponTypes    (const std::map<WeaponType, std::shared_ptr<WeaponType>>& list,                 ImVec2 size);
     }
     namespace ComboBoxes{
         void  category    (Category& selected);
