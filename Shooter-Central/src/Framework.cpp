@@ -142,11 +142,20 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 }
 void Framework::update() {
     std::unique_ptr<ModelEvent> modelEvent;
+    std::unique_ptr<UI> uiEvent;
     pollEvent(modelEvent);
-    
+    pollEvent(uiEvent);
+
     // Must check bc if no event is queued, pollEvent returns nullptr
     if(modelEvent){
         Status s {modelEvent->execute(containers)};
+
+        // In future have it open a pop-up msg in the UI too
+        if (!s.didSucceed)                  
+            log_error(std::string{s.msg});
+    }
+    if(uiEvent){
+        Status s {uiEvent->execute(view)};
 
         // In future have it open a pop-up msg in the UI too
         if (!s.didSucceed)                  
