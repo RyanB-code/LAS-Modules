@@ -4,6 +4,7 @@
 #include "CommonItems.h"
 #include "View.h"
 #include "Containers.h"
+#include "Events.h"
 
 #include <LAS/Logging.h>
 #include <LAS/json.h>
@@ -15,6 +16,7 @@
 #include <filesystem>
 #include <memory>
 #include <chrono>
+
 
 namespace ShooterCentral{
 
