@@ -3,6 +3,7 @@
 #include "Container Items/AssociatedItems.h"
 #include "CommonItems.h"
 #include "Containers.h"
+#include "Events.h"
 
 #include <LAS/Logging.h>
 #include <imgui/imgui.h>
@@ -10,7 +11,7 @@
 #include <map>
 #include <functional>
 
-#include <iostream>
+#include <iostream> // For testing
 
 
 namespace ShooterCentral::UI {
@@ -146,6 +147,8 @@ namespace ShooterCentral::UI {
 
         void draw(const Containers& containers, const UnsavedChanges& unsavedChanges);
 
+        void setScreen(const Screen& screen);
+
     private:
         Screen currentScreen { Screen::HOME };
 
@@ -265,5 +268,21 @@ namespace ShooterCentral::UI {
         void  category    (Category& selected);
         void  subItem     (SubItem& selected);
     }
+
+    // Events
+    class SetScreen : public UIEvent {
+    public:
+        SetScreen(const Screen& setScreen);
+        ~SetScreen();
+
+        virtual Status execute (UIController& controller) override;
+
+        UI_EVENT_CLONE(SetScreen)
+    private:
+        Screen screen;
+    };
+    class ShowPopup : public UIEvent {
+
+    };
 
 }

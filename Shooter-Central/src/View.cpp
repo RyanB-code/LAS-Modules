@@ -46,6 +46,10 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
             LAS::log_warn("SC Screen case not handled");
             break;
     }
+
+}
+void UIController::setScreen(const Screen& screen){
+    currentScreen = screen;
 }
 void Home::main (const Containers& containers, ScreenData::Home& data, const UnsavedChanges& changes) {
     
@@ -258,7 +262,8 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartri
 
     if(ImGui::BeginChild("Selected Cartridge Details", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         if(centerButton("View Detailed\nInformation", ImVec2 { 100, 50 })){
-            std::cout << "go to view\n";
+            SetScreen setScreen {Screen::VIEW};
+            pushEvent(&setScreen); 
         }
     }
     ImGui::EndChild();
@@ -1612,6 +1617,17 @@ void ComboBoxes::subItem(SubItem& selected){
         }
         ImGui::EndCombo();
     }
+}
+
+SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
+        
+}
+SetScreen::~SetScreen(){
+
+}
+Status SetScreen::execute (UIController& controller){
+    controller.setScreen(screen);
+    return Status{true};
 }
 
 } // End view namespace
