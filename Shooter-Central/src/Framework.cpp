@@ -142,7 +142,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 }
 void Framework::update() {
     std::unique_ptr<ModelEvent> modelEvent;
-    std::unique_ptr<UI> uiEvent;
+    std::unique_ptr<UIEvent> uiEvent;
     pollEvent(modelEvent);
     pollEvent(uiEvent);
 
