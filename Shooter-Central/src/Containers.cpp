@@ -243,3 +243,29 @@ bool Containers::addAmountPerCartridge(const Cartridge& cartridge, int addAmount
 
     return true;
 }
+
+
+AddGunMetadata::AddGunMetadata(const ObjectBuffers::GunMetadata& set) : info { set } {
+
+}
+AddGunMetadata::~AddGunMetadata(){
+
+}
+Status AddGunMetadata::execute (Containers& container) {
+    if(container.knownGuns_create(info).second)
+        return Status { true };
+    else
+        return Status { false, "knownGuns_create() failed" };
+}
+
+
+AddWeaponType::AddWeaponType(char* str) {
+
+}
+AddWeaponType::~AddWeaponType(){
+
+}
+Status execute (Containers& container) {
+
+}
+

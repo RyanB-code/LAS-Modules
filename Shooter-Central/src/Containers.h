@@ -2,6 +2,7 @@
 
 #include "Container Items/AssociatedItems.h"
 #include "CommonItems.h"
+#include "Events.h"
 
 #include <map>
 #include <set>
@@ -32,6 +33,7 @@ namespace ShooterCentral {
         };
     }
 
+
     class Containers {
     public:
         Containers();
@@ -54,7 +56,7 @@ namespace ShooterCentral {
 
         std::pair<std::shared_ptr<AmmoMetadata>, bool>  knownAmmo_create   (const ObjectBuffers::AmmoMetadata& add);    // Strong rollback guarantee if any operation fails
         std::pair<std::shared_ptr<GunMetadata>, bool>   knownGuns_create   (const ObjectBuffers::GunMetadata& add);
-        std::pair<std::shared_ptr<ShootingEvent>, bool>         events_create      (const ObjectBuffers::ShootingEventMetadata& add);
+        std::pair<std::shared_ptr<ShootingEvent>, bool> events_create      (const ObjectBuffers::ShootingEventMetadata& add);
 
 
         bool events_add         (const ShootingEvent& add);      
@@ -69,7 +71,7 @@ namespace ShooterCentral {
 
         std::shared_ptr<AmmoMetadata>   knownAmmo_at    (const AmmoMetadata& key);
         std::shared_ptr<GunMetadata>    knownGuns_at    (const GunMetadata& key);
-        std::shared_ptr<ShootingEvent>          events_at       (const ShootingEvent& key);
+        std::shared_ptr<ShootingEvent>  events_at       (const ShootingEvent& key);
         std::shared_ptr<AssociatedAmmo> ammoStockpile_at(const AmmoMetadata& key);
         std::shared_ptr<AssociatedGun>  gunsInArmory_at (const GunMetadata& key);
 
@@ -99,4 +101,32 @@ namespace ShooterCentral {
         bool addAmountPerCartridge(const Cartridge& cartridge, int amount);
     };
 
+    static constexpr int MAX_CHAR_METADATA = 256;
+
+    // Events
+    class AddGunMetadata : public ModelEvent {
+    public:
+        AddGunMetadata(const ObjectBuffers::GunMetadata& set);
+        ~AddGunMetadata();
+
+        virtual Status execute (Containers& container) override;
+
+        MODEL_EVENT_CLONE(AddGunMetadata)
+
+    private:
+        ObjectBuffers::GunMetadata info;
+    };
+
+    class AddWeaponType : public ModelEvent {
+    public:
+        AddWeaponType(char* str);
+        ~AddWeaponType();
+
+        virtual Status execute (Containers& container) override;
+
+        MODEL_EVENT_CLONE(AddWeaponType)
+
+    private:
+        char weaponTypeBuffer[MAX_CHAR_METADATA];
+    };
 }

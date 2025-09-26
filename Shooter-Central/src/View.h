@@ -136,6 +136,11 @@ namespace ShooterCentral::UI {
             std::weak_ptr<AssociatedAmmo>   selectedAmmo;
             std::weak_ptr<AssociatedGun>    selectedGun;
         };
+
+        struct PopUpInfo {
+            bool shown { false };
+            char text[512];
+        };
     }
 
 
@@ -152,10 +157,11 @@ namespace ShooterCentral::UI {
     private:
         Screen currentScreen { Screen::HOME };
 
-        ScreenData::Home homeData    { };
-        ScreenData::View viewData    { };
-        ScreenData::Add  addData     { };
-        ScreenData::Edit editData    { };
+        ScreenData::PopUpInfo popUp { };
+        ScreenData::Home homeData   { };
+        ScreenData::View viewData   { };
+        ScreenData::Add  addData    { };
+        ScreenData::Edit editData   { };
 
 
         void resetAllScreens();
@@ -215,6 +221,8 @@ namespace ShooterCentral::UI {
 
     std::string categoryToString    (const Category& category,  const std::string& noneText=""); // noneText - Choose what to display when none is selected
     std::string subItemToString     (const SubItem& item,       const std::string& noneText=""); // noneText - Choose what to display when none is selected
+
+    void displayPopUp           (char* text);
                                                                                                
 
 
@@ -281,8 +289,17 @@ namespace ShooterCentral::UI {
     private:
         Screen screen;
     };
-    class ShowPopup : public UIEvent {
 
+    class ShowPopup : public UIEvent {
+    public: 
+        ShowPopup(const char* msg);
+        ~ShowPopup();
+
+        virtual Status execute(UIController& controller) override;
+
+        UI_EVENT_CLONE(ShowPopup)
+    private:
+        char text[512];
     };
 
 }

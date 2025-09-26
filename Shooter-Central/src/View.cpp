@@ -62,6 +62,9 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
 
     lastScreen = currentScreen;
 
+    if(popUp.shown)
+        displayPopUp(popUp.text);
+
     switch(currentScreen){
         case Screen::HOME:
             Home::main(containers, homeData, unsavedChanges);
@@ -1125,6 +1128,20 @@ std::string subItemToString (const SubItem& item, const std::string& noneStr){
     }
 }
 
+void displayPopUp (char* text) {
+    if(!text)
+        return;
+
+    ImGui::OpenPopup("Basic PopUp");
+
+    if(ImGui::BeginPopup("Basic PopUp")){
+        ImGui::Text(text);
+
+        ImGui::EndPopup();
+    }
+
+}
+
 void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
     std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
 
@@ -1662,5 +1679,15 @@ Status SetScreen::execute (UIController& controller){
     controller.setScreen(screen);
     return Status{true};
 }
+ShowPopup::ShowPopup(const char* msg) {
+
+}
+ShowPopup::~ShowPopup(){
+
+}
+Status ShowPopup::execute(UIController& controller) {
+    return Status { false };
+}
+
 
 } // End view namespace
