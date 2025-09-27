@@ -14,9 +14,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/Config.h.in" "${CMAKE_CURRENT_SO
 # All CPP files
 file(GLOB sources1 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp" )
 file(GLOB sources2 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/Container Items/*.cpp" )
+file(GLOB sources3 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/GUI/*.cpp" )
+
 
 # Add lib
-add_library(${PROJECT_NAME} SHARED ${sources1} ${sources2})
+add_library(${PROJECT_NAME} SHARED ${sources1} ${sources2} ${sources3})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_SOURCE_DIR}/bin")  # Set output dir
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_NAME "name")                            # Leave as name.so to be renamed later
@@ -43,16 +45,16 @@ if(DEBUG)
     add_custom_command( 
         TARGET ${PROJECT_NAME}
         POST_BUILD 
-        COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_SOURCE_DIR}/bin/libname.so" "${CMAKE_SOURCE_DIR}/bin/${PROJECT_NAME}-dev.lasm"     # Rename temporary file 
-        COMMAND ${CMAKE_COMMAND} -E rm -f   "${CMAKE_SOURCE_DIR}/include/Config.h"                                         # Remove temporary file 
+        COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_SOURCE_DIR}/bin/libname.so" "${CMAKE_SOURCE_DIR}/bin/${PROJECT_NAME}-dev.lasm"  # Rename temporary file 
+        COMMAND ${CMAKE_COMMAND} -E rm -f   "${CMAKE_SOURCE_DIR}/include/Config.h"                                                  # Remove temporary file 
         COMMENT "Removed temporary Config.h file and renamed shared object file"
     )
 else()
     add_custom_command( 
         TARGET ${PROJECT_NAME}
         POST_BUILD 
-        COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_SOURCE_DIR}/bin/libname.so" "${CMAKE_SOURCE_DIR}/bin/${PROJECT_NAME}.lasm"     # Rename temporary file 
-        COMMAND ${CMAKE_COMMAND} -E rm -f   "${CMAKE_SOURCE_DIR}/include/Config.h"                                         # Remove temporary file 
+        COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_SOURCE_DIR}/bin/libname.so" "${CMAKE_SOURCE_DIR}/bin/${PROJECT_NAME}.lasm"      # Rename temporary file 
+        COMMAND ${CMAKE_COMMAND} -E rm -f   "${CMAKE_SOURCE_DIR}/include/Config.h"                                                  # Remove temporary file 
         COMMENT "Removed temporary Config.h file and renamed shared object file"
     )
 endif()
