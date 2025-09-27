@@ -1,6 +1,6 @@
-#include "View.h"
+#include "GUI/UIController.h"
 
-namespace ShooterCentral::UI{
+namespace ShooterCentral::UI {
 
 UIController::UIController(){
 
@@ -39,7 +39,7 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
                 break;
         }
     }
-        
+
     if(ImGui::BeginTabBar("Tabs")){
         if(ImGui::BeginTabItem("Home", nullptr, homeFlags)){
             currentScreen = Screen::HOME;
@@ -298,8 +298,9 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartri
 
     if(ImGui::BeginChild("Selected Cartridge Details", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         if(centerButton("View Detailed\nInformation", ImVec2 { 100, 50 })){
-            SetScreen setScreen {Screen::VIEW};
-            pushEvent(&setScreen); 
+            //SetScreen setScreen {Screen::VIEW};
+            //pushEvent(&setScreen); 
+            // FOR TESTING. UNCOMMENT WHEN CIRCULATE DEPENDENCIES ARE FIXED
         }
     }
     ImGui::EndChild();
@@ -1135,7 +1136,7 @@ void displayPopUp (char* text) {
     ImGui::OpenPopup("Basic PopUp");
 
     if(ImGui::BeginPopup("Basic PopUp")){
-        ImGui::Text(text);
+        ImGui::Text("placeholder text");
 
         ImGui::EndPopup();
     }
@@ -1667,26 +1668,6 @@ void ComboBoxes::subItem(SubItem& selected){
         }
         ImGui::EndCombo();
     }
-}
-
-SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
-        
-}
-SetScreen::~SetScreen(){
-
-}
-Status SetScreen::execute (UIController& controller){
-    controller.setScreen(screen);
-    return Status{true};
-}
-ShowPopup::ShowPopup(const char* msg) {
-
-}
-ShowPopup::~ShowPopup(){
-
-}
-Status ShowPopup::execute(UIController& controller) {
-    return Status { false };
 }
 
 

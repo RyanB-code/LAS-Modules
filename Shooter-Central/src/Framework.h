@@ -1,8 +1,8 @@
 #pragma once
 
+#include "GUI/UIController.h"
 #include "Container Items/AssociatedItems.h"
 #include "CommonItems.h"
-#include "View.h"
 #include "Containers.h"
 #include "Events.h"
 
