@@ -265,7 +265,7 @@ AddWeaponType::AddWeaponType(char* str) {
 AddWeaponType::~AddWeaponType(){
 
 }
-Status execute (Containers& container) {
-
+Status AddWeaponType::execute (Containers& container) {
+    return Status{false};
 }
 
