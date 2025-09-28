@@ -3,7 +3,6 @@
 #include "Containers.h"
 
 #include <memory>
-#include <functional>
 
 namespace ShooterCentral::UI {
 

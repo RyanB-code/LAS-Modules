@@ -14,7 +14,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/Config.h.in" "${CMAKE_CURRENT_SO
 # All CPP files
 file(GLOB sources1 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp" )
 file(GLOB sources2 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/Container Items/*.cpp" )
-file(GLOB sources3 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/GUI/*.cpp" )
+file(GLOB sources3 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/UI/*.cpp" )
 
 
 # Add lib

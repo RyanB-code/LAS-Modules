@@ -2,48 +2,18 @@
 
 #include "Container Items/AssociatedItems.h"
 #include "CommonItems.h"
-#include "Containers.h"
-
-#include "GUI/UIData.h"
-//#include "GUI/UIEvents.h"
+#include "UI/UIData.h"
+#include "UI/UIControl.h"
 
 #include <LAS/Logging.h>
 #include <imgui/imgui.h>
 
 #include <map>
+#include <memory>
 
 #include <iostream> // For testing
 
-
 namespace ShooterCentral::UI {
-
-class UIController {
-public:
-    UIController();
-    ~UIController();
-
-    void draw(const Containers& containers, const UnsavedChanges& unsavedChanges);
-
-    void setScreen(const Screen& screen);
-
-private:
-    Screen currentScreen { Screen::HOME };
-
-    ScreenData::PopUpInfo popUp { };
-    ScreenData::Home homeData   { };
-    ScreenData::View viewData   { };
-    ScreenData::Add  addData    { };
-    ScreenData::Edit editData   { };
-
-
-    void resetAllScreens();
-    void resetScreen(Screen screen);
-
-    void resetGuns();
-    void resetAmmo();
-    void resetEvents();
-};
-
 
 namespace Home {
     void main                               (const Containers& containers, ScreenData::Home& data, const UnsavedChanges& changes);
@@ -148,5 +118,6 @@ namespace ComboBoxes{
     void  category    (Category& selected);
     void  subItem     (SubItem& selected);
 }
+
 
 }   // End UI namespace
