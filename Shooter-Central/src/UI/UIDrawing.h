@@ -64,8 +64,6 @@ bool centerButton           (const std::string& text, ImVec2 size);
 std::string categoryToString    (const Category& category,  const std::string& noneText=""); // noneText - Choose what to display when none is selected
 std::string subItemToString     (const SubItem& item,       const std::string& noneText=""); // noneText - Choose what to display when none is selected
 
-void displayPopUp           (char* text);
-                                                                                           
 
 class Popup {
 public:
