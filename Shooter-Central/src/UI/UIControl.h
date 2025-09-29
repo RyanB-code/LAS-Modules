@@ -50,11 +50,12 @@ private:
     void resetEvents();
 };
 
+
 // Events
 class SetScreen : public UIEvent {
 public:
     SetScreen(const Screen& setScreen);
-    ~SetScreen();
+    ~SetScreen() = default;
 
     virtual Status execute (UIController& controller) override;
 

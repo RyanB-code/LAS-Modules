@@ -109,9 +109,6 @@ void UIController::closePopup() {
 SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
         
 }
-SetScreen::~SetScreen(){
-
-}
 Status SetScreen::execute (UIController& controller){
     controller.setScreen(screen);
     return Status{true};
