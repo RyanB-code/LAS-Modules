@@ -60,10 +60,16 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
         ImGui::EndTabBar();
     }
 
-    lastScreen = currentScreen;
+    lastScreen = currentScreen; 
 
-    if(popUp.shown)
-        displayPopUp(popUp.text);
+    if(popup){
+        ImGui::OpenPopup(popup->getTitle());
+
+        if(ImGui::BeginPopupModal(popup->getTitle(), NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+            popup->show();
+            ImGui::EndPopup();
+        }
+    }
 
     switch(currentScreen){
         case Screen::HOME:
@@ -87,6 +93,17 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
 void UIController::setScreen(const Screen& screen){
     currentScreen = screen;
 }
+bool UIController::setPopup(std::shared_ptr<Popup> set){
+    if(!set)
+        return false;
+
+    popup = set;
+    return true;
+}
+void UIController::closePopup() {
+    popup = nullptr;
+}
+
 
 
 SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
@@ -99,14 +116,20 @@ Status SetScreen::execute (UIController& controller){
     controller.setScreen(screen);
     return Status{true};
 }
-ShowPopup::ShowPopup(const char* msg) {
 
-}
-ShowPopup::~ShowPopup(){
+ShowPopup::ShowPopup(std::shared_ptr<Popup> set) : popup { set } {
 
 }
 Status ShowPopup::execute(UIController& controller) {
-    return Status { false };
+    if(controller.setPopup(popup))
+        return Status { true };
+
+    return Status { false, "UIController::setPopup() failed" };
+}
+
+Status ClosePopup::execute(UIController& controller) {
+    controller.closePopup();
+    return Status { true };
 }
 
 

@@ -67,6 +67,23 @@ std::string subItemToString     (const SubItem& item,       const std::string& n
 void displayPopUp           (char* text);
                                                                                            
 
+class Popup {
+public:
+    Popup(const char* title);
+    virtual ~Popup();
+
+    virtual void show() = 0;
+    void close() const;
+
+    const char* getTitle() const;
+
+    void buttons_Close()   const;
+    bool buttons_YesOrNo() const; // Returns true if YES is chosen, false if not chosen yet
+
+private:
+    char title[32] = "";
+};
+                                                                                        
 
 // Table drawing
 namespace Tables{

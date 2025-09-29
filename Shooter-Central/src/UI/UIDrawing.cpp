@@ -1044,18 +1044,41 @@ std::string subItemToString (const SubItem& item, const std::string& noneStr){
     }
 }
 
-void displayPopUp (char* text) {
-    if(!text)
-        return;
+Popup::Popup(const char* set) {
+    strncpy(title, set, sizeof(title) - 1);
+    title[sizeof(title) - 1] = '\0';            // Manually null-terminate
+}
+Popup::~Popup()  {
 
-    ImGui::OpenPopup("Basic PopUp");
+}
+void Popup::close() const {
+    ImGui::CloseCurrentPopup();
 
-    if(ImGui::BeginPopup("Basic PopUp")){
-        ImGui::Text("placeholder text");
+    ClosePopup close{ };
+    pushEvent(&close);
+}
+const char* Popup::getTitle() const {
+    return title;
+}
+void Popup::buttons_Close() const {
+    if (centerButton("Close", ImVec2{120, 0}))
+        close();
+}
+bool Popup::buttons_YesOrNo() const{ 
+    float windowWidth { ImGui::GetWindowSize().x };
+    float buttonWidth { 100 };
 
-        ImGui::EndPopup();
-    }
+    ImGui::SetCursorPosX( (windowWidth * 0.5f) - (buttonWidth) - 3 ); // Subtracting 3 makes it seem more centered
 
+    if(ImGui::Button("Yes", ImVec2 {buttonWidth, 0}))
+        return true;
+
+    ImGui::SameLine();
+
+    if(ImGui::Button("No", ImVec2 {buttonWidth, 0})) 
+       close(); 
+
+    return false;
 }
 
 void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){

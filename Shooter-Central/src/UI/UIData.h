@@ -123,11 +123,7 @@ namespace ScreenData{
         std::weak_ptr<AssociatedAmmo>   selectedAmmo;
         std::weak_ptr<AssociatedGun>    selectedGun;
     };
-
-    struct PopUpInfo {
-        bool shown { false };
-        char text[512];
-    };
+ 
 }   // End ScreenData namespace
 
 }   // End UI namespace

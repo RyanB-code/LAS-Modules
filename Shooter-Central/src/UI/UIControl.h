@@ -11,11 +11,14 @@
 #include <imgui/imgui.h>
 
 #include <map>
+#include <memory>
 
 #include <iostream> // For testing
 
 
 namespace ShooterCentral::UI {
+
+class Popup;
 
 class UIController {
 public:
@@ -25,11 +28,14 @@ public:
     void draw(const Containers& containers, const UnsavedChanges& unsavedChanges);
 
     void setScreen(const Screen& screen);
+    bool setPopup(std::shared_ptr<Popup> popup);
+    void closePopup();
 
 private:
     Screen currentScreen { Screen::HOME };
 
-    ScreenData::PopUpInfo popUp { };
+    std::shared_ptr<Popup>  popup;
+
     ScreenData::Home homeData   { };
     ScreenData::View viewData   { };
     ScreenData::Add  addData    { };
@@ -57,16 +63,27 @@ private:
     Screen screen;
 };
 
+
 class ShowPopup : public UIEvent {
 public: 
-    ShowPopup(const char* msg);
-    ~ShowPopup();
+    ShowPopup(std::shared_ptr<Popup>);
+    ~ShowPopup() = default;
 
     virtual Status execute(UIController& controller) override;
 
     UI_EVENT_CLONE(ShowPopup)
 private:
-    char text[512];
+    std::shared_ptr<Popup> popup; 
+};
+
+class ClosePopup : public UIEvent {
+public:
+    ClosePopup() = default;
+    ~ClosePopup() = default;
+
+    virtual Status execute(UIController& controller) override;
+
+    UI_EVENT_CLONE(ClosePopup)
 };
 
 
