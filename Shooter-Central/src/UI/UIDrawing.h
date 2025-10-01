@@ -46,9 +46,9 @@ namespace View {
 namespace Add {
     void    main                    (const Containers& containers, ScreenData::Add& data);
     void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
-    void    addItemWindow           (const SubItem& selected);
+    void    addItemWindow           (const SubItem& selected, ScreenData::Add::TextBuffers& textBuffers);
 
-    void    add_WeaponType          ();
+    void    add_WeaponType          (char* textBuf);
 }
 
 

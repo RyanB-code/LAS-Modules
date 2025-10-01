@@ -114,6 +114,12 @@ namespace ScreenData{
         static constexpr int MAX_CHAR_INPUT { 64 };
         Category category   { Category::NONE }; 
         SubItem  subItem    { SubItem::NONE };
+
+        struct TextBuffers {
+            char weaponType[MAX_CHAR_INPUT] = "";
+        };
+
+        TextBuffers textBuffers { };
     };
 
     struct Edit {
