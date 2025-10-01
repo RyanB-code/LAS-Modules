@@ -259,13 +259,16 @@ Status AddGunMetadata::execute (Containers& container) {
 }
 
 
-AddWeaponType::AddWeaponType(char* str) {
-
+AddWeaponType::AddWeaponType(const WeaponType& wt) : weaponType { wt } {
+    
 }
 AddWeaponType::~AddWeaponType(){
 
 }
 Status AddWeaponType::execute (Containers& container) {
-    return Status{false};
+    if(container.weaponTypes_add(weaponType))
+        return Status{true};
+
+    return Status{false, "Failed to add WeaponType" };
 }
 

@@ -101,7 +101,6 @@ namespace ShooterCentral {
         bool addAmountPerCartridge(const Cartridge& cartridge, int amount);
     };
 
-    static constexpr int MAX_CHAR_METADATA = 256;
 
     // Events
     class AddGunMetadata : public ModelEvent {
@@ -119,7 +118,7 @@ namespace ShooterCentral {
 
     class AddWeaponType : public ModelEvent {
     public:
-        AddWeaponType(char* str);
+        AddWeaponType(const WeaponType& wt);
         ~AddWeaponType();
 
         virtual Status execute (Containers& container) override;
@@ -127,6 +126,6 @@ namespace ShooterCentral {
         MODEL_EVENT_CLONE(AddWeaponType)
 
     private:
-        char weaponTypeBuffer[MAX_CHAR_METADATA];
+        WeaponType weaponType;
     };
 }
