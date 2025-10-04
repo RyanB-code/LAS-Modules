@@ -50,6 +50,7 @@ private:
     void resetEvents();
 };
 
+
 namespace UIEvents {
 
     class SetScreen : public UIEvent {

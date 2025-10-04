@@ -105,7 +105,6 @@ void UIController::closePopup() {
 }
 
 
-
 namespace UIEvents {
 
     SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
