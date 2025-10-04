@@ -6,7 +6,14 @@
 LAS_LOCATION_FILE=las-directory.dat
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )     # Where script is (should be Garage/build/scripts/
-LAS_DIR=$(cat ${SCRIPT_DIR}/${LAS_LOCATION_FILE})                                   # LAS directory
+CONFIG_FILE="${SCRIPT_DIR}/${LAS_LOCATION_FILE}"
+
+if [[ -e ${CONFIG_FILE} ]]; then
+    source "${CONFIG_FILE}"
+else
+    echo "Configuration file not found at expected location: ${CONFIG_FILE}"
+    exit 1
+fi
 
 cd ${SCRIPT_DIR}
 
