@@ -106,28 +106,32 @@ void UIController::closePopup() {
 
 
 
-SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
-        
-}
-Status SetScreen::execute (UIController& controller){
-    controller.setScreen(screen);
-    return Status{true};
-}
+namespace UIEvents {
 
-ShowPopup::ShowPopup(std::shared_ptr<Popup> set) : popup { set } {
+    SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
+            
+    }
+    Status SetScreen::execute (UIController& controller){
+        controller.setScreen(screen);
+        return Status{true};
+    }
 
-}
-Status ShowPopup::execute(UIController& controller) {
-    if(controller.setPopup(popup))
+    ShowPopup::ShowPopup(std::shared_ptr<Popup> set) : popup { set } {
+
+    }
+    Status ShowPopup::execute(UIController& controller) {
+        if(controller.setPopup(popup))
+            return Status { true };
+
+        return Status { false, "UIController::setPopup() failed" };
+    }
+
+    Status ClosePopup::execute(UIController& controller) {
+        controller.closePopup();
         return Status { true };
-
-    return Status { false, "UIController::setPopup() failed" };
-}
-
-Status ClosePopup::execute(UIController& controller) {
-    controller.closePopup();
-    return Status { true };
-}
+    }
 
 
-} // End UI namespace
+    }   // End UIEvents namespace
+
+}   // End SC::UI namespace

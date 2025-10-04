@@ -102,30 +102,32 @@ namespace ShooterCentral {
     };
 
 
-    // Events
-    class AddGunMetadata : public ModelEvent {
-    public:
-        AddGunMetadata(const ObjectBuffers::GunMetadata& set);
-        ~AddGunMetadata();
+    namespace ModelEvents {
 
-        virtual Status execute (Containers& container) override;
+        class AddGunMetadata : public ModelEvent {
+        public:
+            AddGunMetadata(const ObjectBuffers::GunMetadata& set);
+            ~AddGunMetadata();
 
-        MODEL_EVENT_CLONE(AddGunMetadata)
+            virtual Status execute (Containers& container) override;
 
-    private:
-        ObjectBuffers::GunMetadata info;
-    };
+            MODEL_EVENT_CLONE(AddGunMetadata)
 
-    class AddWeaponType : public ModelEvent {
-    public:
-        AddWeaponType(const WeaponType& wt);
-        ~AddWeaponType();
+        private:
+                ObjectBuffers::GunMetadata info;
+        };
 
-        virtual Status execute (Containers& container) override;
+        class AddWeaponType : public ModelEvent {
+        public:
+            AddWeaponType(const WeaponType& wt);
+            ~AddWeaponType();
 
-        MODEL_EVENT_CLONE(AddWeaponType)
+            virtual Status execute (Containers& container) override;
 
-    private:
-        WeaponType weaponType;
-    };
+            MODEL_EVENT_CLONE(AddWeaponType)
+
+        private:
+                WeaponType weaponType;
+        };
+    }
 }

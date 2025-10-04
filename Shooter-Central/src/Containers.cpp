@@ -1,6 +1,6 @@
 #include "Containers.h"
 
-using namespace ShooterCentral;
+namespace ShooterCentral {
 
 Containers::Containers(){
 
@@ -244,31 +244,35 @@ bool Containers::addAmountPerCartridge(const Cartridge& cartridge, int addAmount
     return true;
 }
 
+namespace ModelEvents {
 
-AddGunMetadata::AddGunMetadata(const ObjectBuffers::GunMetadata& set) : info { set } {
+    AddGunMetadata::AddGunMetadata(const ObjectBuffers::GunMetadata& set) : info { set } {
 
-}
-AddGunMetadata::~AddGunMetadata(){
+    }
+    AddGunMetadata::~AddGunMetadata(){
 
-}
-Status AddGunMetadata::execute (Containers& container) {
-    if(container.knownGuns_create(info).second)
-        return Status { true };
-    else
-        return Status { false, "knownGuns_create() failed" };
-}
+    }
+    Status AddGunMetadata::execute (Containers& container) {
+        if(container.knownGuns_create(info).second)
+            return Status { true };
+        else
+            return Status { false, "knownGuns_create() failed" };
+    }
 
 
-AddWeaponType::AddWeaponType(const WeaponType& wt) : weaponType { wt } {
-    
-}
-AddWeaponType::~AddWeaponType(){
+    AddWeaponType::AddWeaponType(const WeaponType& wt) : weaponType { wt } {
+        
+    }
+    AddWeaponType::~AddWeaponType(){
 
-}
-Status AddWeaponType::execute (Containers& container) {
-    if(container.weaponTypes_add(weaponType))
-        return Status{true};
+    }
+    Status AddWeaponType::execute (Containers& container) {
+        if(container.weaponTypes_add(weaponType))
+            return Status{true};
 
-    return Status{false, "Failed to add WeaponType" };
-}
+        return Status{false, "Failed to add WeaponType" };
+    }
 
+}   // End ModeEvents namespace
+
+}   // End SC namespace

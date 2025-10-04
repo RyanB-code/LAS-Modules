@@ -50,42 +50,44 @@ private:
     void resetEvents();
 };
 
+namespace UIEvents {
 
-// Events
-class SetScreen : public UIEvent {
-public:
-    SetScreen(const Screen& setScreen);
-    ~SetScreen() = default;
+    class SetScreen : public UIEvent {
+    public:
+        SetScreen(const Screen& setScreen);
+        ~SetScreen() = default;
 
-    virtual Status execute (UIController& controller) override;
+        virtual Status execute (UIController& controller) override;
 
-    UI_EVENT_CLONE(SetScreen)
-private:
-    Screen screen;
-};
-
-
-class ShowPopup : public UIEvent {
-public: 
-    ShowPopup(std::shared_ptr<Popup>);
-    ~ShowPopup() = default;
-
-    virtual Status execute(UIController& controller) override;
-
-    UI_EVENT_CLONE(ShowPopup)
-private:
-    std::shared_ptr<Popup> popup; 
-};
-
-class ClosePopup : public UIEvent {
-public:
-    ClosePopup() = default;
-    ~ClosePopup() = default;
-
-    virtual Status execute(UIController& controller) override;
-
-    UI_EVENT_CLONE(ClosePopup)
-};
+        UI_EVENT_CLONE(SetScreen)
+    private:
+        Screen screen;
+    };
 
 
-}   // End UI namespace
+    class ShowPopup : public UIEvent {
+    public: 
+        ShowPopup(std::shared_ptr<Popup>);
+        ~ShowPopup() = default;
+
+        virtual Status execute(UIController& controller) override;
+
+        UI_EVENT_CLONE(ShowPopup)
+    private:
+        std::shared_ptr<Popup> popup; 
+    };
+
+    class ClosePopup : public UIEvent {
+    public:
+        ClosePopup() = default;
+        ~ClosePopup() = default;
+
+        virtual Status execute(UIController& controller) override;
+
+        UI_EVENT_CLONE(ClosePopup)
+    };
+
+}   // End UIEvents namespace
+
+
+}   // End ShooterCentral::UI namespace

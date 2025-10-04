@@ -213,7 +213,7 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartri
 
     if(ImGui::BeginChild("Selected Cartridge Details", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         if(centerButton("View Detailed\nInformation", ImVec2 { 100, 50 })){
-            SetScreen setScreen {Screen::VIEW};
+            UIEvents::SetScreen setScreen {Screen::VIEW};
             pushEvent(&setScreen); 
             // FOR TESTING. UNCOMMENT WHEN CIRCULATE DEPENDENCIES ARE FIXED
         }
@@ -936,7 +936,7 @@ void Add::add_WeaponType(char* textBuf){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add New Weapon Type", ImVec2{200,50})){
-        AddWeaponType e { WeaponType { textBuf } };
+        ModelEvents::AddWeaponType e { WeaponType { textBuf } };
         pushEvent(&e);
     }
 }
@@ -1053,7 +1053,7 @@ Popup::~Popup()  {
 void Popup::close() const {
     ImGui::CloseCurrentPopup();
 
-    ClosePopup close{ };
+    UIEvents::ClosePopup close{ };
     pushEvent(&close);
 }
 const char* Popup::getTitle() const {
