@@ -748,7 +748,7 @@ void View::stockpileTab(
 }
 void Add::main(const Containers& containers, ScreenData::Add& data){
 
-    static constexpr float MIN_WIN_SIZE_X { 400 };
+    static constexpr float MIN_WIN_SIZE_X { 200 };
     static constexpr float MIN_WIN_SIZE_Y { 600 };
 
     static constexpr float MIN_TABLE_SIZE_X { 200 };
