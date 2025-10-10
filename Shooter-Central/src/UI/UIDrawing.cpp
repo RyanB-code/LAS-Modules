@@ -146,7 +146,7 @@ void Home::eventsWindow(const std::map<ShootingEventMetadata, std::shared_ptr<Sh
     ImGui::SeparatorText( "Selected Event" );
 
     if(!selected) {
-        centerText("Select An Event For More Information");
+        centerTextDisabled("Select An Event For More Information");
         return;
     }
 
@@ -207,7 +207,7 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartri
     ImGui::SeparatorText( "Selected Cartridge" );
 
     if(selected == EMPTY_CARTRIDGE) {
-        centerText("Select A Cartridge For More Information");
+        centerTextDisabled("Select A Cartridge For More Information");
         return;
     }
 
