@@ -48,7 +48,7 @@ namespace Add {
     void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
     void    addItemWindow           (const SubItem& selected, ScreenData::Add::TextBuffers& textBuffers);
 
-    void    add_WeaponType          (char* textBuf);
+    void    add_WeaponType          (char* textBuf, size_t size);
 }
 
 
@@ -63,6 +63,8 @@ bool centerButton           (const std::string& text, ImVec2 size);
 
 std::string categoryToString    (const Category& category,  const std::string& noneText=""); // noneText - Choose what to display when none is selected
 std::string subItemToString     (const SubItem& item,       const std::string& noneText=""); // noneText - Choose what to display when none is selected
+                                                                                             
+void resetText (char* dest, size_t size, const char* replacementText=""); // Does nothing if paremeters are invalid for any reason
 
 
 class Popup {

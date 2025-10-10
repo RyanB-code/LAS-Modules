@@ -3,7 +3,7 @@
 namespace ShooterCentral::UI {
 
 void Home::main (const Containers& containers, ScreenData::Home& data, const UnsavedChanges& changes) {
-    
+
     ImVec2  windowSize { ImGui::GetContentRegionAvail() };
     ImVec2  childWindowSizes { };
     bool    horizontalLayout { false };
@@ -914,7 +914,7 @@ void Add::addItemWindow(const SubItem& selectedItem, ScreenData::Add::TextBuffer
 
             break;
         case SubItem::GUN_WEAPON_TYPE:
-            Add::add_WeaponType(textBuffers.weaponType);
+            Add::add_WeaponType(textBuffers.weaponType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         default:
             centerTextDisabled("Select an Item");
@@ -922,7 +922,7 @@ void Add::addItemWindow(const SubItem& selectedItem, ScreenData::Add::TextBuffer
     }
  
 }
-void Add::add_WeaponType(char* textBuf){
+void Add::add_WeaponType(char* textBuf, size_t size){
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Weapon Type to choose from when creating a gun.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -931,13 +931,15 @@ void Add::add_WeaponType(char* textBuf){
     
     ImGui::Text("Weapon Type");
     ImGui::SameLine(100);
-    ImGui::InputText("##Input New Weapon Type", textBuf, ScreenData::Add::MAX_CHAR_INPUT, ImGuiInputTextFlags_CharsUppercase);
+    ImGui::InputText("##Input New Weapon Type", textBuf, size, ImGuiInputTextFlags_CharsUppercase);
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add New Weapon Type", ImVec2{200,50})){
         ModelEvents::AddWeaponType e { WeaponType { textBuf } };
         pushEvent(&e);
+
+        resetText(textBuf, size);
     }
 }
 
@@ -1042,6 +1044,29 @@ std::string subItemToString (const SubItem& item, const std::string& noneStr){
             break;
     }
 }
+
+void resetText (char* dest, size_t size, const char* replacementText) {
+    if(!dest){
+        LAS::log_warn("UI::resetText() - destination is null");
+        return;
+    }
+    
+    if(strlen(dest) > size) {
+        LAS::log_warn("UI::resetText() - buffer > allowed size");
+        return;
+    }
+
+    if(strlen(replacementText) > size) {
+        LAS::log_warn("UI::resetText() - replacement text > allowed size");
+        return;
+    }
+
+    memset(dest, '\0', size);
+    std::strcpy(dest, replacementText);
+
+    return;
+}
+
 
 Popup::Popup(const char* set) {
     strncpy(title, set, sizeof(title) - 1);
