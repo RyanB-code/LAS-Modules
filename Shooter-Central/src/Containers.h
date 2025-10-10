@@ -109,9 +109,7 @@ namespace ShooterCentral {
             AddGunMetadata(const ObjectBuffers::GunMetadata& set);
             ~AddGunMetadata();
 
-            virtual Status execute (Containers& container) override;
-
-            MODEL_EVENT_CLONE(AddGunMetadata)
+            MODEL_EVENT_FUNCTIONS(AddGunMetadata)
 
         private:
                 ObjectBuffers::GunMetadata info;
@@ -122,9 +120,7 @@ namespace ShooterCentral {
             AddWeaponType(const WeaponType& wt);
             ~AddWeaponType();
 
-            virtual Status execute (Containers& container) override;
-
-            MODEL_EVENT_CLONE(AddWeaponType)
+            MODEL_EVENT_FUNCTIONS(AddWeaponType)
 
         private:
                 WeaponType weaponType;

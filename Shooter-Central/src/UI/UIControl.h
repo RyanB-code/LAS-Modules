@@ -58,9 +58,7 @@ namespace UIEvents {
         SetScreen(const Screen& setScreen);
         ~SetScreen() = default;
 
-        virtual Status execute (UIController& controller) override;
-
-        UI_EVENT_CLONE(SetScreen)
+        UI_EVENT_FUNCTIONS(SetScreen)
     private:
         Screen screen;
     };
@@ -71,9 +69,7 @@ namespace UIEvents {
         ShowPopup(std::shared_ptr<Popup>);
         ~ShowPopup() = default;
 
-        virtual Status execute(UIController& controller) override;
-
-        UI_EVENT_CLONE(ShowPopup)
+        UI_EVENT_FUNCTIONS(ShowPopup)
     private:
         std::shared_ptr<Popup> popup; 
     };
@@ -83,9 +79,8 @@ namespace UIEvents {
         ClosePopup() = default;
         ~ClosePopup() = default;
 
-        virtual Status execute(UIController& controller) override;
 
-        UI_EVENT_CLONE(ClosePopup)
+        UI_EVENT_FUNCTIONS(ClosePopup)
     };
 
 }   // End UIEvents namespace
