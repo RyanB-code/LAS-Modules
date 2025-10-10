@@ -74,6 +74,17 @@ namespace UIEvents {
         Screen screen;
     };
 
+    class SetScreenData_Home : public UIEvent {
+    public:
+        SetScreenData_Home(ScreenData::Home set);
+        ~SetScreenData_Home() = default;
+
+        UI_EVENT_FUNCTIONS(SetScreenData_Home)
+    private:
+        ScreenData::Home homeData;
+
+    };
+
     class SetScreenData_View : public UIEvent {
     public:
         SetScreenData_View(ScreenData::View set);
@@ -82,6 +93,28 @@ namespace UIEvents {
         UI_EVENT_FUNCTIONS(SetScreenData_View)
     private:
         ScreenData::View viewData;
+
+    };
+
+    class SetScreenData_Add : public UIEvent {
+    public:
+        SetScreenData_Add(ScreenData::Add set);
+        ~SetScreenData_Add() = default;
+
+        UI_EVENT_FUNCTIONS(SetScreenData_Add)
+    private:
+        ScreenData::Add addData;
+
+    };
+
+    class SetScreenData_Edit : public UIEvent {
+    public:
+        SetScreenData_Edit(ScreenData::Edit set);
+        ~SetScreenData_Edit() = default;
+
+        UI_EVENT_FUNCTIONS(SetScreenData_Edit)
+    private:
+        ScreenData::Edit editData;
 
     };
 
