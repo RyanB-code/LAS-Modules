@@ -212,10 +212,17 @@ void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartri
     }
 
     if(ImGui::BeginChild("Selected Cartridge Details", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
-        if(centerButton("View Detailed\nInformation", ImVec2 { 100, 50 })){
+        if(centerButton("View More Information", ImVec2 { 200, 50 })){
+
+            ScreenData::View newBuffer { };
+            newBuffer.category = Category::STOCKPILE;
+            newBuffer.stockpileTab.selectedCartridge = selected;
+
+            UIEvents::SetScreenData_View setScreenData { newBuffer };
             UIEvents::SetScreen setScreen {Screen::VIEW};
+
+            pushEvent(&setScreenData);
             pushEvent(&setScreen); 
-            // FOR TESTING. UNCOMMENT WHEN CIRCULATE DEPENDENCIES ARE FIXED
         }
     }
     ImGui::EndChild();
