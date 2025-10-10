@@ -104,8 +104,41 @@ void UIController::closePopup() {
     popup = nullptr;
 }
 
+ScreenData::Home UIController::getScreenData_Home() const{
+    return homeData;
+}
+ScreenData::View UIController::getScreenData_View() const{
+    return viewData;
+}
+ScreenData::Add  UIController::getScreenData_Add() const{
+    return addData;
+}
+ScreenData::Edit UIController::getScreenData_Edit() const{
+    return editData;
+}
+
+void UIController::setScreenData(ScreenData::Home set) {
+    homeData = set;
+}
+void UIController::setScreenData(ScreenData::View set) {
+    viewData = set;
+}
+void UIController::setScreenData(ScreenData::Add set) {
+    addData = set;
+}
+void UIController::setScreenData(ScreenData::Edit set) {
+    editData = set;
+}
+
 
 namespace UIEvents {
+    SetScreenData_View::SetScreenData_View(ScreenData::View set) : viewData { set } {
+            
+    }
+    Status SetScreenData_View::execute (UIController& controller){
+        controller.setScreenData(viewData);
+        return Status{true};
+    }
 
     SetScreen::SetScreen(const Screen& setScreen) : screen { setScreen } {
             

@@ -31,6 +31,17 @@ public:
     bool setPopup(std::shared_ptr<Popup> popup);
     void closePopup();
 
+    ScreenData::Home    getScreenData_Home()    const;
+    ScreenData::View    getScreenData_View()    const;
+    ScreenData::Add     getScreenData_Add()     const;
+    ScreenData::Edit    getScreenData_Edit()    const;
+
+    void setScreenData(ScreenData::Home set);
+    void setScreenData(ScreenData::View set);
+    void setScreenData(ScreenData::Add set);
+    void setScreenData(ScreenData::Edit set);
+
+
 private:
     Screen currentScreen { Screen::HOME };
 
@@ -63,6 +74,16 @@ namespace UIEvents {
         Screen screen;
     };
 
+    class SetScreenData_View : public UIEvent {
+    public:
+        SetScreenData_View(ScreenData::View set);
+        ~SetScreenData_View() = default;
+
+        UI_EVENT_FUNCTIONS(SetScreenData_View)
+    private:
+        ScreenData::View viewData;
+
+    };
 
     class ShowPopup : public UIEvent {
     public: 
