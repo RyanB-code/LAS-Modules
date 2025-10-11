@@ -33,7 +33,6 @@ namespace ShooterCentral {
         };
     }
 
-
     class Containers {
     public:
         Containers();
