@@ -150,15 +150,17 @@ void Framework::update() {
     if(modelEvent){
         Status s {modelEvent->execute(containers)};
 
-        // In future have it open a pop-up msg in the UI too
-        if (!s.didSucceed)                  
-            log_error(std::string{s.msg});
+        if (!s.didSucceed){
+            Popup_CommandFailed p {s.msg};
+            UI::UIEvents::ShowPopup e {std::make_shared<Popup_CommandFailed>(p)};
+            pushEvent(&e);
+        }
     }
     if(uiEvent){
         Status s {uiEvent->execute(view)};
 
         // In future have it open a pop-up msg in the UI too
-        if (!s.didSucceed)                  
+        if (!s.didSucceed)
             log_error(std::string{s.msg});
     }
 }
@@ -729,3 +731,12 @@ void read_EventMetadata (const json& j, ObjectBuffers::ShootingEventMetadata& bu
 } // End FileIO namespace
 
 
+Popup_CommandFailed::Popup_CommandFailed(const char* set) : Popup("Event Failed") {
+    strncpy(text, set, sizeof(text) - 1);
+    text[sizeof(text) - 1] = '\0';            // Manually null-terminate
+}
+void Popup_CommandFailed::show() {
+    UI::centerText(text);
+
+    buttons_Close();
+}

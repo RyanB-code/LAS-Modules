@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UI/UIControl.h"
+#include "UI/UIHelperElements.h"
 #include "Container Items/AssociatedItems.h"
 #include "CommonItems.h"
 #include "Containers.h"
@@ -80,4 +81,15 @@ namespace ShooterCentral{
         void read_AmmoMetadata  (const LAS::json& j, ObjectBuffers::AmmoMetadata& buffer);
         void read_EventMetadata (const LAS::json& j, ObjectBuffers::ShootingEventMetadata& buffer);
     }
+
+    class Popup_CommandFailed : public UI::Popup {
+    public:
+        Popup_CommandFailed(const char* text);
+        ~Popup_CommandFailed() = default;
+
+        virtual void show() override;
+
+    private:
+        char text[255];
+    };
 }
