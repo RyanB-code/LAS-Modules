@@ -117,6 +117,7 @@ namespace ScreenData{
 
         struct TextBuffers {
             char weaponType[MAX_CHAR_INPUT] = "";
+            char manufacturer[MAX_CHAR_INPUT] = "";
         };
 
         TextBuffers textBuffers { };

@@ -912,7 +912,7 @@ void Add::addItemWindow(const SubItem& selectedItem, ScreenData::Add::TextBuffer
        
             break;
         case SubItem::AMMO_MANUFACTURER:
-
+            Add::add_Manufacturer(textBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::GUN_AMMO_CARTRIDGE:
 
@@ -928,6 +928,26 @@ void Add::addItemWindow(const SubItem& selectedItem, ScreenData::Add::TextBuffer
             break;
     }
  
+}
+void Add::add_Manufacturer(char* textBuf, size_t size){
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Manufacturer to choose from when creating ammo.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+    
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+    
+    ImGui::Text("Manufacturer");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input Manufacturer", textBuf, size);
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    if(centerButton("Add Manufacturer", ImVec2{200,50})){
+        ModelEvents::AddManufacturer e { Manufacturer { textBuf } };
+        pushEvent(&e);
+
+        resetText(textBuf, size);
+    }
 }
 void Add::add_WeaponType(char* textBuf, size_t size){
     ImGui::Text("Directions");

@@ -48,6 +48,7 @@ namespace Add {
     void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
     void    addItemWindow           (const SubItem& selected, ScreenData::Add::TextBuffers& textBuffers);
 
+    void    add_Manufacturer        (char* textBuf, size_t size);
     void    add_WeaponType          (char* textBuf, size_t size);
 }
 
