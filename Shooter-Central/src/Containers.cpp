@@ -249,9 +249,6 @@ namespace ModelEvents {
     AddGunMetadata::AddGunMetadata(const ObjectBuffers::GunMetadata& set) : info { set } {
 
     }
-    AddGunMetadata::~AddGunMetadata(){
-
-    }
     Status AddGunMetadata::execute (Containers& container) {
         if(container.knownGuns_create(info).second)
             return Status { true };
@@ -259,12 +256,35 @@ namespace ModelEvents {
             return Status { false, "knownGuns_create() failed" };
     }
 
+    AddManufacturer::AddManufacturer(const Manufacturer& m) : manufacturer { m } {
 
+    }
+    Status AddManufacturer::execute (Containers& container) {
+        if(container.manufacturers_add(manufacturer))
+            return Status{true};
+
+        return Status{false, "Failed to add Manufacturer" };
+    }
+    AddCartridge::AddCartridge(const Cartridge& c) : cartridge { c } {
+
+    }
+    Status AddCartridge::execute (Containers& container) {
+        if(container.cartridges_add(cartridge))
+            return Status{true};
+
+        return Status{false, "Failed to add Cartridge" };
+    }
+    AddEventType::AddEventType(const ShootingEventType& et) : eventType { et } {
+
+    }
+    Status AddEventType::execute (Containers& container) {
+        if(container.eventTypes_add(eventType))
+            return Status{true};
+
+        return Status{false, "Failed to add ShootingEventType" };
+    }
     AddWeaponType::AddWeaponType(const WeaponType& wt) : weaponType { wt } {
         
-    }
-    AddWeaponType::~AddWeaponType(){
-
     }
     Status AddWeaponType::execute (Containers& container) {
         if(container.weaponTypes_add(weaponType))
@@ -273,6 +293,15 @@ namespace ModelEvents {
         return Status{false, "Failed to add WeaponType" };
     }
 
+    AddLocation::AddLocation(const Location& loc) : location { loc } {
+        
+    }
+    Status AddLocation::execute (Containers& container) {
+        if(container.locations_add(location))
+            return Status{true};
+
+        return Status{false, "Failed to add Location" };
+    }
 }   // End ModeEvents namespace
 
 }   // End SC namespace

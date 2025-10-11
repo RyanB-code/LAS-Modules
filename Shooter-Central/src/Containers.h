@@ -107,23 +107,65 @@ namespace ShooterCentral {
         class AddGunMetadata : public ModelEvent {
         public:
             AddGunMetadata(const ObjectBuffers::GunMetadata& set);
-            ~AddGunMetadata();
+            ~AddGunMetadata() = default;
 
             MODEL_EVENT_FUNCTIONS(AddGunMetadata)
 
         private:
-                ObjectBuffers::GunMetadata info;
+            ObjectBuffers::GunMetadata info;
         };
+        
+        class AddManufacturer : public ModelEvent {
+            public:
+                AddManufacturer(const Manufacturer& m);
+                ~AddManufacturer() = default;
 
+                MODEL_EVENT_FUNCTIONS(AddManufacturer)
+
+            private:
+                Manufacturer manufacturer;
+        };
+        class AddCartridge : public ModelEvent {
+            public:
+                AddCartridge(const Cartridge& c);
+                ~AddCartridge() = default;
+
+                MODEL_EVENT_FUNCTIONS(AddCartridge)
+
+            private:
+                Cartridge cartridge;
+        };
+        class AddEventType : public ModelEvent {
+            public:
+                AddEventType(const ShootingEventType& et);
+                ~AddEventType() = default;
+
+                MODEL_EVENT_FUNCTIONS(AddEventType)
+
+            private:
+                    ShootingEventType eventType;
+        };
         class AddWeaponType : public ModelEvent {
         public:
             AddWeaponType(const WeaponType& wt);
-            ~AddWeaponType();
+            ~AddWeaponType() = default;
 
             MODEL_EVENT_FUNCTIONS(AddWeaponType)
 
         private:
-                WeaponType weaponType;
+            WeaponType weaponType;
         };
+
+        class AddLocation : public ModelEvent {
+        public:
+            AddLocation(const Location& loc);
+            ~AddLocation() = default;
+
+            MODEL_EVENT_FUNCTIONS(AddLocation)
+
+        private:
+            Location location;
+        };
+
     }
 }
