@@ -116,26 +116,7 @@ namespace UIEvents {
     private:
         ScreenData::Edit editData;
 
-    };
-
-    class ShowPopup : public UIEvent {
-    public: 
-        ShowPopup(std::shared_ptr<Popup>);
-        ~ShowPopup() = default;
-
-        UI_EVENT_FUNCTIONS(ShowPopup)
-    private:
-        std::shared_ptr<Popup> popup; 
-    };
-
-    class ClosePopup : public UIEvent {
-    public:
-        ClosePopup() = default;
-        ~ClosePopup() = default;
-
-
-        UI_EVENT_FUNCTIONS(ClosePopup)
-    };
+    }; 
 
 }   // End UIEvents namespace
 
