@@ -104,17 +104,39 @@ namespace ShooterCentral {
 
     namespace ModelEvents {
 
-        class AddGunMetadata : public ModelEvent {
+        // Full Objects
+        class CreateGun : public ModelEvent {
         public:
-            AddGunMetadata(const ObjectBuffers::GunMetadata& set);
-            ~AddGunMetadata() = default;
+            CreateGun(const ObjectBuffers::GunMetadata& set);
+            ~CreateGun() = default;
 
-            MODEL_EVENT_FUNCTIONS(AddGunMetadata)
+            MODEL_EVENT_FUNCTIONS(CreateGun)
 
         private:
             ObjectBuffers::GunMetadata info;
         };
+        class CreateAmmo : public ModelEvent {
+        public:
+            CreateAmmo(const ObjectBuffers::AmmoMetadata& set);
+            ~CreateAmmo() = default;
+
+            MODEL_EVENT_FUNCTIONS(CreateAmmo)
+
+        private:
+            ObjectBuffers::AmmoMetadata info;
+        };
+        class CreateEvent : public ModelEvent {
+        public:
+            CreateEvent(const ObjectBuffers::ShootingEventMetadata& set);
+            ~CreateEvent() = default;
+
+            MODEL_EVENT_FUNCTIONS(CreateEvent)
+
+        private:
+            ObjectBuffers::ShootingEventMetadata info;
+        };
         
+        // Metadata items
         class AddManufacturer : public ModelEvent {
             public:
                 AddManufacturer(const Manufacturer& m);
