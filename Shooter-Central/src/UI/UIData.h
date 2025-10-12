@@ -118,6 +118,9 @@ namespace ScreenData{
         struct TextBuffers {
             char weaponType[MAX_CHAR_INPUT] = "";
             char manufacturer[MAX_CHAR_INPUT] = "";
+            char cartridge[MAX_CHAR_INPUT] = "";
+            char location[MAX_CHAR_INPUT] = "";
+            char eventType[MAX_CHAR_INPUT] = "";
         };
 
         TextBuffers textBuffers { };
