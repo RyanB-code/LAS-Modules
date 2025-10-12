@@ -901,12 +901,10 @@ void Add::addItemWindow(const SubItem& selectedItem, ScreenData::Add::TextBuffer
 
             break;
         case SubItem::EVENT_TYPE:
-           
-          
+            Add::add_EventType(textBuffers.eventType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
-        case SubItem::EVENT_LOCATION:
-         
-        
+        case SubItem::EVENT_LOCATION: 
+            Add::add_Location(textBuffers.location, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::AMMO_AMMO:
        
@@ -915,7 +913,7 @@ void Add::addItemWindow(const SubItem& selectedItem, ScreenData::Add::TextBuffer
             Add::add_Manufacturer(textBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::GUN_AMMO_CARTRIDGE:
-
+            Add::add_Cartridge(textBuffers.cartridge, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::GUN_GUN:
 
@@ -931,11 +929,11 @@ void Add::addItemWindow(const SubItem& selectedItem, ScreenData::Add::TextBuffer
 }
 void Add::add_Manufacturer(char* textBuf, size_t size){
     ImGui::Text("Directions");
-    ImGui::BulletText("This will add a new Manufacturer to choose from when creating ammo.");
+    ImGui::BulletText("This will add a new Manufacturer to choose from when creating Ammo.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
-    
+
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
-    
+
     ImGui::Text("Manufacturer");
     ImGui::SameLine(100);
     ImGui::InputText("##Input Manufacturer", textBuf, size);
@@ -944,6 +942,46 @@ void Add::add_Manufacturer(char* textBuf, size_t size){
 
     if(centerButton("Add Manufacturer", ImVec2{200,50})){
         ModelEvents::AddManufacturer e { Manufacturer { textBuf } };
+        pushEvent(&e);
+
+        resetText(textBuf, size);
+    }
+}
+void Add::add_Cartridge       (char* textBuf, size_t size){
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Cartridge to choose from when creating Ammo and Guns.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    ImGui::Text("Cartridge");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input Cartridge", textBuf, size);
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    if(centerButton("Add Cartrige", ImVec2{200,50})){
+        ModelEvents::AddCartridge e { Cartridge { textBuf } };
+        pushEvent(&e);
+
+        resetText(textBuf, size);
+    }
+}
+void Add::add_EventType       (char* textBuf, size_t size){
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Event Type to choose from when creating an Event");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    ImGui::Text("Event Type");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input Event Type", textBuf, size);
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    if(centerButton("Add Event Type", ImVec2{200,50})){
+        ModelEvents::AddEventType e { ShootingEventType { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
@@ -958,12 +996,32 @@ void Add::add_WeaponType(char* textBuf, size_t size){
     
     ImGui::Text("Weapon Type");
     ImGui::SameLine(100);
-    ImGui::InputText("##Input New Weapon Type", textBuf, size, ImGuiInputTextFlags_CharsUppercase);
+    ImGui::InputText("##Input Weapon Type", textBuf, size, ImGuiInputTextFlags_CharsUppercase);
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
-    if(centerButton("Add New Weapon Type", ImVec2{200,50})){
+    if(centerButton("Add Weapon Type", ImVec2{200,50})){
         ModelEvents::AddWeaponType e { WeaponType { textBuf } };
+        pushEvent(&e);
+
+        resetText(textBuf, size);
+    }
+}
+void Add::add_Location(char* textBuf, size_t size){
+    ImGui::Text("Directions");
+    ImGui::BulletText("This will add a new Location to choose from when creating an Event.");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    ImGui::Text("Location");
+    ImGui::SameLine(100);
+    ImGui::InputText("##Input Location", textBuf, size);
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    if(centerButton("Add Location", ImVec2{200,50})){
+        ModelEvents::AddLocation e { Location { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
