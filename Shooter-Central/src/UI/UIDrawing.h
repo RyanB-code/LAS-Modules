@@ -47,14 +47,21 @@ namespace View {
 namespace Add {
     void    main                    (const Containers& containers, ScreenData::Add& data);
     void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
-    void    addItemWindow           (const SubItem& selected, ScreenData::Add::TextBuffers& textBuffers);
+    void    addItemWindow           (const Containers& containers, const SubItem& selected, ScreenData::Add::TextBuffers& textBuffers);
 
     void    add_Manufacturer    (char* textBuf, size_t size);
     void    add_Cartridge       (char* textBuf, size_t size);
     void    add_EventType       (char* textBuf, size_t size);
     void    add_WeaponType      (char* textBuf, size_t size);
     void    add_Location        (char* textBuf, size_t size);
-}                                                                                        
+
+    void    add_Event(  
+                ScreenData::Add::TextBuffers::CreateEvent& buffers, 
+                size_t size,            
+                const std::map<Location,            std::shared_ptr<Location>>&             locations,
+                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&    eventTypes
+            );
+}
 
 // Table drawing
 namespace Tables{
