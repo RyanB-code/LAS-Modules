@@ -2,6 +2,7 @@
 
 #include "Containers.h"
 
+#include <imgui/imgui.h>
 #include <memory>
 
 namespace ShooterCentral::UI {
@@ -120,9 +121,16 @@ namespace ScreenData{
             char location[MAX_CHAR_INPUT]       = "";
             char eventType[MAX_CHAR_INPUT]      = "";
         };
+        enum class EventTab {
+            INFO,
+            GUNS_AND_AMMO,
+            REVIEW_AND_SUBMIT
+        };
         struct EventBuffer {
             Location            location        { "" };
             ShootingEventType   eventType       { "" };
+
+            std::vector<std::reference_wrapper<const GunAndAmmo>> gunsUsed { };
 
             char notes[MAX_CHAR_INPUT] = "";
             int day     { 0 };
@@ -131,6 +139,9 @@ namespace ScreenData{
 
             bool applyToStockpile   { true };
             bool applyToArmory      { true };
+
+            ImGuiTabItemFlags eventInfoFlags { 0 }, gunsUsedFlags { 0 }, reviewFlags { 0 };
+            EventTab currentTab { EventTab::INFO };
         };
 
         Category        category        { Category::NONE }; 
