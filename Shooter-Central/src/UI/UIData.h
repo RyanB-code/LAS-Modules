@@ -112,33 +112,32 @@ namespace ScreenData{
 
     struct Add {
         static constexpr int MAX_CHAR_INPUT { 64 };
-        Category category   { Category::NONE }; 
-        SubItem  subItem    { SubItem::NONE };
 
-        struct TextBuffers {
+        struct SubItemBuffers {
             char weaponType[MAX_CHAR_INPUT]     = "";
             char manufacturer[MAX_CHAR_INPUT]   = "";
             char cartridge[MAX_CHAR_INPUT]      = "";
             char location[MAX_CHAR_INPUT]       = "";
             char eventType[MAX_CHAR_INPUT]      = "";
+        };
+        struct EventBuffer {
+            Location            location        { "" };
+            ShootingEventType   eventType       { "" };
 
-            struct CreateEvent {
-                Location            location    { "" };
-                ShootingEventType   eventType   { "" };
+            char notes[MAX_CHAR_INPUT] = "";
+            int day     { 0 };
+            int month   { 0 };
+            int year    { 0 };
 
-                char notes[MAX_CHAR_INPUT] = "";
-                int day     { 0 };
-                int month   { 0 };
-                int year    { 0 };
-
-                bool applyToStockpile    { true };
-                bool applyToArmory      { true };
-            };
-
-            CreateEvent createEventBuffers { };
+            bool applyToStockpile   { true };
+            bool applyToArmory      { true };
         };
 
-        TextBuffers textBuffers { };
+        Category        category        { Category::NONE }; 
+        SubItem         subItem         { SubItem::NONE };
+        SubItemBuffers  subItemBuffers  { };
+        EventBuffer     eventBuffer     { };
+
     };
 
     struct Edit {

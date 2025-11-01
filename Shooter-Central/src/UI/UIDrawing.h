@@ -44,23 +44,34 @@ namespace View {
         );
 
 }
+
 namespace Add {
     void    main                    (const Containers& containers, ScreenData::Add& data);
     void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
-    void    addItemWindow           (const Containers& containers, const SubItem& selected, ScreenData::Add::TextBuffers& textBuffers);
+    void    addItemWindow           (const Containers& containers, ScreenData::Add& data);
 
-    void    add_Manufacturer    (char* textBuf, size_t size);
-    void    add_Cartridge       (char* textBuf, size_t size);
-    void    add_EventType       (char* textBuf, size_t size);
-    void    add_WeaponType      (char* textBuf, size_t size);
-    void    add_Location        (char* textBuf, size_t size);
+    void    add_Manufacturer        (char* textBuf, size_t size);
+    void    add_Cartridge           (char* textBuf, size_t size);
+    void    add_EventType           (char* textBuf, size_t size);
+    void    add_WeaponType          (char* textBuf, size_t size);
+    void    add_Location            (char* textBuf, size_t size);
 
     void    add_Event(  
-                ScreenData::Add::TextBuffers::CreateEvent& buffers, 
+                ScreenData::Add::EventBuffer& buffer, 
                 size_t size,            
-                const std::map<Location,            std::shared_ptr<Location>>&             locations,
-                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&    eventTypes
+                const std::map<Location,            std::shared_ptr<Location>>&                         locations,
+                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes,
+                const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
+                const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
             );
+
+    void    add_Event_gunsUsed(
+                std::vector<GunAndAmmo>& gunsUsedList,
+                const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
+                const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
+            );
+
+
 }
 
 // Table drawing

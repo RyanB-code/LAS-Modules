@@ -831,7 +831,7 @@ void Add::main(const Containers& containers, ScreenData::Add& data){
 
         ImGui::Dummy(ImVec2{0.0f, 20.0f});
 
-        addItemWindow(containers, data.subItem, data.textBuffers);
+        addItemWindow(containers, data);
     }
     ImGui::EndChild();
 
@@ -894,31 +894,38 @@ void Add::showExistingItemsWindow (const Containers& containers, const SubItem& 
     }
     ImGui::EndGroup();
 }
-void Add::addItemWindow(const Containers& containers, const SubItem& selectedItem, ScreenData::Add::TextBuffers& textBuffers){
-    switch(selectedItem){
+void Add::addItemWindow(const Containers& containers, ScreenData::Add& screenData){
+    switch(screenData.subItem){
         case SubItem::EVENT_EVENT:
-            Add::add_Event(textBuffers.createEventBuffers, ScreenData::Add::MAX_CHAR_INPUT, containers.getLocations(), containers.getEventTypes());
+            Add::add_Event(
+                    screenData.eventBuffer, 
+                    ScreenData::Add::MAX_CHAR_INPUT, 
+                    containers.getLocations(), 
+                    containers.getEventTypes(),
+                    containers.getAmmoStockpile(),
+                    containers.getGunsInArmory()
+                );
             break;
         case SubItem::EVENT_TYPE:
-            Add::add_EventType(textBuffers.eventType, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_EventType(screenData.subItemBuffers.eventType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::EVENT_LOCATION: 
-            Add::add_Location(textBuffers.location, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Location(screenData.subItemBuffers.location, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::AMMO_AMMO:
        
             break;
         case SubItem::AMMO_MANUFACTURER:
-            Add::add_Manufacturer(textBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Manufacturer(screenData.subItemBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::GUN_AMMO_CARTRIDGE:
-            Add::add_Cartridge(textBuffers.cartridge, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Cartridge(screenData.subItemBuffers.cartridge, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::GUN_GUN:
 
             break;
         case SubItem::GUN_WEAPON_TYPE:
-            Add::add_WeaponType(textBuffers.weaponType, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_WeaponType(screenData.subItemBuffers.weaponType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         default:
             centerTextDisabled("Select an Item");
@@ -1027,10 +1034,12 @@ void Add::add_Location(char* textBuf, size_t size){
     }
 }
 void Add::add_Event(  
-    ScreenData::Add::TextBuffers::CreateEvent& buffers, 
+    ScreenData::Add::EventBuffer& buffer, 
     size_t size,            
-    const std::map<Location,            std::shared_ptr<Location>>&             locations,
-    const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&    eventTypes
+    const std::map<Location,            std::shared_ptr<Location>>&                         locations,
+    const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes,
+    const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
+    const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
 ){
     if(ImGui::BeginChild("Add Event Directions", ImVec2{ImGui::GetContentRegionAvail().x / 2, 120} ) ) {
         ImGui::Text("Directions");
@@ -1052,11 +1061,11 @@ void Add::add_Event(
         if(ImGui::BeginChild("Apply Amounts", ImVec2{ImGui::GetContentRegionAvail().x/2, 110})) {
             ImGui::Text("Apply to Stockpile");
             ImGui::SameLine(135);
-            ImGui::Checkbox("##Apply To Stockpile", &buffers.applyToStockpile);
+            ImGui::Checkbox("##Apply To Stockpile", &buffer.applyToStockpile);
 
             ImGui::Text("Apply to Armory");
             ImGui::SameLine(135);
-            ImGui::Checkbox("##Apply To Guns", &buffers.applyToArmory);
+            ImGui::Checkbox("##Apply To Guns", &buffer.applyToArmory);
         }
         ImGui::EndChild();
 
@@ -1064,20 +1073,20 @@ void Add::add_Event(
     ImGui::EndChild();
 
     if(centerButton("Add Event", ImVec2{200,50})){
-
+        std::cout << "Command to add\n";
     }
 
     ImGui::SeparatorText("Input Event Information");
 
     ImGui::Text("Location");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Location Combo", buffers.location.getName().c_str(), ImGuiComboFlags_HeightSmall)) {
+    if (ImGui::BeginCombo("##Choose Location Combo", buffer.location.getName().c_str(), ImGuiComboFlags_HeightSmall)) {
         for (const auto& [key, ptr] : locations) {
             Location& loc { *ptr };
-            const bool isSelected = (buffers.location == loc);
+            const bool isSelected = (buffer.location == loc);
 
             if (ImGui::Selectable(loc.getName().c_str(), isSelected))
-                buffers.location = loc;
+                buffer.location = loc;
 
             if (isSelected)
                 ImGui::SetItemDefaultFocus();
@@ -1087,13 +1096,13 @@ void Add::add_Event(
 
     ImGui::Text("Event Type");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Event Type Combo", buffers.eventType.getName().c_str(), ImGuiComboFlags_HeightSmall)) {
+    if (ImGui::BeginCombo("##Choose Event Type Combo", buffer.eventType.getName().c_str(), ImGuiComboFlags_HeightSmall)) {
         for (const auto& [key, ptr]: eventTypes) {
             ShootingEventType& et { *ptr };
-            const bool isSelected = (buffers.eventType == et);
+            const bool isSelected = (buffer.eventType == et);
 
             if (ImGui::Selectable(et.getName().c_str(), isSelected))
-                buffers.eventType = et;
+                buffer.eventType = et;
 
             if (isSelected)
                 ImGui::SetItemDefaultFocus();
@@ -1103,7 +1112,7 @@ void Add::add_Event(
 
     ImGui::Text("Notes");
     ImGui::SameLine(100);
-    ImGui::InputTextMultiline("##Input Notes", buffers.notes, size, ImVec2{ImGui::GetContentRegionAvail().x, 100}, ImGuiInputTextFlags_CtrlEnterForNewLine);
+    ImGui::InputTextMultiline("##Input Notes", buffer.notes, size, ImVec2{ImGui::GetContentRegionAvail().x, 100}, ImGuiInputTextFlags_CtrlEnterForNewLine);
     ImGui::SameLine();
     ImGui::TextDisabled("(May be left blank)");
 
@@ -1112,13 +1121,13 @@ void Add::add_Event(
     ImGui::Text("Date");
     ImGui::SameLine(100);
     ImGui::SetNextItemWidth(100);
-    ImGui::InputInt("##Input Day", &buffers.day);
+    ImGui::InputInt("##Input Day", &buffer.day);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(100);
-    ImGui::InputInt("##Input Month", &buffers.month);
+    ImGui::InputInt("##Input Month", &buffer.month);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(100);
-    ImGui::InputInt("##Input Year", &buffers.year);
+    ImGui::InputInt("##Input Year", &buffer.year);
 
     // Button to auto fill today's date
     ImGui::SameLine(0, 30);
@@ -1126,9 +1135,9 @@ void Add::add_Event(
         const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
 
         const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
-        buffers.day = static_cast<unsigned>(ymd.day());
-        buffers.month = static_cast<unsigned>(ymd.month());
-        buffers.year = static_cast<int>(ymd.year());
+        buffer.day = static_cast<unsigned>(ymd.day());
+        buffer.month = static_cast<unsigned>(ymd.month());
+        buffer.year = static_cast<int>(ymd.year());
     }
     // Grayed out details, approximate centers of text box did the trick
     ImGui::SetCursorPosX(125);
@@ -1138,6 +1147,42 @@ void Add::add_Event(
     ImGui::SameLine(0, 70);
     ImGui::TextDisabled("(Year)");
 
+    ImGui::Spacing();
+    ImGui::SeparatorText("Add Guns Used");
+    ImGui::Spacing();
+
+    // GUNS USED LIST THENadd_Event_gunsUsed(buffers.gunsUsedList, stockpile, armory);
+
+}
+void Add::add_Event_gunsUsed(
+    std::vector<GunAndAmmo>& gunsUsedList,
+    const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
+    const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
+){
+    /*
+    // Table size calculations
+    static constexpr float MIN_TABLE_SIZE_X { 400 };
+    static constexpr float MAX_TABLE_SIZE_X { 800 };
+
+    ImVec2 tableSize = { ImGui::GetContentRegionAvail().x-2, 400};
+    if(tableSize.x < MIN_TABLE_SIZE_X)
+        tableSize.x = MIN_TABLE_SIZE_X;
+    if(tableSize.x > MAX_TABLE_SIZE_X)
+        tableSize.x = MAX_TABLE_SIZE_X;
+
+    centerNextItemX(tableSize.x);
+    Tables::selectable_Guns(armory, selectedGunReference, tableSize);
+
+    if(selectedGunReference.get().getGunInfo() == EMPTY_GUN_AND_AMMO.getGunInfo())
+        return;
+
+    ImGui::Spacing();
+    ImGui::SeparatorText("Ammo Used");
+    ImGui::Spacing();
+
+    centerNextItemX(tableSize.x);
+    Tables::amountOfAmmo(selectedGunReference.get().getAmmoUsedList(), tableSize);
+    */
 
 }
 
