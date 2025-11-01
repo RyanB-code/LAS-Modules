@@ -64,14 +64,18 @@ namespace Add {
                 const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
                 const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
             );
-
-    void    add_Event_gunsUsed(
-                std::vector<GunAndAmmo>& gunsUsedList,
+    void    add_Event_InformationTab(
+                ScreenData::Add::EventBuffer& buffer, 
+                size_t size,            
+                const std::map<Location,            std::shared_ptr<Location>>&                         locations,
+                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes
+            );
+    bool    add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer);
+    void    add_Event_GunsUsedTab(
+                std::vector<std::reference_wrapper<const GunAndAmmo>>& gunsUsed,
                 const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
                 const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
             );
-
-
 }
 
 // Table drawing

@@ -1041,13 +1041,78 @@ void Add::add_Event(
     const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
     const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
 ){
+    typedef ScreenData::Add::EventTab EventTab;
+
+    static EventTab lastTab;
+    bool applyForce { false };
+
+    if(lastTab != buffer.currentTab)
+        applyForce = true;
+    
+    if(applyForce){
+        switch(buffer.currentTab){
+            case EventTab::INFO:
+                buffer.eventInfoFlags |= ImGuiTabItemFlags_SetSelected;
+                break;
+            case EventTab::GUNS_AND_AMMO:
+                buffer.gunsUsedFlags |= ImGuiTabItemFlags_SetSelected;
+                break;
+            case EventTab::REVIEW_AND_SUBMIT:
+                buffer.reviewFlags |= ImGuiTabItemFlags_SetSelected;
+                break;
+            default:
+                LAS::log_warn("SC Add Event Tab case not handled");
+                break;
+        }
+    }
+    
+    // PICKUP WHERE I LEFT OFF, NEED TO FIGURE OUT WHY THE TAB WONT STAY
+
+    // Start the tabs here
+    if(ImGui::BeginTabBar("Add Event Tabs")){
+        if(ImGui::BeginTabItem("Event Information", nullptr, buffer.eventInfoFlags)){
+            buffer.currentTab = EventTab::INFO;
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Guns and Ammo", nullptr, buffer.gunsUsedFlags)){
+            buffer.currentTab = EventTab::GUNS_AND_AMMO;
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Review And Submit", nullptr, buffer.reviewFlags)){
+            buffer.currentTab = EventTab::REVIEW_AND_SUBMIT;
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+
+    lastTab = buffer.currentTab;
+
+    switch(buffer.currentTab){
+        case EventTab::INFO:
+            add_Event_InformationTab(buffer, size, locations, eventTypes); 
+            break;
+        case EventTab::GUNS_AND_AMMO:
+            add_Event_GunsUsedTab(buffer.gunsUsed, stockpile, armory); 
+            break;
+        case EventTab::REVIEW_AND_SUBMIT:
+
+            break;
+        default:
+            LAS::log_warn("SC Add Event Tab case not handled");
+            break;
+    }
+
+}
+void Add::add_Event_InformationTab(
+                ScreenData::Add::EventBuffer& buffer, 
+                size_t size,            
+                const std::map<Location,            std::shared_ptr<Location>>&                         locations,
+                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes
+) {
     if(ImGui::BeginChild("Add Event Directions", ImVec2{ImGui::GetContentRegionAvail().x / 2, 120} ) ) {
         ImGui::Text("Directions");
-        ImGui::BulletText("This will add a new Event to tracked events.");
-        ImGui::BulletText("Select a Gun and Ammo from the table to add to the event");
+        ImGui::BulletText("Navigate through the tabs to proceed to create the Event");
         ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
-        ImGui::BulletText("To add a new Event Type, see the \"Add New Event Type\" tab.");
-        ImGui::BulletText("To add a new location, see the \"Add New Location\" tab.");
     }
     ImGui::EndChild();
 
@@ -1072,8 +1137,13 @@ void Add::add_Event(
     }
     ImGui::EndChild();
 
-    if(centerButton("Add Event", ImVec2{200,50})){
-        std::cout << "Command to add\n";
+    if(centerButton("Next", ImVec2{200,50})){
+        if(add_Event_verifyInformation(buffer)){
+            buffer.currentTab = ScreenData::Add::EventTab::GUNS_AND_AMMO;
+            std::cout << "verified\n";
+        }
+        else
+            std::cout << "Popup verify failed\n";
     }
 
     ImGui::SeparatorText("Input Event Information");
@@ -1147,18 +1217,30 @@ void Add::add_Event(
     ImGui::SameLine(0, 70);
     ImGui::TextDisabled("(Year)");
 
-    ImGui::Spacing();
-    ImGui::SeparatorText("Add Guns Used");
-    ImGui::Spacing();
-
-    // GUNS USED LIST THENadd_Event_gunsUsed(buffers.gunsUsedList, stockpile, armory);
-
 }
-void Add::add_Event_gunsUsed(
-    std::vector<GunAndAmmo>& gunsUsedList,
+bool Add::add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer){
+    using namespace std::chrono;
+
+    static const ScreenData::Add::EventBuffer EMPTY_BUFFER { }; 
+
+    if(EMPTY_BUFFER.location == buffer.location)
+        return false;
+    if(EMPTY_BUFFER.eventType == buffer.eventType)
+        return false;
+    
+    const year_month_day  dateBuf { year{buffer.year}, month{buffer.month}, day{buffer.day}};
+    if(!dateBuf.ok())
+        return false;
+
+    return true;
+}
+
+void Add::add_Event_GunsUsedTab(
+    std::vector<std::reference_wrapper<const GunAndAmmo>>& gunsUsed,
     const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
     const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
 ){
+    ImGui::Text("Here");
     /*
     // Table size calculations
     static constexpr float MIN_TABLE_SIZE_X { 400 };
