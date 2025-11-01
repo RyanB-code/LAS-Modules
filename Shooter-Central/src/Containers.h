@@ -58,7 +58,6 @@ namespace ShooterCentral {
         std::pair<std::shared_ptr<ShootingEvent>, bool> events_create      (const ObjectBuffers::ShootingEventMetadata& add);
 
 
-        bool events_add         (const ShootingEvent& add);      
         bool ammoStockpile_add  (const AssociatedAmmo& add); // Will return false if cannot add to ammoStockpile OR amountPerCartridge container
         bool gunsInArmory_add   (const AssociatedGun& add);
 
