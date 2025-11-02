@@ -1239,11 +1239,14 @@ void Add::add_Event_GunsUsedTab(
     const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
     const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
 ){
-    ImGui::Text("Here");
-    /*
     // Table size calculations
     static constexpr float MIN_TABLE_SIZE_X { 400 };
     static constexpr float MAX_TABLE_SIZE_X { 800 };
+    static int totalGuns { 1 };
+    static int curGun { 1 };
+    static int ammoTypes { 1 };
+    static std::weak_ptr<AssociatedGun> weakGunPtr { };
+    static std::weak_ptr<AssociatedAmmo> ammoUsed { };
 
     ImVec2 tableSize = { ImGui::GetContentRegionAvail().x-2, 400};
     if(tableSize.x < MIN_TABLE_SIZE_X)
@@ -1251,19 +1254,63 @@ void Add::add_Event_GunsUsedTab(
     if(tableSize.x > MAX_TABLE_SIZE_X)
         tableSize.x = MAX_TABLE_SIZE_X;
 
-    centerNextItemX(tableSize.x);
-    Tables::selectable_Guns(armory, selectedGunReference, tableSize);
+    centerNextItemX(300);
+    ImGui::BeginGroup();
+    ImGui::Text("Number of Guns Used");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Guns Used", &totalGuns);
+    ImGui::EndGroup();
 
-    if(selectedGunReference.get().getGunInfo() == EMPTY_GUN_AND_AMMO.getGunInfo())
+    if(totalGuns < 1)
+        totalGuns = 1;
+    if(totalGuns > 5)
+        totalGuns = 5;
+
+    if(ImGui::BeginChild("Guns Info", ImVec2{ImGui::GetContentRegionAvail().x/2, 50})){
+        centerText("Information for Gun: ");
+        ImGui::SameLine();
+        ImGui::Text("%d", curGun);
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+    if(ImGui::BeginChild("Add Button", ImVec2{ImGui::GetContentRegionAvail().x-2, 50})){
+       if(centerButton("Submit Current Gun", ImVec2 { 140, 30 }))
+           std::cout << "Verify gun and ammo\n";
+    }
+    ImGui::EndChild();
+
+
+    ImGui::Separator();
+    ImGui::Spacing();
+    centerNextItemX(tableSize.x);
+    Tables::selectable_Guns(armory, weakGunPtr, tableSize);
+
+    std::shared_ptr<AssociatedGun> selected { weakGunPtr.lock() };
+
+    if(!selected)
         return;
 
     ImGui::Spacing();
-    ImGui::SeparatorText("Ammo Used");
+    ImGui::Separator();
     ImGui::Spacing();
 
+    centerNextItemX(310);
+    ImGui::BeginGroup();
+    ImGui::Text("Number of Ammo Types Used for Gun ");
+    ImGui::SameLine();
+    ImGui::Text("%d", curGun);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Ammo Used", &ammoTypes);
+    ImGui::EndGroup();
+
+
     centerNextItemX(tableSize.x);
-    Tables::amountOfAmmo(selectedGunReference.get().getAmmoUsedList(), tableSize);
-    */
+    Tables::selectable_SingleCartridgeAmmo(stockpile.at(selected->getGunInfo().cartridge), ammoUsed, tableSize);
+
+    // NEED TO FIGURE OUT WAY TO ADD MULTIPLE AMMO AND GUN STILL
 
 }
 
