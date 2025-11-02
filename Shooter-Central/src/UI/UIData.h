@@ -140,7 +140,8 @@ namespace ScreenData{
             bool applyToStockpile   { true };
             bool applyToArmory      { true };
 
-            ImGuiTabItemFlags eventInfoFlags { 0 }, gunsUsedFlags { 0 }, reviewFlags { 0 };
+            bool eventInfoVerified  { false };
+            bool gunsVerified       { false };
             EventTab currentTab { EventTab::INFO };
         };
 

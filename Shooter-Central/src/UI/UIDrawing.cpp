@@ -1043,42 +1043,41 @@ void Add::add_Event(
 ){
     typedef ScreenData::Add::EventTab EventTab;
 
+
     static EventTab lastTab;
+    ImGuiTabItemFlags eventInfoFlags { 0 }, gunsUsedFlags { 0 }, reviewFlags { 0 };
     bool applyForce { false };
 
     if(lastTab != buffer.currentTab)
         applyForce = true;
-    
+
     if(applyForce){
         switch(buffer.currentTab){
             case EventTab::INFO:
-                buffer.eventInfoFlags |= ImGuiTabItemFlags_SetSelected;
+                eventInfoFlags   |= ImGuiTabItemFlags_SetSelected;
                 break;
             case EventTab::GUNS_AND_AMMO:
-                buffer.gunsUsedFlags |= ImGuiTabItemFlags_SetSelected;
+                gunsUsedFlags    |= ImGuiTabItemFlags_SetSelected;
                 break;
             case EventTab::REVIEW_AND_SUBMIT:
-                buffer.reviewFlags |= ImGuiTabItemFlags_SetSelected;
+                reviewFlags      |= ImGuiTabItemFlags_SetSelected;
                 break;
             default:
                 LAS::log_warn("SC Add Event Tab case not handled");
                 break;
         }
     }
-    
-    // PICKUP WHERE I LEFT OFF, NEED TO FIGURE OUT WHY THE TAB WONT STAY
 
-    // Start the tabs here
     if(ImGui::BeginTabBar("Add Event Tabs")){
-        if(ImGui::BeginTabItem("Event Information", nullptr, buffer.eventInfoFlags)){
+        if(ImGui::BeginTabItem("Event Information", nullptr, eventInfoFlags)){
             buffer.currentTab = EventTab::INFO;
             ImGui::EndTabItem();
         }
-        if(ImGui::BeginTabItem("Guns and Ammo", nullptr, buffer.gunsUsedFlags)){
+        if(buffer.eventInfoVerified && ImGui::BeginTabItem("Guns and Ammo", nullptr, gunsUsedFlags)){
             buffer.currentTab = EventTab::GUNS_AND_AMMO;
             ImGui::EndTabItem();
         }
-        if(ImGui::BeginTabItem("Review And Submit", nullptr, buffer.reviewFlags)){
+        if(buffer.eventInfoVerified && buffer.gunsVerified && ImGui::BeginTabItem("Review And Submit", nullptr, reviewFlags)){
             buffer.currentTab = EventTab::REVIEW_AND_SUBMIT;
             ImGui::EndTabItem();
         }
@@ -1095,7 +1094,6 @@ void Add::add_Event(
             add_Event_GunsUsedTab(buffer.gunsUsed, stockpile, armory); 
             break;
         case EventTab::REVIEW_AND_SUBMIT:
-
             break;
         default:
             LAS::log_warn("SC Add Event Tab case not handled");
@@ -1140,6 +1138,7 @@ void Add::add_Event_InformationTab(
     if(centerButton("Next", ImVec2{200,50})){
         if(add_Event_verifyInformation(buffer)){
             buffer.currentTab = ScreenData::Add::EventTab::GUNS_AND_AMMO;
+            buffer.eventInfoVerified = true;
             std::cout << "verified\n";
         }
         else
