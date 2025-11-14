@@ -38,20 +38,7 @@ namespace ShooterCentral {
         Containers();
         ~Containers();
 
-        const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>&    getKnownAmmo()    const;
-        const std::map<GunMetadata, std::shared_ptr<GunMetadata>>&      getKnownGuns()    const;
-        const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>&          getEvents()       const;
-
-        const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    getAmmoStockpile()    const;
-        const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     getGunsInArmory()     const;
-        const std::map<Cartridge, int>& getAmountPerCartridge() const;
-
-        const std::map<Manufacturer,  std::shared_ptr<Manufacturer>>&   getManufacturers()    const;
-        const std::map<Cartridge,     std::shared_ptr<Cartridge>>&      getCartridges()       const;
-        const std::map<Location,      std::shared_ptr<Location>>&       getLocations()        const;
-        const std::map<ShootingEventType,     std::shared_ptr<ShootingEventType>>&      getEventTypes()       const;
-        const std::map<WeaponType,    std::shared_ptr<WeaponType>>&     getWeaponTypes()      const;
-
+        // DELETED GETTERS
 
         std::pair<std::shared_ptr<AmmoMetadata>, bool>  knownAmmo_create   (const ObjectBuffers::AmmoMetadata& add);    // Strong rollback guarantee if any operation fails
         std::pair<std::shared_ptr<GunMetadata>, bool>   knownGuns_create   (const ObjectBuffers::GunMetadata& add);
@@ -61,11 +48,7 @@ namespace ShooterCentral {
         bool ammoStockpile_add  (const AssociatedAmmo& add); // Will return false if cannot add to ammoStockpile OR amountPerCartridge container
         bool gunsInArmory_add   (const AssociatedGun& add);
 
-        bool manufacturers_add  (const Manufacturer& add);
-        bool cartridges_add     (const Cartridge& add);
-        bool eventTypes_add     (const ShootingEventType& add);
-        bool weaponTypes_add    (const WeaponType& add);
-        bool locations_add      (const Location& add);
+        // DELETED METADATA ITEMS ADD
 
         std::shared_ptr<AmmoMetadata>   knownAmmo_at    (const AmmoMetadata& key);
         std::shared_ptr<GunMetadata>    knownGuns_at    (const GunMetadata& key);

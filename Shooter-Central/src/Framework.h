@@ -1,11 +1,16 @@
 #pragma once
 
+/*
 #include "UI/UIControl.h"
 #include "UI/UIHelperElements.h"
 #include "Container Items/AssociatedItems.h"
 #include "CommonItems.h"
 #include "Containers.h"
 #include "Events.h"
+*/
+
+#include "Backend/DatabaseItems.h"
+#include "Backend/Database.h"
 
 #include <LAS/Logging.h>
 #include <LAS/json.h>
@@ -17,6 +22,8 @@
 #include <filesystem>
 #include <memory>
 #include <chrono>
+
+#include <iostream> // For testing
 
 
 namespace ShooterCentral{
@@ -44,6 +51,7 @@ namespace ShooterCentral{
         static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
 
     private:
+        /*
         Containers          containers      { };
         UI::UIController    view            { };
         UnsavedChanges      unsavedChanges  { };
@@ -61,11 +69,14 @@ namespace ShooterCentral{
         bool writeFile_Descriptors   (std::string dirrectory);
 
         void buildAssociations();
+        */
     };
 
     namespace Setup {
         bool    setupFilesystem(Framework::Filepaths& paths); // Needs parentDir set first
     }
+
+    /*
 
     namespace FileIO { 
 
@@ -92,4 +103,5 @@ namespace ShooterCentral{
     private:
         char text[255];
     };
+    */
 }

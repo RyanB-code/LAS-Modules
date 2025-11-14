@@ -9,7 +9,103 @@ Framework::Framework() {
 Framework::~Framework() {
 
 }
+
+// FOR TESTING
+void printAmmoMetadata(const AmmoMetadata& info) {
+    std::cout << std::format("  Name: {}, Man: {}, Cart: {}, GW: {}\n",  info.name, info.manufacturer.getName(), info.cartridge.getName(), info.grainWeight );
+}
+void printGunMetadata(const GunMetadata& info) {
+    std::cout << std::format("  Name: {}, WT: {}, Cart: {}\n", info.name, info.weaponType.getName(), info.cartridge.getName());
+}
+void printStockpileAmmo(const StockpileAmmo& ammo){
+    printAmmoMetadata(ammo.getAmmoInfo());
+    std::cout << "  Amount: " << ammo.getAmountOnHand() << "\n";
+}
+void printAmountOfAmmo(const AmountOfAmmo& ammo){
+    printAmmoMetadata(ammo.getAmmoInfo());
+    std::cout << "  Amount: " << ammo.getAmount() << "\n";
+}
+void printEvent(const ShootingEvent& event) {
+    const auto& info { event.getInfo() };
+    std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", info.location.getName(), info.eventType.getName(), info.notes, event.printDate());
+}
+
+
 bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setShown){
+
+    AmmoMetadata amMet1 {
+        "testAmmo1",
+        Cartridge       { "testCart1" },
+        Manufacturer    { "testMan1" },
+        3
+    };
+
+    GunMetadata gunMet1 {
+        "testGun1",
+        Cartridge {"testCart1"},
+        WeaponType {"testWT1"}
+    };
+
+    GunMetadata gunMet2 {
+        "testGun2",
+        Cartridge {"testCart1"},
+        WeaponType {"testWT1"}
+    };
+
+    StockpileAmmo stockpileAmmo1 { amMet1 };
+    stockpileAmmo1.addAmount(3);
+
+    std::cout << "stockpileAmmo1: \n";
+    printStockpileAmmo(stockpileAmmo1);
+
+    std::cout << "testGun1: \n";
+    printGunMetadata(gunMet1);
+
+
+    stockpileAmmo1.addGun(gunMet2);
+    stockpileAmmo1.addGun(gunMet1);
+
+
+    std::cout << "Guns Used: \n";
+    for(const GunMetadata& gun : stockpileAmmo1.getGunsUsed() ){
+       printGunMetadata(gun); 
+    }
+
+    std::cout << "\n\n";
+
+
+    ArmoryGun armoryGun1 { gunMet1 };
+    armoryGun1.addAmmoUsed( AmountOfAmmo {amMet1, 15} );
+
+    for(const auto& [info, amountOfAmmo] : armoryGun1.getAmmoUsed()){
+       printAmountOfAmmo(amountOfAmmo); 
+    }
+
+    const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
+    const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
+
+
+    ShootingEventMetadata eventMet1 {
+        .notes = "",
+        .location = Location { "testLoc1" },
+        .eventType = ShootingEventType { "testET1" },
+        .date = ymd
+    };
+
+    ShootingEvent testEvent1 { eventMet1 };
+    std::cout << "\n";
+    printEvent(testEvent1);
+
+
+    Database database { };
+    database.getStockpile(Cartridge {"fuck"});
+
+
+    return true;
+}
+
+
+/*
     using namespace ShooterCentral::Setup;
 
     Filepaths paths {directory};
@@ -43,7 +139,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     testEvent1.addGun(testGAA);
     if(!FileIO::write(paths.eventsDir, testEvent1))
         log_error("Could not write event");
-    */
+    // /
 
     buildAssociations();
 
@@ -139,8 +235,11 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
  
     log_info("SC Setup sucessful");
     return true;
+
 }
+*/
 void Framework::update() {
+    /*
     std::unique_ptr<ModelEvent> modelEvent;
     std::unique_ptr<UIEvent> uiEvent;
     pollEvent(modelEvent);
@@ -163,9 +262,12 @@ void Framework::update() {
         if (!s.didSucceed)
             log_error(std::string{s.msg});
     }
+    */
+
 }
 void Framework::draw() {
    
+    /*
     if(!ImGui::Begin(TITLE, &*shown, 0)){
         ImGui::End();
         return;
@@ -174,7 +276,10 @@ void Framework::draw() {
     view.draw(containers, unsavedChanges);
 
     ImGui::End();
+    */
+
 }
+/*
 bool Framework::readDir_Guns(const std::string& dir) {
     if(!std::filesystem::exists(dir))
         return false;
@@ -490,7 +595,7 @@ void Framework::buildAssociations() {
         } // End every GunAndAmmo in the event
     } // End every event
 }
-
+*/
 bool Setup::setupFilesystem(Framework::Filepaths& paths){
     if(paths.parentDir.empty())
         return false;
@@ -521,6 +626,7 @@ bool Setup::setupFilesystem(Framework::Filepaths& paths){
     }
     return true;
 }
+/*
  
 
 namespace ShooterCentral::FileIO {
@@ -740,3 +846,4 @@ void Popup_CommandFailed::show() {
 
     buttons_Close();
 }
+*/

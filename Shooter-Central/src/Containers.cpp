@@ -9,39 +9,7 @@ Containers::~Containers(){
 
 }
 
-const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>& Containers::getKnownAmmo()    const{
-    return knownAmmo;
-}
-const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& Containers::getKnownGuns()    const{
-    return knownGuns;
-}
-const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& Containers::getEvents()       const{
-    return events;
-}
-const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& Containers::getAmmoStockpile()    const{
-    return ammoStockpile;
-}
-const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>& Containers::getGunsInArmory()     const{
-    return gunsInArmory;
-}
-const std::map<Cartridge, int>& Containers::getAmountPerCartridge() const{
-    return amountPerCartridge;
-}
-const std::map<Manufacturer,  std::shared_ptr<Manufacturer>>& Containers::getManufacturers()    const{
-    return manufacturers;
-}
-const std::map<Cartridge,     std::shared_ptr<Cartridge>>& Containers::getCartridges()       const{
-    return cartridges;
-}
-const std::map<Location,      std::shared_ptr<Location>>& Containers::getLocations()        const{
-    return locations;
-}
-const std::map<ShootingEventType,     std::shared_ptr<ShootingEventType>>& Containers::getEventTypes()       const{
-    return eventTypes;
-}
-const std::map<WeaponType,    std::shared_ptr<WeaponType>>& Containers::getWeaponTypes()      const{
-    return weaponTypes;
-}
+
 std::pair<std::shared_ptr<AmmoMetadata>, bool> Containers::knownAmmo_create      (const ObjectBuffers::AmmoMetadata& data){
     const Manufacturer manufacturer { data.manufacturer };
     const Cartridge cartridge       { data.cartridge };
