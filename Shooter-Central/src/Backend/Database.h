@@ -9,6 +9,7 @@
 
 namespace ShooterCentral {
 
+typedef std::map<ShootingEventMetadata, ShootingEvent>::iterator EventIterator; 
 
 class Database {
 public:
@@ -37,6 +38,9 @@ public:
     }    
 
     // getters and adders for events, armory, stockpile
+    std::pair<EventIterator, bool> addEvent (const ShootingEvent& event);  // bool is if event was added or not. If already contains eventInfo, returns false
+   
+    bool addToStockpile     (const AmountOfAmmo& );
 
     bool addManufacturer    (const Manufacturer& );
     bool addCartridge       (const Cartridge& );
@@ -44,11 +48,9 @@ public:
     bool addLocation        (const Location& );
     bool addEventType       (const ShootingEventType& );
 
-    bool armoryContains     (const GunMetadata& info)   const { return armory.contains(info); }
-    bool stockpileContains  (const AmmoMetadata& info)  const { return stockpile.contains(info); }
+    bool armoryContains     (const GunMetadata& info) const;
+    bool stockpileContains  (const AmmoMetadata& info) const;
 
-
-    // NEED TO TEST THESE TOO
     int amountInStockpile   (const Cartridge& );
     int amountInStockpile   (const AmmoMetadata& );
 
@@ -64,6 +66,9 @@ private:
     std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>       armory              { };
     std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>> stockpile           { };
     std::map<Cartridge, int>                                    amountPerCartridge  { };
+
+    bool addAmountPerCartridge(const Cartridge& cartridge, int amount);
+
 };
 
 }   // End SC namespace

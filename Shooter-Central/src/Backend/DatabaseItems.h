@@ -177,6 +177,7 @@ public:
     int         getAmountOnHand()   const;
     const auto& getAmmoInfo()       const { return ammoInfo; }
     const auto& getGunsUsed()       const { return gunsUsed; }
+    const auto  getAmountOfAmmo()   const { return AmountOfAmmo { ammoInfo, amountOnHand }; }
 private:
     AmmoMetadata            ammoInfo        { };
     int                     amountOnHand    { 0 };
