@@ -38,8 +38,8 @@ public:
         throw std::out_of_range { std::format("Database::getStockpile(), no ammo present with Cartridge '{}'", cartridge.getName() ) };
     }    
 
-    bool addEvent (const ShootingEvent& event);  // True if event alread exists or created. False if could not emplace 
    
+    bool addEvent           (const ShootingEvent& );  // True if event alread exists or created. False if could not emplace 
     bool addToStockpile     (const AmountOfAmmo& );
     bool addToStockpile     (const AmmoMetadata& );
     bool addToArmory        (const ArmoryGun& );
@@ -55,11 +55,11 @@ public:
     bool addLocation        (const Location& );
     bool addEventType       (const ShootingEventType& );
 
-    bool armoryContains     (const GunMetadata& info) const;
-    bool stockpileContains  (const AmmoMetadata& info) const;
+    bool armoryContains     (const GunMetadata& ) const;
+    bool stockpileContains  (const AmmoMetadata& ) const;
 
-    int amountInStockpile   (const Cartridge& );
-    int amountInStockpile   (const AmmoMetadata& );
+    int amountInStockpile   (const Cartridge& ) const;
+    int amountInStockpile   (const AmmoMetadata& ) const;
 
 private:
     std::set<Manufacturer>      manufacturers   { };

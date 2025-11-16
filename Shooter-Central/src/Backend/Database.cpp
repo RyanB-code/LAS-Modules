@@ -90,17 +90,17 @@ bool Database::stockpileContains (const AmmoMetadata& info) const {
 
     return stockpile.at(info.cartridge).contains(info);
 }
-int Database::amountInStockpile   (const Cartridge& cartridge){
+int Database::amountInStockpile   (const Cartridge& cartridge) const{
     if(!amountPerCartridge.contains(cartridge))
         return 0;
 
     return amountPerCartridge.at(cartridge);
 }
-int Database::amountInStockpile   (const AmmoMetadata& info){
+int Database::amountInStockpile   (const AmmoMetadata& info) const{
     const Cartridge& cartridge { info.cartridge };
 
     if(!stockpile.contains(cartridge))
-        return false;
+        return 0;
 
     const auto& cartridgeMap { stockpile.at(cartridge) };
 
