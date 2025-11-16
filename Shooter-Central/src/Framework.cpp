@@ -17,9 +17,26 @@ void printAmmoMetadata(const AmmoMetadata& info) {
 void printGunMetadata(const GunMetadata& info) {
     std::cout << std::format("  Name: {}, WT: {}, Cart: {}\n", info.name, info.weaponType.getName(), info.cartridge.getName());
 }
+void printEventMetadata(const ShootingEventMetadata& info){
+    std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", info.location.getName(), info.eventType.getName(), info.notes, std::format("{:%Od %b %Y}", info.date) );
+}
 void printStockpileAmmo(const StockpileAmmo& ammo){
     printAmmoMetadata(ammo.getAmmoInfo());
     std::cout << "  Amount: " << ammo.getAmountOnHand() << "\n";
+}
+void printArmoryGun(const ArmoryGun& gun){
+    printGunMetadata(gun.getGunInfo());
+    std::cout << "   -\n";
+    for(const auto& eventInfo : gun.getEventsUsed() ){
+        std::cout << "  ";
+        printEventMetadata(eventInfo);
+    }
+    std::cout << "   -\n";
+    for(const auto& [info, amountOfAmmo] : gun.getAmmoUsed()) {
+        std::cout << "  ";
+        printAmmoMetadata(amountOfAmmo.getAmmoInfo());
+        std::cout << "    Amount: " << amountOfAmmo.getAmount() << '\n';
+    }
 }
 void printAmountOfAmmo(const AmountOfAmmo& ammo){
     printAmmoMetadata(ammo.getAmmoInfo());
@@ -27,7 +44,17 @@ void printAmountOfAmmo(const AmountOfAmmo& ammo){
 }
 void printEvent(const ShootingEvent& event) {
     const auto& info { event.getInfo() };
-    std::cout << std::format("  Event: Location: {}, EventType: {}, Notes: {}, Date: {}\n", info.location.getName(), info.eventType.getName(), info.notes, event.printDate());
+    printEventMetadata(info); 
+
+    for(const auto& gunTrackingAmmo : event.getGunsUsed() ){
+        std::cout << "  ";
+        printGunMetadata(gunTrackingAmmo.getGunInfo());
+        for(const auto& amountOfAmmo : gunTrackingAmmo.getAmmoUsed()) {
+            std::cout << "    ";
+            printAmmoMetadata(amountOfAmmo.getAmmoInfo());
+            std::cout << "      Amount: " << amountOfAmmo.getAmount() << '\n';
+        }
+    }
 }
 
 
@@ -63,38 +90,10 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         WeaponType {"testWT1"}
     };
 
-    StockpileAmmo stockpileAmmo1 { amMet1 };
-    stockpileAmmo1.addAmount(3);
-
-    std::cout << "stockpileAmmo1: \n";
-    printStockpileAmmo(stockpileAmmo1);
-
-    std::cout << "testGun1: \n";
-    printGunMetadata(gunMet1);
-
-
-    stockpileAmmo1.addGun(gunMet2);
-    stockpileAmmo1.addGun(gunMet1);
-
-
-    std::cout << "Guns Used: \n";
-    for(const GunMetadata& gun : stockpileAmmo1.getGunsUsed() ){
-       printGunMetadata(gun); 
-    }
-
-    std::cout << "\n\n";
-
-
-    ArmoryGun armoryGun1 { gunMet1 };
-    armoryGun1.addAmmoUsed( AmountOfAmmo {amMet1, 15} );
-
-    for(const auto& [info, amountOfAmmo] : armoryGun1.getAmmoUsed()){
-       printAmountOfAmmo(amountOfAmmo); 
-    }
+    Database database { };
 
     const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
     const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
-
 
     ShootingEventMetadata eventMet1 {
         .notes = "",
@@ -105,10 +104,30 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
     ShootingEvent testEvent1 { eventMet1 };
 
-    Database database { };
     database.addEvent(testEvent1);
     database.addToStockpile( AmountOfAmmo { amMet1, 100 } );
     database.addToStockpile( AmountOfAmmo { amMet2, 69 } );
+
+    database.addToArmory(gunMet1);
+    database.addToArmory(gunMet2);
+
+    GunTrackingAmmoUsed gunUsed1 {gunMet1};
+    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 50 } );
+    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet2, 60 } );
+    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 3 } );
+
+    database.getEvent(eventMet1).addGun( gunUsed1 );
+    database.getEvent(eventMet1).addGun( GunTrackingAmmoUsed {gunMet2} );
+
+    database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet1, 14 } );
+    database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet2, 20 } );
+    database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet1, 1 } );
+
+    database.getGun(gunMet2).addAmmoUsed( AmountOfAmmo { amMet1, 100 } );
+
+    if(!database.getGun(gunMet1).addEvent( testEvent1 ))
+        std::cout << "fail adding event to gun\n";
+
 
 
     std::cout << "\nEvents: \n";
@@ -116,14 +135,62 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         printEvent(e);
 
     std::cout << "\nStockpile: \n";
-
     for(const auto& [key, cartMap] : database.getStockpile()){
         for(const auto& [info, stockpileAmmo] : cartMap)
             printAmountOfAmmo(stockpileAmmo.getAmountOfAmmo());
     }
 
-    std::cout << "testCart1: " << database.amountInStockpile(testCart1) << "\n";
-    std::cout << "amMet1: " << database.amountInStockpile(amMet2) << "\n";
+    std::cout << "\nStockpile by cartridge: \n";
+    for(const auto& c : database.getCartridges() ) {
+        try {
+            for(const auto& [info, stockpileAmmo] : database.getStockpile(c) )
+                printAmountOfAmmo(stockpileAmmo.getAmountOfAmmo());
+        }
+        catch(std::invalid_argument& e){
+            continue;
+        }  
+    }
+
+    std::cout << "\nArmory: \n";
+    for(const auto& [key, cartMap] : database.getArmory()){
+        for(const auto& [info, armoryGun] : cartMap)
+            printArmoryGun(armoryGun);
+    }
+
+    std::cout << "\nArmory by cartridge: \n";
+    for(const auto& c : database.getCartridges() ) {
+        try { 
+            for(const auto& [info, gun] : database.getArmory(c) )
+                printGunMetadata(gun.getGunInfo());
+        }
+        catch(std::invalid_argument& e){
+            continue;
+        }
+    }
+
+
+    std::cout << "\n\nManufacturers:\n";
+    for(const auto& manufacturer : database.getManufacturers() ){
+        std::cout << "  " << manufacturer.getName() << "\n";
+    }
+    std::cout << "\n\nLocations:\n";
+    for(const auto& location : database.getLocations() ){
+        std::cout << "  " << location.getName() << "\n";
+    }
+    std::cout << "\n\nEventTypes:\n";
+    for(const auto& et : database.getEventTypes() ){
+        std::cout << "  " << et.getName() << "\n";
+    }
+    std::cout << "\n\nCartridges:\n";
+    for(const auto& c : database.getCartridges() ){
+        std::cout << "  " << c.getName() << "\n";
+    }
+    std::cout << "\n\nWeaponTypes:\n";
+    for(const auto& wt : database.getWeaponTypes() ){
+        std::cout << "  " << wt.getName() << "\n";
+    }
+
+
 
 
 
