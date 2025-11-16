@@ -23,10 +23,12 @@ void printEventMetadata(const ShootingEventMetadata& info){
 void printStockpileAmmo(const StockpileAmmo& ammo){
     printAmmoMetadata(ammo.getAmmoInfo());
     std::cout << "  Amount: " << ammo.getAmountOnHand() << "\n";
+    std::cout << "  ";
+    for(const auto& gunInfo : ammo.getGunsUsed() )
+        printGunMetadata(gunInfo);
 }
 void printArmoryGun(const ArmoryGun& gun){
     printGunMetadata(gun.getGunInfo());
-    std::cout << "   -\n";
     for(const auto& eventInfo : gun.getEventsUsed() ){
         std::cout << "  ";
         printEventMetadata(eventInfo);
@@ -102,31 +104,27 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         .date = ymd
     };
 
-    ShootingEvent testEvent1 { eventMet1 };
+    GunTrackingAmmoUsed gunUsed1 {gunMet1};
+    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 50 } );
+    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet2, 60 } );
+    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 3 } );
 
-    database.addEvent(testEvent1);
+    database.addEvent(ShootingEvent {eventMet1} );
+    database.getEvent(eventMet1).addGun( gunUsed1 );
+    database.getEvent(eventMet1).addGun( GunTrackingAmmoUsed {gunMet2} );
+
     database.addToStockpile( AmountOfAmmo { amMet1, 100 } );
     database.addToStockpile( AmountOfAmmo { amMet2, 69 } );
 
     database.addToArmory(gunMet1);
     database.addToArmory(gunMet2);
 
-    GunTrackingAmmoUsed gunUsed1 {gunMet1};
-    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 50 } );
-    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet2, 60 } );
-    gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 3 } );
-
-    database.getEvent(eventMet1).addGun( gunUsed1 );
-    database.getEvent(eventMet1).addGun( GunTrackingAmmoUsed {gunMet2} );
-
     database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet1, 14 } );
     database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet2, 20 } );
     database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet1, 1 } );
-
     database.getGun(gunMet2).addAmmoUsed( AmountOfAmmo { amMet1, 100 } );
 
-    if(!database.getGun(gunMet1).addEvent( testEvent1 ))
-        std::cout << "fail adding event to gun\n";
+    database.getGun(gunMet1).addEvent( database.getEvent(eventMet1) );
 
 
 
@@ -146,7 +144,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
             for(const auto& [info, stockpileAmmo] : database.getStockpile(c) )
                 printAmountOfAmmo(stockpileAmmo.getAmountOfAmmo());
         }
-        catch(std::invalid_argument& e){
+        catch(...){
             continue;
         }  
     }
@@ -163,7 +161,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
             for(const auto& [info, gun] : database.getArmory(c) )
                 printGunMetadata(gun.getGunInfo());
         }
-        catch(std::invalid_argument& e){
+        catch(...){
             continue;
         }
     }
