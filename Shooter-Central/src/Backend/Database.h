@@ -9,8 +9,6 @@
 
 namespace ShooterCentral {
 
-typedef std::map<ShootingEventMetadata, ShootingEvent>::iterator EventIterator; 
-
 class Database {
 public:
     Database();
@@ -26,11 +24,13 @@ public:
     const auto& getArmory()         const { return armory; }
     const auto& getStockpile()      const { return stockpile; }
 
+    // Throws if cartridge not found
     const auto& getArmory(const Cartridge& cartridge) const {
         if(armory.contains(cartridge))
             return armory.at(cartridge);
         throw std::invalid_argument { std::format("Database::getArmory(), no guns present with Cartridge '{}'", cartridge.getName() ) };
     }
+    // Throws if cartridge not found
     const auto& getStockpile(const Cartridge& cartridge) const {
         if(stockpile.contains(cartridge))
             return stockpile.at(cartridge);
@@ -38,9 +38,16 @@ public:
     }    
 
     // getters and adders for events, armory, stockpile
-    std::pair<EventIterator, bool> addEvent (const ShootingEvent& event);  // bool is if event was added or not. If already contains eventInfo, returns false
+    bool addEvent (const ShootingEvent& event);  // True if event alread exists, or created. False if could not emplace 
    
     bool addToStockpile     (const AmountOfAmmo& );
+    bool addToStockpile     (const AmmoMetadata& );
+    bool addToArmory        (const ArmoryGun& );
+    bool addToArmory        (const GunMetadata& ); 
+
+    ShootingEvent& getEvent  (const ShootingEventMetadata& );    // Throws out_of_range if not present
+    StockpileAmmo& getAmmo   (const AmmoMetadata& );             // Throws out_of_range if not present
+    ArmoryGun&     getGun    (const GunMetadata& );              // Throws out_of_range if not present
 
     bool addManufacturer    (const Manufacturer& );
     bool addCartridge       (const Cartridge& );
@@ -67,7 +74,10 @@ private:
     std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>> stockpile           { };
     std::map<Cartridge, int>                                    amountPerCartridge  { };
 
-    bool addAmountPerCartridge(const Cartridge& cartridge, int amount);
+    bool addAmountPerCartridge  (const Cartridge& cartridge, int amount);
+    void addMetadataInfo        (const GunMetadata& );
+    void addMetadataInfo        (const AmmoMetadata& );
+    void addMetadataInfo        (const ShootingEventMetadata& );
 
 };
 
