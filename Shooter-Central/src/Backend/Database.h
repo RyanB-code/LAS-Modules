@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DatabaseItems.h"
+#include "LAS/Logging.h"
 
 #include <set>
 #include <map>
@@ -28,17 +29,16 @@ public:
     const auto& getArmory(const Cartridge& cartridge) const {
         if(armory.contains(cartridge))
             return armory.at(cartridge);
-        throw std::invalid_argument { std::format("Database::getArmory(), no guns present with Cartridge '{}'", cartridge.getName() ) };
+        throw std::out_of_range { std::format("Database::getArmory(), no guns present with Cartridge '{}'", cartridge.getName() ) };
     }
     // Throws if cartridge not found
     const auto& getStockpile(const Cartridge& cartridge) const {
         if(stockpile.contains(cartridge))
             return stockpile.at(cartridge);
-        throw std::invalid_argument { std::format("Database::getStockpile(), no ammo present with Cartridge '{}'", cartridge.getName() ) };
+        throw std::out_of_range { std::format("Database::getStockpile(), no ammo present with Cartridge '{}'", cartridge.getName() ) };
     }    
 
-    // getters and adders for events, armory, stockpile
-    bool addEvent (const ShootingEvent& event);  // True if event alread exists, or created. False if could not emplace 
+    bool addEvent (const ShootingEvent& event);  // True if event alread exists or created. False if could not emplace 
    
     bool addToStockpile     (const AmountOfAmmo& );
     bool addToStockpile     (const AmmoMetadata& );
@@ -75,10 +75,17 @@ private:
     std::map<Cartridge, int>                                    amountPerCartridge  { };
 
     bool addAmountPerCartridge  (const Cartridge& cartridge, int amount);
-    void addMetadataInfo        (const GunMetadata& );
-    void addMetadataInfo        (const AmmoMetadata& );
-    void addMetadataInfo        (const ShootingEventMetadata& );
-
 };
+
+
+// Here add item by association for event, gun, ammo
+
+
+
+
+// Adds all items into Database along with appropriate logging
+void addMetadataInfo (Database&, const GunMetadata& );
+void addMetadataInfo (Database&, const AmmoMetadata& );
+void addMetadataInfo (Database&, const ShootingEventMetadata& );
 
 }   // End SC namespace

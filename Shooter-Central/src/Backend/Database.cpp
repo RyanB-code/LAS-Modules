@@ -9,15 +9,9 @@ bool Database::addEvent(const ShootingEvent& event){
     const ShootingEventMetadata& info { event.getInfo() };
 
     if(events.contains(info))
-       true; 
+       return true; 
 
-
-    if(events.try_emplace(info, event).second){
-        addMetadataInfo(info);
-        return true;
-    }
-
-    return false;
+    return events.try_emplace(info, event).second;
 }
 bool Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
     const AmmoMetadata& info { amountOfAmmo.getAmmoInfo() };
@@ -36,9 +30,7 @@ bool Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
         return false;
     }
 
-    addMetadataInfo(amountOfAmmo.getAmmoInfo());
     return true;
-
 }
 bool Database::addToStockpile(const AmmoMetadata& info) {
     return addToStockpile( AmountOfAmmo { info } );
@@ -51,12 +43,7 @@ bool Database::addToArmory(const ArmoryGun& gun) {
             return false;
     }
 
-    if(armory.at(info.cartridge).try_emplace(info, gun).second){
-        addMetadataInfo(gun.getGunInfo());
-        return true;
-    }
-
-    return false;
+    return armory.at(info.cartridge).try_emplace(info, gun).second;
 }
 bool Database::addToArmory(const GunMetadata& info) {
     return addToArmory( ArmoryGun { info } );
@@ -128,17 +115,30 @@ bool Database::addAmountPerCartridge(const Cartridge& cartridge, int addAmount) 
 
     return true;
 }
-void Database::addMetadataInfo(const GunMetadata& info){
-   cartridges.emplace(info.cartridge);
-   weaponTypes.emplace(info.weaponType);
+
+
+
+
+
+void addMetadataInfo(Database& database, const GunMetadata& info){
+    if(!database.addCartridge(info.cartridge))
+        LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
+
+    if(!database.addWeaponType(info.weaponType))
+        LAS::log_warn(std::format("addMetadataInfo() could not add WeaponType {}", info.weaponType.getName() ) );
 }
-void Database::addMetadataInfo(const AmmoMetadata& info){
-    manufacturers.emplace(info.manufacturer);
-    cartridges.emplace(info.cartridge);
+void addMetadataInfo(Database& database, const AmmoMetadata& info){
+     if(!database.addManufacturer(info.manufacturer))
+        LAS::log_warn(std::format("addMetadataInfo() could not add Manufacturer {}", info.manufacturer.getName()) );
+
+    if(!database.addCartridge(info.cartridge))
+        LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
 }
-void Database::addMetadataInfo(const ShootingEventMetadata& info){
-    locations.emplace(info.location);
-    eventTypes.emplace(info.eventType);
+void addMetadataInfo(Database& database, const ShootingEventMetadata& info){
+    if(!database.addLocation(info.location))
+        LAS::log_warn(std::format("addMetadataInfo() could not add Location {}", info.location.getName()) );
+    if(!database.addEventType(info.eventType))
+        LAS::log_warn(std::format("addMetadataInfo() could not add EventType {}", info.eventType.getName()) );
 }
 
 
