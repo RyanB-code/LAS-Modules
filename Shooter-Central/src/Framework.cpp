@@ -24,6 +24,7 @@ void printStockpileAmmo(const StockpileAmmo& ammo){
     printAmmoMetadata(ammo.getAmmoInfo());
     std::cout << "  Amount: " << ammo.getAmountOnHand() << "\n";
     std::cout << "  ";
+
     for(const auto& gunInfo : ammo.getGunsUsed() )
         printGunMetadata(gunInfo);
 }
@@ -65,6 +66,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     Cartridge testCart1 { "testCart1" };
     Cartridge testCart2 { "testCart2" };
     Manufacturer testMan1  { "testMan1" };
+    Manufacturer testMan2  { "testMan2" };
 
     AmmoMetadata amMet1 {
         "testAmmo1",
@@ -79,6 +81,15 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
         testMan1,
         5
     };
+
+    AmmoMetadata amMet3 {
+        "testAmmo3",
+        testCart2,
+        testMan2,
+        60
+    };
+
+
 
     GunMetadata gunMet1 {
         "testGun1",
@@ -108,25 +119,18 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 50 } );
     gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet2, 60 } );
     gunUsed1.addAmmoUsed( AmountOfAmmo  { amMet1, 3 } );
+    
+    GunTrackingAmmoUsed gunUsed2 {gunMet2};
+    gunUsed2.addAmmoUsed( AmountOfAmmo { amMet3, 100 } );
 
     database.addEvent(ShootingEvent {eventMet1} );
     database.getEvent(eventMet1).addGun( gunUsed1 );
-    database.getEvent(eventMet1).addGun( GunTrackingAmmoUsed {gunMet2} );
+    database.getEvent(eventMet1).addGun( gunUsed2 );
 
     database.addToStockpile( AmountOfAmmo { amMet1, 100 } );
     database.addToStockpile( AmountOfAmmo { amMet2, 69 } );
 
-    database.addToArmory(gunMet1);
-    database.addToArmory(gunMet2);
-
-    database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet1, 14 } );
-    database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet2, 20 } );
-    database.getGun(gunMet1).addAmmoUsed( AmountOfAmmo { amMet1, 1 } );
-    database.getGun(gunMet2).addAmmoUsed( AmountOfAmmo { amMet1, 100 } );
-
-    database.getGun(gunMet1).addEvent( database.getEvent(eventMet1) );
-
-
+    associateEvents(database);
 
     std::cout << "\nEvents: \n";
     for(const auto& [info, e] : database.getEvents())
@@ -135,7 +139,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     std::cout << "\nStockpile: \n";
     for(const auto& [key, cartMap] : database.getStockpile()){
         for(const auto& [info, stockpileAmmo] : cartMap)
-            printAmountOfAmmo(stockpileAmmo.getAmountOfAmmo());
+            printStockpileAmmo(stockpileAmmo);
     }
 
     std::cout << "\nStockpile by cartridge: \n";
