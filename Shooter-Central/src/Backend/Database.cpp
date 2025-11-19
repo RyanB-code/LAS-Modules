@@ -142,6 +142,7 @@ void ShooterCentral::associateEvents(Database& db){
         for(const auto& gunTrackingAmmo : event.getGunsUsed() ){
             const GunMetadata& gunInfo { gunTrackingAmmo.getGunInfo() };
 
+            // Add gun to armory
             if(!db.armoryContains(gunInfo)){
                 if(!db.addToArmory(gunInfo)){
                     LAS::log_error(std::format("associateEvents(), attempt to add gun '{}' failed", gunInfo.name)); 
@@ -157,18 +158,29 @@ void ShooterCentral::associateEvents(Database& db){
                 if(!gun.addEvent(event))
                     LAS::log_error(std::format("associateEvents(), attempt to add Event on {} to gun '{}' failed", event.printDate(), gunInfo.name));
 
+                // For every ammo type used, add metadata info, add to stockpile (w/ amount 0), and add Gun to that StockpileAmmo entry
                 for(const auto& amountOfAmmo : gunTrackingAmmo.getAmmoUsed() ){
                     const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo() };
 
                     addMetadataInfo(db, ammoInfo);
 
+                    // Associate ammoInfo to gun used
                     if(!gun.addAmmoUsed(amountOfAmmo))
                         LAS::log_error(std::format("associateEvents(), attempt to add AmmountOfAmmo '{}' to gun '{}' failed", ammoInfo.name, gunInfo.name));
 
+                    // Add ammoInfo to stockpile
                     if(!db.stockpileContains(ammoInfo)){
                         if(!db.addToStockpile(ammoInfo))
-                            LAS::log_error(std::format("associateEvents(), attempt to Ammo '{}' to stockpile failed", ammoInfo.name)); 
+                            LAS::log_error(std::format("associateEvents(), attempt to add Ammo '{}' to stockpile failed", ammoInfo.name)); 
+                            continue;
                     } 
+
+                    // Associate stockpile ammo with gun
+                    StockpileAmmo& stockpileAmmo { db.getAmmo(ammoInfo) };
+                    if(stockpileAmmo.hasGun(gunInfo))
+                        continue;
+                    if(!stockpileAmmo.addGun(gunInfo))
+                        LAS::log_error(std::format("associateEvents(), attempt to add Gun '{}' to Ammo '{}' failed", gunInfo.name, ammoInfo.name)); 
 
                 }   // End adding of all Ammo for the Gun
             }   // End Gun selection
@@ -176,6 +188,7 @@ void ShooterCentral::associateEvents(Database& db){
                 LAS::log_error(std::format("std::out_of_range from associateEvents(). What: {}", e.what()));
                 continue;
             }
+
         }   // End adding of all Guns for the Event
     }   // End adding of all Events
 }
