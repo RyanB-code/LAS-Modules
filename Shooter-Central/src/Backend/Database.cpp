@@ -96,6 +96,23 @@ int Database::amountInStockpile   (const Cartridge& cartridge) const{
 
     return amountPerCartridge.at(cartridge);
 }
+bool Database::metadataContains   (const Manufacturer& man) const{
+    return manufacturers.contains(man);
+}
+bool Database::metadataContains   (const Cartridge& cart) const{
+    return cartridges.contains(cart);
+}
+bool Database::metadataContains   (const WeaponType& wt) const{
+    return weaponTypes.contains(wt);
+}
+bool Database::metadataContains   (const Location& loc) const{
+    return locations.contains(loc);
+}
+bool Database::metadataContains   (const ShootingEventType& et) const{
+    return eventTypes.contains(et);
+}
+
+
 int Database::amountInStockpile   (const AmmoMetadata& info) const{
     const Cartridge& cartridge { info.cartridge };
 

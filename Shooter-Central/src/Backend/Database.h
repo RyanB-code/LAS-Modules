@@ -58,8 +58,15 @@ public:
     bool armoryContains     (const GunMetadata& ) const;
     bool stockpileContains  (const AmmoMetadata& ) const;
 
+    bool metadataContains   (const Manufacturer& ) const;
+    bool metadataContains   (const Cartridge& ) const;
+    bool metadataContains   (const WeaponType& ) const;
+    bool metadataContains   (const Location& ) const;
+    bool metadataContains   (const ShootingEventType& ) const;
+
     int amountInStockpile   (const Cartridge& ) const;
     int amountInStockpile   (const AmmoMetadata& ) const;
+
 
 private:
     std::set<Manufacturer>      manufacturers   { };
