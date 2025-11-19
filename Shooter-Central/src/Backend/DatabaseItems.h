@@ -222,7 +222,7 @@ public:
     /* bool removeAmmoUsed (const AmmoMetadata& ammo); */
     bool hasUsedAmmo    (const AmmoMetadata& ammo) const;
 
-    bool addEvent       (const ShootingEvent& event);           // If key already exists, returns false since data is not overwritten. Iterates over the event and adds all ammo to the gun
+    bool addEvent       (const ShootingEvent& event);           // If key already exists, returns false since data is not overwritten 
     bool wasUsedInEvent (const ShootingEventMetadata& data);
 
     const auto& getAmmoUsed() const     { return ammoUsed; }

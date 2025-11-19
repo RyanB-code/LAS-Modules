@@ -430,11 +430,6 @@ bool ArmoryGun::addEvent(const ShootingEvent& event) {
         // Verify the GunAndAmmo is pointing to a valid gun object
         if(gunAndAmmo.getGunInfo() == gun){
             gunFound = true;
-
-            // Iterate over GunAndAmmo and add to ammoUsedList
-            for(const auto& amountOfAmmo : gunAndAmmo.getAmmoUsed())
-                addAmmoUsed(amountOfAmmo);
-
             break;
         }
     }
