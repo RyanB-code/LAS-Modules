@@ -460,7 +460,7 @@ ShootingEvent::ShootingEvent(const ShootingEventMetadata& info) : eventInfo {inf
     gunsUsed.reserve(5);
 }
 bool ShootingEvent::addGun(const GunTrackingAmmoUsed& gun) {
-    for(auto& entry : gunsUsed){
+    for(const auto& entry : gunsUsed){
         if(gun.getGunInfo() == entry.getGunInfo())
             return false;
     }
