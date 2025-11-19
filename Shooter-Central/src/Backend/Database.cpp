@@ -135,6 +135,59 @@ bool Database::addAmountPerCartridge(const Cartridge& cartridge, int addAmount) 
 
 
 
+void ShooterCentral::associateEvents(Database& db){
+    for(const auto& [eventInfo, event] : db.getEvents()){
+        addMetadataInfo(db, eventInfo);
+
+        for(const auto& gunTrackingAmmo : event.getGunsUsed() ){
+            const GunMetadata& gunInfo { gunTrackingAmmo.getGunInfo() };
+
+            if(!db.armoryContains(gunInfo)){
+                if(!db.addToArmory(gunInfo)){
+                    LAS::log_error(std::format("associateEvents(), attempt to add gun '{}' failed", gunInfo.name)); 
+                    continue;
+                }
+            }
+            
+            try{
+                ArmoryGun& gun { db.getGun(gunInfo) };
+                
+                addMetadataInfo(db, gunInfo);
+
+                if(!gun.addEvent(event))
+                    LAS::log_error(std::format("associateEvents(), attempt to add Event on {} to gun '{}' failed", event.printDate(), gunInfo.name));
+
+                for(const auto& amountOfAmmo : gunTrackingAmmo.getAmmoUsed() ){
+                    const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo() };
+
+                    addMetadataInfo(db, ammoInfo);
+
+                    if(!gun.addAmmoUsed(amountOfAmmo))
+                        LAS::log_error(std::format("associateEvents(), attempt to add AmmountOfAmmo '{}' to gun '{}' failed", ammoInfo.name, gunInfo.name));
+
+                    if(!db.stockpileContains(ammoInfo)){
+                        if(!db.addToStockpile(ammoInfo))
+                            LAS::log_error(std::format("associateEvents(), attempt to Ammo '{}' to stockpile failed", ammoInfo.name)); 
+                    } 
+
+                }   // End adding of all Ammo for the Gun
+            }   // End Gun selection
+            catch(std::out_of_range& e){
+                LAS::log_error(std::format("std::out_of_range from associateEvents(). What: {}", e.what()));
+                continue;
+            }
+        }   // End adding of all Guns for the Event
+    }   // End adding of all Events
+}
+
+
+
+
+void ShooterCentral::addMetadataInfo(Database& db, const GunMetadata& info){
+    if(!db.metadataContains(info.cartridge)){
+        if(!db.addCartridge(info.cartridge))
+            LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
+    }
 
 
 void addMetadataInfo(Database& database, const GunMetadata& info){

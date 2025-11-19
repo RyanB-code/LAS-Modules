@@ -86,6 +86,7 @@ private:
 
 
 // Here add item by association for event, gun, ammo
+void associateEvents(Database& );
 
 
 
