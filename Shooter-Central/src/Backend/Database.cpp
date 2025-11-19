@@ -202,26 +202,33 @@ void ShooterCentral::addMetadataInfo(Database& db, const GunMetadata& info){
             LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
     }
 
-
-void addMetadataInfo(Database& database, const GunMetadata& info){
-    if(!database.addCartridge(info.cartridge))
-        LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
-
-    if(!database.addWeaponType(info.weaponType))
-        LAS::log_warn(std::format("addMetadataInfo() could not add WeaponType {}", info.weaponType.getName() ) );
+    if(!db.metadataContains(info.weaponType)){
+        if(!db.addWeaponType(info.weaponType))
+            LAS::log_warn(std::format("addMetadataInfo() could not add WeaponType {}", info.weaponType.getName() ) );
+    }
 }
-void addMetadataInfo(Database& database, const AmmoMetadata& info){
-     if(!database.addManufacturer(info.manufacturer))
-        LAS::log_warn(std::format("addMetadataInfo() could not add Manufacturer {}", info.manufacturer.getName()) );
+void ShooterCentral::addMetadataInfo(Database& db, const AmmoMetadata& info){
+    if(!db.metadataContains(info.manufacturer)){
+        if(!db.addManufacturer(info.manufacturer))
+            LAS::log_warn(std::format("addMetadataInfo() could not add Manufacturer {}", info.manufacturer.getName()) );
+    }
 
-    if(!database.addCartridge(info.cartridge))
-        LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
+    if(!db.metadataContains(info.cartridge)){
+        if(!db.addCartridge(info.cartridge))
+            LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
+    }
+
 }
-void addMetadataInfo(Database& database, const ShootingEventMetadata& info){
-    if(!database.addLocation(info.location))
-        LAS::log_warn(std::format("addMetadataInfo() could not add Location {}", info.location.getName()) );
-    if(!database.addEventType(info.eventType))
-        LAS::log_warn(std::format("addMetadataInfo() could not add EventType {}", info.eventType.getName()) );
+void ShooterCentral::addMetadataInfo(Database& db, const ShootingEventMetadata& info){
+    if(!db.metadataContains(info.location)){
+        if(!db.addLocation(info.location))
+            LAS::log_warn(std::format("addMetadataInfo() could not add Location {}", info.location.getName()) );
+    }
+
+    if(!db.metadataContains(info.eventType)){
+        if(!db.addEventType(info.eventType))
+            LAS::log_warn(std::format("addMetadataInfo() could not add EventType {}", info.eventType.getName()) );
+    }
 }
 
 
