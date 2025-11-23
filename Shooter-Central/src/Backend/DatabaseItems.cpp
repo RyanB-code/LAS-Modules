@@ -257,6 +257,8 @@ bool ShootingEventMetadata::operator<(const ShootingEventMetadata& other) const{
 }
 
 
+
+
 bool AmmoMetadata::operator==(const AmmoMetadata& other) const {
     if(name == other.name && manufacturer == other.manufacturer && cartridge == other.cartridge && grainWeight == other.grainWeight)
         return true;
@@ -269,6 +271,8 @@ bool AmmoMetadata::operator<(const AmmoMetadata& other) const{
 
     return lhs < rhs;
 }
+
+
 
 bool GunMetadata::operator==(const GunMetadata& other) const{
     if(this->name == other.name && this->weaponType == other.weaponType && this->cartridge == other.cartridge)

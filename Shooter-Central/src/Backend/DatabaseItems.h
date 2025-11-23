@@ -1,10 +1,10 @@
 #pragma once
 
+
 #include <string>
 #include <cstring>      // strncpy
 #include <stdexcept>    // throws
 #include <set>
-
 #include <memory>
 #include <map>
 #include <chrono>
@@ -132,6 +132,8 @@ struct AmmoMetadata {
     bool operator<  (const AmmoMetadata& other) const;
 };
 
+
+
 struct GunMetadata {
     std::string name        { };
     Cartridge   cartridge   { };
@@ -158,6 +160,8 @@ private:
     int amount  { 0 };
 
 };
+
+
 
 class StockpileAmmo {
 public:
