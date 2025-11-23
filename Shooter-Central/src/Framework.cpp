@@ -63,6 +63,20 @@ void printEvent(const ShootingEvent& event) {
 
 bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setShown){
 
+    // REAL SETUP DATA
+    using namespace ShooterCentral::Setup;
+
+    Filepaths paths {directory};
+
+    if(!setupFilesystem(paths)){
+        log_critical("Failed to setup filesystem");
+        return false;
+    }
+
+    shown = setShown;
+
+    // END REAL SETUP DATA
+
     Cartridge testCart1 { "testCart1" };
     Cartridge testCart2 { "testCart2" };
     Manufacturer testMan1  { "testMan1" };
@@ -194,24 +208,16 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
 
 
+    write(paths.eventsDir, database.getEvent(eventMet1).getInfo());
 
 
+
+    log_info("SC Setup sucessful");
     return true;
 }
 
 
 /*
-    using namespace ShooterCentral::Setup;
-
-    Filepaths paths {directory};
-
-    if(!setupFilesystem(paths)){
-        log_critical("Failed to setup filesystem");
-        return false;
-    }
-
-    shown = setShown;
-
     // TESTING
     if(!readDir_Guns(paths.gunsDir))
         log_error("Failed reading Guns");
@@ -328,8 +334,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
     // DONE TESTING   
  
-    log_info("SC Setup sucessful");
-    return true;
+        return true;
 
 }
 */
@@ -721,192 +726,12 @@ bool Setup::setupFilesystem(Framework::Filepaths& paths){
     }
     return true;
 }
-/*
- 
 
+ 
+/*
 namespace ShooterCentral::FileIO {
 
-std::string makeFileName    (std::string directory, const GunMetadata& gun) {
-    std::ostringstream fileName;
-    fileName << directory;
 
-    for(const auto& c : gun.weaponType.getName()){     // Remove spaces
-        if(isalnum(c))
-            fileName << c;
-        else if(c == ' ' || c == '\t')
-            fileName << '-';
-    }
-
-    fileName << '_';
-
-    for(const auto& c : gun.cartridge.getName()){     // Remove spaces
-        if(isalnum(c))
-            fileName << c;
-        else if(c == ' ' || c == '\t')
-            fileName << '-';
-    }
-
-    fileName << '_';
-
-    for(const auto& c : gun.name){     // Remove spaces
-        if(isalnum(c))
-            fileName << c;
-        else if(c == ' ' || c == '\t')
-            fileName << '-';
-    }
-
-    fileName << ".json";
-
-    return fileName.str();
-}
-std::string makeFileName (std::string directory, const AmmoMetadata& ammo) {
-    std::ostringstream fileName;
-    fileName << directory;
-
-    for(const auto& c : ammo.manufacturer.getName()){     // Remove spaces and make lowercase
-        if(isalnum(c))
-            fileName << c;
-        else if(c == ' ' || c == '\t')
-            fileName << '-';
-    }
-
-    fileName << '_';
-
-    for(const auto& c : ammo.cartridge.getName()){     // Remove spaces and make lowercase
-        if(isalnum(c))
-            fileName << c;
-        else if(c == ' ' || c == '\t')
-            fileName << '-';
-    }
-
-    fileName << '_';
-
-    for(const auto& c : ammo.name){     // Remove spaces and make lowercase
-        if(isalnum(c))
-            fileName << c;
-        else if(c == ' ' || c == '\t')
-            fileName << '-';
-    }
-
-    fileName << '_' << ammo.grainWeight;
-
-    fileName << ".json";
-
-    return fileName.str();
-}
-std::string makeFileName(std::string directory, const ShootingEventMetadata& event){
-    // Output fileName
-    std::ostringstream fileName;
-    fileName << directory << std::format("{:%Y-%m-%d}", event.date) << '_';
-
-    for(const auto& c : event.eventType.getName()){     // Remove spaces, make sure alnum
-        if(c == ' ' || c == '\t')
-            fileName << '-';
-        else if(isalnum(c))
-            fileName << c;
-    }
-
-    fileName << '_';
-
-    for(const auto& c : event.location.getName()){     // Remove spaces, make sure alnum
-        if(c == ' ' || c == '\t')
-            fileName << '-';
-        else if(isalnum(c))
-            fileName << c;
-    }
-
-    fileName << ".json";
-
-    return fileName.str();
-}
-bool write(std::string directory, const GunMetadata& data) {
-    using LAS::json;
-
-    if(directory.empty())
-       return false;
-
-    directory = LAS::TextManip::ensureSlash(directory);
-
-    if(!std::filesystem::exists(directory))
-		return false;
-
-    json j = data;
-
-    // Write to file
-    std::ofstream file{ makeFileName(directory, data) };
-    file << std::setw(1) << std::setfill('\t') << j;
-    file.close();
-   
-    return true;
-}
-bool write(std::string directory, const AmountOfAmmo& data) {
-    using LAS::json;
-
-    if(directory.empty())
-       return false;
-
-    directory = LAS::TextManip::ensureSlash(directory);
-
-    if(!std::filesystem::exists(directory))
-		return false;
-
-    LAS::json j = data;
-
-    // Write to file
-    std::ofstream file{ makeFileName(directory, data.getAmmoInfo()) };
-    file << std::setw(1) << std::setfill('\t') << j;
-    file.close();
-   
-    return true;
-}
-bool write (std::string directory, const ShootingEvent& data){
-    using LAS::json;
-
-    if(directory.empty())
-       return false;
-
-    directory = LAS::TextManip::ensureSlash(directory);
-
-    if(!std::filesystem::exists(directory))
-		return false;
-    
-    json eventJson;
-	json gunsArray = json::array();
-
-    // Write every gun and ammo used
-    for(const GunAndAmmo& gunUsed : data.getGunsUsed()){
-
-        // Add ammo used to gun
-        json ammoUsed = json::array();
-        for(const auto& amountOfAmmo : gunUsed.getAmmoUsedList())
-            ammoUsed.emplace_back(amountOfAmmo);
-        
-        // Make json for the gun
-        json buffer;
-        buffer = json {
-            { "gunInfo",  gunUsed.getGunInfo() },
-            { "ammoUsed", ammoUsed }
-        };
-        
-        gunsArray.emplace_back(buffer);
-    }
-    
-    std::ostringstream timeBuf;
-    timeBuf << std::chrono::system_clock::time_point{std::chrono::sys_days{data.getInfo().date}};
-    
-    // Make JSON
-    eventJson = json{
-        { "eventInfo",  data.getInfo() },
-        { "gunsUsed",   gunsArray      }
-    };
-
-    std::ofstream file{makeFileName(directory, data.getInfo())};
-    file << std::setw(1) << std::setfill('\t') << eventJson;
-    file.close();
-   
-    return true;
-
-}
 void read_GunMetadata   (const json& j, ObjectBuffers::GunMetadata& buffer){
     using LAS::json;
 

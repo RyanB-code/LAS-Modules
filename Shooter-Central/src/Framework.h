@@ -11,6 +11,7 @@
 
 #include "Backend/DatabaseItems.h"
 #include "Backend/Database.h"
+#include "Backend/DatabaseFileIO.h"
 
 #include <LAS/Logging.h>
 #include <LAS/json.h>
@@ -51,12 +52,12 @@ namespace ShooterCentral{
         static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
 
     private:
+        std::shared_ptr<bool> shown;
         /*
         Containers          containers      { };
         UI::UIController    view            { };
         UnsavedChanges      unsavedChanges  { };
 
-        std::shared_ptr<bool> shown;
 
         static constexpr char FILENAME_DESCRIPTORS[] = "ItemDescriptors.json";
 
@@ -76,18 +77,10 @@ namespace ShooterCentral{
         bool    setupFilesystem(Framework::Filepaths& paths); // Needs parentDir set first
     }
 
+    
     /*
 
     namespace FileIO { 
-
-        std::string makeFileName    (std::string directory, const GunMetadata& data);
-        std::string makeFileName    (std::string directory, const AmmoMetadata& data);
-        std::string makeFileName    (std::string directory, const ShootingEventMetadata& data);
-
-        bool write (std::string directory, const GunMetadata& data);
-        bool write (std::string directory, const AmountOfAmmo& data);
-        bool write (std::string directory, const ShootingEvent& data);
-
         void read_GunMetadata   (const LAS::json& j, ObjectBuffers::GunMetadata& buffer);
         void read_AmmoMetadata  (const LAS::json& j, ObjectBuffers::AmmoMetadata& buffer);
         void read_EventMetadata (const LAS::json& j, ObjectBuffers::ShootingEventMetadata& buffer);
