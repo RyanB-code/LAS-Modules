@@ -146,6 +146,8 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
     associateEvents(database);
 
+    write(paths.eventsDir, database.getEvent(eventMet1));
+
     std::cout << "\nEvents: \n";
     for(const auto& [info, e] : database.getEvents())
         printEvent(e);
@@ -208,7 +210,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
 
 
-    write(paths.eventsDir, database.getEvent(eventMet1).getInfo());
+ //   write(paths.eventsDir, database.getEvent(eventMet1).getInfo());
 
 
 
