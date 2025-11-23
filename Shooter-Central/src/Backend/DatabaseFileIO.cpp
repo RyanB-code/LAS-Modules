@@ -16,10 +16,10 @@ void to_json(LAS::json& j, const ShootingEventMetadata& data){
 void from_json(const LAS::json& j, ShootingEventMetadata& data){
     std::string locBuf, etBuf, dateBuf;
 
-    j.at("notes").get_to(data.notes);
-    j.at("location").get_to(locBuf);
-    j.at("eventType").get_to(etBuf);
     j.at("date").get_to(dateBuf);
+    j.at("eventType").get_to(etBuf);
+    j.at("location").get_to(locBuf);
+    j.at("notes").get_to(data.notes);
 
     data.location   = Location  { locBuf.c_str() };
     data.eventType  = ShootingEventType { etBuf.c_str() }; 
@@ -31,26 +31,167 @@ void to_json (LAS::json& j, const AmmoMetadata& data){
         { "name",           data.name },
         { "manufacturer",   data.manufacturer.getName() },
         { "cartridge",      data.cartridge.getName() },
-        { "grain",          data.grainWeight},
+        { "grainWeight",    data.grainWeight},
     };
 }
 void from_json  (const LAS::json& j, AmmoMetadata& data){
+    std::string textBuf;
 
+    j.at("name").get_to(data.name);
+
+    j.at("manufacturer").get_to(textBuf);
+    data.manufacturer = Manufacturer { textBuf.c_str() };
+
+    j.at("cartridge").get_to(textBuf);
+    data.cartridge = Cartridge { textBuf.c_str() };
+
+    j.at("grainWeight").get_to(data.grainWeight);
 }
 
-void to_json(LAS::json& j, const GunMetadata& gun){
+void to_json(LAS::json& j, const GunMetadata& data){
     j = LAS::json{
-        { "name",           gun.name        },
-        { "weaponType",     gun.weaponType.getName()  },
-        { "cartridge",      gun.cartridge.getName()   },
+        { "name",           data.name        },
+        { "weaponType",     data.weaponType.getName()  },
+        { "cartridge",      data.cartridge.getName()   },
     };
 }
+void from_json  (const LAS::json& j, GunMetadata& data){
+    std::string textBuf;
+
+    j.at("name").get_to(data.name);
+
+    j.at("weaponType").get_to(textBuf);
+    data.weaponType = WeaponType { textBuf.c_str() };
+
+    j.at("cartridge").get_to(textBuf);
+    data.cartridge = Cartridge { textBuf.c_str() };
+}
+
 
 void to_json(LAS::json& j, const AmountOfAmmo& data){
     j = LAS::json {
         { "ammoInfo",   data.getAmmoInfo() },
         { "amount",     data.getAmount() }
     };
+}
+void from_json (const LAS::json& j, AmountOfAmmo& data){
+    AmmoMetadata infoBuffer;
+    int amountBuf { 0 };
+
+    j.at("ammoInfo").get_to(infoBuffer);
+    j.at("amount").get_to(amountBuf);
+    
+    data = AmountOfAmmo { infoBuffer, amountBuf };
+}
+
+
+bool write (std::string directory, const StockpileAmmo& data){
+    using LAS::json;
+
+    if(directory.empty())
+       return false;
+
+    directory = LAS::TextManip::ensureSlash(directory);
+
+    if(!std::filesystem::exists(directory))
+		return false;
+    
+    json j = json{
+        { "ammoInfo",       data.getAmmoInfo() },
+        { "amountOnHand",   data.getAmountOnHand() },
+        { "isActive",       data.isActive() }
+    };
+
+    std::ofstream file{makeFileName(directory, data.getAmmoInfo())};
+    file << std::setw(1) << std::setfill('\t') << j;
+    file.close();
+   
+    return true;
+}
+bool write (std::string directory, const ArmoryGun& data){
+    using LAS::json;
+
+    if(directory.empty())
+       return false;
+
+    directory = LAS::TextManip::ensureSlash(directory);
+
+    if(!std::filesystem::exists(directory))
+		return false;
+    
+    json j = json{
+        { "gunInfo",        data.getGunInfo() },
+        { "isActive",       data.isActive() }
+    };
+
+    std::ofstream file{makeFileName(directory, data.getGunInfo())};
+    file << std::setw(1) << std::setfill('\t') << j;
+    file.close();
+   
+    return true;
+}
+bool write (std::string directory, const ShootingEvent& data){
+    using LAS::json;
+
+    if(directory.empty())
+       return false;
+
+    directory = LAS::TextManip::ensureSlash(directory);
+
+    if(!std::filesystem::exists(directory))
+		return false;
+
+
+    json gunsUsedArray = json::array();
+    for(const auto& gunAmmoUsed : data.getGunsUsed() ){
+        json ammoUsedArray = json::array();
+
+        for(const auto& amountOfAmmo : gunAmmoUsed.getAmmoUsed() )
+            ammoUsedArray.emplace_back(amountOfAmmo);
+
+        gunsUsedArray.emplace_back(
+            json {
+                { "gunInfo", gunAmmoUsed.getGunInfo() },
+                { "ammoUsed", ammoUsedArray }
+            }
+        );
+    }
+    
+
+
+    json fullJson = json {
+        { "eventInfo",  data.getInfo() },
+        { "gunsUsed", gunsUsedArray }
+    };
+
+    std::ofstream file{makeFileName(directory, data.getInfo())};
+    file << std::setw(1) << std::setfill('\t') << fullJson;
+    file.close();
+   
+    return true;
+}
+
+bool readDir_Events(const std::string& dir) {
+    using namespace LAS;
+
+    if(!std::filesystem::exists(dir))
+        return false;
+
+    const std::filesystem::path workingDirectory{dir};
+	for(auto const& dirEntry : std::filesystem::directory_iterator(workingDirectory)){
+		try{
+            std::ifstream inputFile{ dirEntry.path(), std::ios::in };
+            json j = json::parse(inputFile);
+
+            ShootingEventMetadata infoBuf = j.at("eventInfo");
+            std::cout << "Date: " << infoBuf.date << "\n";
+		} 
+		catch(std::exception& e){
+            LAS::log_error("Failed to create Event object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
+		}
+	}
+    
+	return true;
 }
 
 std::string makeFileName    (std::string directory, const GunMetadata& gun) {
@@ -146,31 +287,6 @@ std::string makeFileName(std::string directory, const ShootingEventMetadata& eve
 
     return fileName.str();
 }
-
-// TESTING WRITE
-bool write (std::string directory, const ShootingEventMetadata& data){
-    using LAS::json;
-
-    if(directory.empty())
-       return false;
-
-    directory = LAS::TextManip::ensureSlash(directory);
-
-    if(!std::filesystem::exists(directory))
-		return false;
-    
-
-    json eventJson = json{
-        { "eventInfo",  data },
-    };
-
-    std::ofstream file{makeFileName(directory, data)};
-    file << std::setw(1) << std::setfill('\t') << eventJson;
-    file.close();
-   
-    return true;
-}
-
 /*
 bool write(std::string directory, const GunMetadata& data) {
     using LAS::json;
