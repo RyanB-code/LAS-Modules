@@ -178,6 +178,7 @@ public:
 
     int totalGuns   () const;
 
+    bool        isActive()          const { return m_isActive; }
     int         getAmountOnHand()   const;
     const auto& getAmmoInfo()       const { return ammoInfo; }
     const auto& getGunsUsed()       const { return gunsUsed; }
@@ -185,7 +186,7 @@ public:
 private:
     AmmoMetadata            ammoInfo        { };
     int                     amountOnHand    { 0 };
-    bool                    isActive        { false };
+    bool                    m_isActive      { false };
     std::set<GunMetadata>   gunsUsed;
 };
 
@@ -229,11 +230,12 @@ public:
     bool addEvent       (const ShootingEvent& event);           // If key already exists, returns false since data is not overwritten 
     bool wasUsedInEvent (const ShootingEventMetadata& data);
 
+    bool        isActive()      const   { return m_isActive; }
     const auto& getAmmoUsed() const     { return ammoUsed; }
     const auto& getEventsUsed() const   { return eventsUsed; }
 private:
     GunMetadata gun         { };
-    bool        isActive    { false };
+    bool        m_isActive    { false };
     int         roundCount  { 0 };
 
     std::set<ShootingEventMetadata>         eventsUsed  { };
