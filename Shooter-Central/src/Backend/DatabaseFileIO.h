@@ -39,13 +39,21 @@ void from_json      (const LAS::json&, ArmoryGun& );
 void to_json        (LAS::json&, const ShootingEvent& );
 void from_json      (const LAS::json&, ShootingEvent& );
 
+// Read/Write individual objects
 bool write (std::string directory, const StockpileAmmo& ); 
 bool write (std::string directory, const ArmoryGun& ); 
 bool write (std::string directory, const ShootingEvent& ); 
 
 bool read (std::ifstream&, ShootingEvent& );
-bool readEvents(Database&, const std::filesystem::path& directory); // Need to find better spot
+bool read (std::ifstream&, ArmoryGun& );
+bool read (std::ifstream&, StockpileAmmo& );
 
+// Read/Write for directory/list
+bool readEvents (Database&, const std::filesystem::path& directory); // Need to find better spot
+                                                                     
+// Overwrites existing guns/ammo. Must re-associate events afterward                                                                
+bool readGuns   (Database&, const std::filesystem::path& directory); 
+bool readAmmo   (Database&, const std::filesystem::path& directory);
 
 std::string makeFileName    (std::string, const GunMetadata& );
 std::string makeFileName    (std::string, const AmmoMetadata& );

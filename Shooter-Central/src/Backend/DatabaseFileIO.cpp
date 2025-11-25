@@ -227,11 +227,35 @@ bool write (std::string directory, const ShootingEvent& data){
 }
 
 
-bool read (std::ifstream& file, ShootingEvent& event){
-    using LAS::json;
 
+
+
+
+bool read (std::ifstream& file, ShootingEvent& data){
     try{
-        event = json::parse(file).get<ShootingEvent>();
+        data = LAS::json::parse(file).get<ShootingEvent>();
+    }
+    catch(std::exception& e){
+        LAS::log_error(std::format("Failed to parse JSON. What: {}", e.what()) );
+        return false;
+    }
+
+    return true;
+}
+bool read (std::ifstream& file, ArmoryGun& data){
+    try{
+        data = LAS::json::parse(file).get<ArmoryGun>();
+    }
+    catch(std::exception& e){
+        LAS::log_error(std::format("Failed to parse JSON. What: {}", e.what()) );
+        return false;
+    }
+
+    return true;
+}
+bool read (std::ifstream& file, StockpileAmmo& data){
+    try{
+        data = LAS::json::parse(file).get<StockpileAmmo>();
     }
     catch(std::exception& e){
         LAS::log_error(std::format("Failed to parse JSON. What: {}", e.what()) );
@@ -265,6 +289,62 @@ bool readEvents(Database& db, const std::filesystem::path& workingDirectory) {
 
         if(!db.addEvent(event))
             LAS::log_error(std::format("Failed to add Event on {}", event.printDate()));
+	}
+    
+	return true;
+}
+bool readGuns(Database& db, const std::filesystem::path& workingDirectory) {
+    using namespace LAS;
+
+    if(!std::filesystem::exists(workingDirectory))
+        return false;
+
+	for(auto const& dirEntry : std::filesystem::directory_iterator(workingDirectory)){
+        std::ifstream inputFile{ dirEntry.path(), std::ios::in };
+        ArmoryGun data { };
+
+        if(!read(inputFile, data)){
+            LAS::log_error(std::format("Failed to create ArmoryGun object from file [{}]", dirEntry.path().string()));
+            continue;
+        }
+
+        const GunMetadata& gunInfo { data.getGunInfo() };
+
+        // If already exists, ensure isActive status is updated
+        if(db.armoryContains(gunInfo))
+            db.getGun(gunInfo) = data;
+        else {
+            if(!db.addToArmory(data))
+                LAS::log_error(std::format("Failed to add ArmoryGun named [{}]", gunInfo.name));
+        }
+	}
+    
+	return true;
+}
+bool readAmmo(Database& db, const std::filesystem::path& workingDirectory) {
+    using namespace LAS;
+
+    if(!std::filesystem::exists(workingDirectory))
+        return false;
+
+	for(auto const& dirEntry : std::filesystem::directory_iterator(workingDirectory)){
+        std::ifstream inputFile{ dirEntry.path(), std::ios::in };
+        StockpileAmmo data { };
+
+        if(!read(inputFile, data)){
+            LAS::log_error(std::format("Failed to create StockpileAmmo object from file [{}]", dirEntry.path().string()));
+            continue;
+        }
+
+        const AmmoMetadata& ammoInfo { data.getAmmoInfo() };
+
+        // If already exists, replace with read object
+        if(db.stockpileContains(ammoInfo))
+            db.getAmmo(ammoInfo) = data;
+        else{
+            if(!db.addToStockpile(data))
+                LAS::log_error(std::format("Failed to add StockpileAmmo named [{}]", ammoInfo.name));
+        }
 	}
     
 	return true;
