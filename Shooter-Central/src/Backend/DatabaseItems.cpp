@@ -312,9 +312,6 @@ StockpileAmmo::StockpileAmmo(const AmmoMetadata& setAmmoInfo) :
 {
 
 }
-int StockpileAmmo::getAmountOnHand() const {
-    return amountOnHand;
-}
 void StockpileAmmo::addAmount      (int amount){
    amountOnHand += amount; 
 }
