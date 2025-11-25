@@ -23,6 +23,8 @@ void printEventMetadata(const ShootingEventMetadata& info){
 void printStockpileAmmo(const StockpileAmmo& ammo){
     printAmmoMetadata(ammo.getAmmoInfo());
     std::cout << "  Amount: " << ammo.getAmountOnHand() << "\n";
+    std::cout << "    isActive: " << std::boolalpha << ammo.isActive() << "\n";
+
     std::cout << "  ";
 
     for(const auto& gunInfo : ammo.getGunsUsed() )
@@ -30,6 +32,9 @@ void printStockpileAmmo(const StockpileAmmo& ammo){
 }
 void printArmoryGun(const ArmoryGun& gun){
     printGunMetadata(gun.getGunInfo());
+    std::cout << "    isActive: " << std::boolalpha << gun.isActive() << "\n";
+    std::cout << "    roundCount: " << gun.getRoundCount() << "\n";
+
     for(const auto& eventInfo : gun.getEventsUsed() ){
         std::cout << "  ";
         printEventMetadata(eventInfo);
@@ -119,6 +124,7 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
 
     Database database { };
 
+    /*
     const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
     const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
 
@@ -141,12 +147,23 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     database.getEvent(eventMet1).addGun( gunUsed1 );
     database.getEvent(eventMet1).addGun( gunUsed2 );
 
-    database.addToStockpile( AmountOfAmmo { amMet1, 100 } );
-    database.addToStockpile( AmountOfAmmo { amMet2, 69 } );
+    */
 
+    //database.addToStockpile( AmountOfAmmo { amMet1, 100 } );
+    //database.addToStockpile( AmountOfAmmo { amMet2, 69 } );
+    readAmmo(database, std::filesystem::path(paths.ammoDir));
+    readGuns(database, std::filesystem::path(paths.gunsDir));
+    readEvents(database, std::filesystem::path(paths.eventsDir)); 
+
+    addAllMetadataInfo(database);
     associateEvents(database);
 
-    write(paths.eventsDir, database.getEvent(eventMet1));
+
+
+    //write(paths.ammoDir, database.getAmmo(amMet1));
+    //write(paths.ammoDir, database.getAmmo(amMet2));
+
+
 
     std::cout << "\nEvents: \n";
     for(const auto& [info, e] : database.getEvents())
