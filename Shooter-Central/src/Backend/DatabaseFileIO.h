@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Backend/DatabaseItems.h"
+#include "Backend/Database.h"
 
 #include <LAS/HelperFunctions.h>
 #include <LAS/json.h>
@@ -14,29 +15,35 @@
 
 namespace ShooterCentral {
 
-void to_json        (LAS::json& j, const ShootingEventMetadata& data); 
-void from_json      (const LAS::json& j, ShootingEventMetadata& data);
+void to_json        (LAS::json&, const ShootingEventMetadata& ); 
+void from_json      (const LAS::json&, ShootingEventMetadata& );
 
-void to_json        (LAS::json& j, const AmmoMetadata& data);
-void from_json      (const LAS::json& j, AmmoMetadata& data);
+void to_json        (LAS::json&, const AmmoMetadata& );
+void from_json      (const LAS::json&, AmmoMetadata& );
 
-void to_json        (LAS::json& j, const GunMetadata& data);
-void from_json      (const LAS::json& j, GunMetadata& data);
+void to_json        (LAS::json&, const GunMetadata& );
+void from_json      (const LAS::json&, GunMetadata& );
 
-void to_json        (LAS::json& j, const AmountOfAmmo& data);
-void from_json      (const LAS::json& j, AmountOfAmmo& data);
+void to_json        (LAS::json&, const AmountOfAmmo& );
+void from_json      (const LAS::json&, AmountOfAmmo& );
+
+void to_json        (LAS::json&, const GunTrackingAmmoUsed& );
+void from_json      (const LAS::json&, GunTrackingAmmoUsed& );
+
+void to_json        (LAS::json&, const ShootingEvent& );
+void from_json      (const LAS::json&, ShootingEvent& );
+
+bool write (std::string directory, const StockpileAmmo& ); 
+bool write (std::string directory, const ArmoryGun& ); 
+bool write (std::string directory, const ShootingEvent& ); 
+
+bool read (std::ifstream&, ShootingEvent& );
+bool readEvents(Database&, const std::filesystem::path& directory); // Need to find better spot
 
 
-bool readDir_Events(const std::string& dir);
-
-bool write (std::string directory, const StockpileAmmo& data); 
-bool write (std::string directory, const ArmoryGun& data); 
-bool write (std::string directory, const ShootingEvent& data); 
-
-
-std::string makeFileName    (std::string directory, const GunMetadata& data);
-std::string makeFileName    (std::string directory, const AmmoMetadata& data);
-std::string makeFileName    (std::string directory, const ShootingEventMetadata& data);
+std::string makeFileName    (std::string, const GunMetadata& );
+std::string makeFileName    (std::string, const AmmoMetadata& );
+std::string makeFileName    (std::string, const ShootingEventMetadata& );
 
 /*
 bool write (std::string directory, const GunMetadata& data);

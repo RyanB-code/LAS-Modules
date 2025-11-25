@@ -83,7 +83,55 @@ void from_json (const LAS::json& j, AmountOfAmmo& data){
     
     data = AmountOfAmmo { infoBuffer, amountBuf };
 }
+void to_json(LAS::json& j, const GunTrackingAmmoUsed& data){
+    LAS::json ammoUsedArray = LAS::json::array();
 
+    for(const auto& amountOfAmmo : data.getAmmoUsed() )
+        ammoUsedArray.emplace_back(amountOfAmmo);
+
+    j["gunInfo"] = data.getGunInfo();
+    j["ammoUsed"] = ammoUsedArray;
+}
+void from_json(const LAS::json& j, GunTrackingAmmoUsed& data){
+    GunMetadata gunInfo { j.at("gunInfo").get<GunMetadata>() };
+        
+    GunTrackingAmmoUsed buf { gunInfo };
+    
+    for (const auto& amountOfAmmoJson : j.at("ammoUsed").items()){
+        AmountOfAmmo amountOfAmmo = amountOfAmmoJson.value().get<AmountOfAmmo>();
+        buf.addAmmoUsed( amountOfAmmo );
+    }
+
+    data = buf;
+}
+
+void to_json(LAS::json& j, const ShootingEvent& event){
+    using LAS::json;
+
+    json gunsUsedArray = json::array();
+    for(const auto& gunAmmoUsed : event.getGunsUsed() ){
+        json gunAmmoUsedJson = gunAmmoUsed;
+        gunsUsedArray.emplace_back(gunAmmoUsedJson);
+    }
+
+    j["eventInfo"]  = event.getInfo();
+    j["gunsUsed"]   = gunsUsedArray;
+
+}
+void from_json(const LAS::json& j, ShootingEvent& event){
+    ShootingEventMetadata eventInfo;
+
+    j.at("eventInfo").get_to(eventInfo);
+
+    ShootingEvent buf { eventInfo };
+
+    for (const auto& gunJson : j.at("gunsUsed").items()) {
+        GunTrackingAmmoUsed gunTrackingAmmo = gunJson.value().get<GunTrackingAmmoUsed>();
+        buf.addGun(gunTrackingAmmo);
+    }
+
+    event = buf;
+}
 
 bool write (std::string directory, const StockpileAmmo& data){
     using LAS::json;
@@ -141,58 +189,53 @@ bool write (std::string directory, const ShootingEvent& data){
     if(!std::filesystem::exists(directory))
 		return false;
 
-
-    json gunsUsedArray = json::array();
-    for(const auto& gunAmmoUsed : data.getGunsUsed() ){
-        json ammoUsedArray = json::array();
-
-        for(const auto& amountOfAmmo : gunAmmoUsed.getAmmoUsed() )
-            ammoUsedArray.emplace_back(amountOfAmmo);
-
-        gunsUsedArray.emplace_back(
-            json {
-                { "gunInfo", gunAmmoUsed.getGunInfo() },
-                { "ammoUsed", ammoUsedArray }
-            }
-        );
-    }
-    
-
-
-    json fullJson = json {
-        { "eventInfo",  data.getInfo() },
-        { "gunsUsed", gunsUsedArray }
-    };
+    json j = data;
 
     std::ofstream file{makeFileName(directory, data.getInfo())};
-    file << std::setw(1) << std::setfill('\t') << fullJson;
+    file << std::setw(1) << std::setfill('\t') << j;
     file.close();
    
     return true;
 }
 
-bool readDir_Events(const std::string& dir) {
+
+bool read (std::ifstream& file, ShootingEvent& event){
+    using LAS::json;
+
+    try{
+        event = json::parse(file).get<ShootingEvent>();
+    }
+    catch(std::exception& e){
+        LAS::log_error(std::format("Failed to parse JSON. What: {}", e.what()) );
+        return false;
+    }
+
+    return true;
+}
+
+
+bool readEvents(Database& db, const std::filesystem::path& workingDirectory) {
     using namespace LAS;
 
-    if(!std::filesystem::exists(dir))
+    if(!std::filesystem::exists(workingDirectory))
         return false;
 
-    const std::filesystem::path workingDirectory{dir};
 	for(auto const& dirEntry : std::filesystem::directory_iterator(workingDirectory)){
-		try{
-            std::ifstream inputFile{ dirEntry.path(), std::ios::in };
-            json j = json::parse(inputFile);
+        std::ifstream inputFile{ dirEntry.path(), std::ios::in };
+        ShootingEvent event { ShootingEventMetadata { } };
 
-            ShootingEventMetadata infoBuf = j.at("eventInfo");
-            std::cout << "Date: " << infoBuf.date << "\n";
-		} 
-		catch(std::exception& e){
-            LAS::log_error("Failed to create Event object from file [" + dirEntry.path().string() + "]. What: " + std::string{e.what()});
-		}
+        if(!read(inputFile, event)){
+            LAS::log_error(std::format("Failed to create Event object from file [{}]", dirEntry.path().string()));
+            continue;
+        }
+
+        if(!db.addEvent(event))
+            LAS::log_error(std::format("Failed to add Event on {}", event.printDate()));
 	}
     
 	return true;
 }
+
 
 std::string makeFileName    (std::string directory, const GunMetadata& gun) {
     std::ostringstream fileName;
