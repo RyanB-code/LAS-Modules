@@ -21,7 +21,6 @@ public:
     const auto& getLocations()      const { return locations; }
     const auto& getEventTypes()     const { return eventTypes; }
     const auto& getEvents()         const { return events; }
-
     const auto& getArmory()         const { return armory; }
     const auto& getStockpile()      const { return stockpile; }
 
@@ -42,6 +41,7 @@ public:
     bool addEvent           (const ShootingEvent& );  // True if event alread exists or created. False if could not emplace 
     bool addToStockpile     (const AmountOfAmmo& );
     bool addToStockpile     (const AmmoMetadata& );
+    bool addToStockpile     (const StockpileAmmo& );
     bool addToArmory        (const ArmoryGun& );
     bool addToArmory        (const GunMetadata& ); 
 

@@ -1,6 +1,6 @@
 #include "Database.h"
 
-using namespace ShooterCentral;
+namespace ShooterCentral {
 
 Database::Database() {
 
@@ -35,6 +35,26 @@ bool Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
 bool Database::addToStockpile(const AmmoMetadata& info) {
     return addToStockpile( AmountOfAmmo { info } );
 }
+bool Database::addToStockpile(const StockpileAmmo& data){
+    const AmmoMetadata& info { data.getAmmoInfo() };
+
+    if(!stockpile.contains(info.cartridge)){
+        if(!stockpile.try_emplace(info.cartridge).second)
+            return false;
+    }
+    
+    if(!stockpile.at(info.cartridge).try_emplace(info, data).second)
+        return false;
+
+    // Add to amount per cartridge list
+    if(!addAmountPerCartridge(info.cartridge, data.getAmountOnHand() )){
+        stockpile.at(info.cartridge).erase(info);
+        return false;
+    }
+
+    return true;
+}
+
 bool Database::addToArmory(const ArmoryGun& gun) {
     const GunMetadata& info { gun.getGunInfo() };
 
@@ -231,4 +251,4 @@ void ShooterCentral::addMetadataInfo(Database& db, const ShootingEventMetadata& 
     }
 }
 
-
+}   // End SC namespace
