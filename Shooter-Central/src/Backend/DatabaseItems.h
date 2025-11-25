@@ -148,7 +148,7 @@ struct GunMetadata {
 
 class AmountOfAmmo {
 public:
-    AmountOfAmmo(const AmmoMetadata& setAmmo, int amount=0);
+    AmountOfAmmo(const AmmoMetadata& setAmmo=AmmoMetadata{ }, int amount=0);
     ~AmountOfAmmo() = default;
 
     int getAmount() const;
@@ -166,7 +166,7 @@ private:
 class StockpileAmmo {
 public:
     StockpileAmmo(const AmountOfAmmo& setAmountofAmmo);
-    StockpileAmmo(const AmmoMetadata& setAmmoInfo);
+    StockpileAmmo(const AmmoMetadata& setAmmoInfo = AmmoMetadata{ });
     ~StockpileAmmo() = default;
 
     void addAmount      (int amount);
@@ -194,7 +194,7 @@ private:
 
 class GunTrackingAmmoUsed {
 public:
-    GunTrackingAmmoUsed(const GunMetadata& setGun);
+    GunTrackingAmmoUsed(const GunMetadata& setGun=GunMetadata{ } );
     ~GunTrackingAmmoUsed() = default;
 
     bool    addAmmoUsed     (const AmountOfAmmo& ammo);
@@ -214,7 +214,7 @@ private:
 
 class ArmoryGun {
 public:
-    ArmoryGun(const GunMetadata& setGun);
+    ArmoryGun(const GunMetadata& setGun=GunMetadata{ } );
     ~ArmoryGun() = default;
 
     const GunMetadata& getGunInfo() const;
@@ -246,7 +246,7 @@ private:
 
 class ShootingEvent {
 public:
-    ShootingEvent(const ShootingEventMetadata& setInfo);
+    ShootingEvent(const ShootingEventMetadata& setInfo=ShootingEventMetadata{ } );
     ~ShootingEvent() = default;
 
     bool    addGun          (const GunTrackingAmmoUsed& gun);        // Will not amend existing entries if a gun is already in the container
