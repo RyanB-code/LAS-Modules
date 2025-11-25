@@ -73,13 +73,13 @@ ShootingEvent& Database::getEvent(const ShootingEventMetadata& info) {
 }
 StockpileAmmo& Database::getAmmo   (const AmmoMetadata& info) {
     if(!stockpile.contains(info.cartridge))
-        throw std::out_of_range{"test"};
+        throw std::out_of_range{std::format("Database::getAmmo(), no StockpileAmmo named [{}] found", info.name)};
 
     return stockpile.at(info.cartridge).at(info);
 }
 ArmoryGun& Database::getGun (const GunMetadata& info) {
     if(!armory.contains(info.cartridge))
-       throw std::out_of_range{"test"};
+       throw std::out_of_range{std::format("Database::getGun(), no ArmoryGun named [{}] found", info.name)};
 
     return armory.at(info.cartridge).at(info);
 }
