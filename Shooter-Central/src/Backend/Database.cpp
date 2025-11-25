@@ -155,7 +155,7 @@ bool Database::addAmountPerCartridge(const Cartridge& cartridge, int addAmount) 
 
 
 
-void ShooterCentral::associateEvents(Database& db){
+void associateEvents(Database& db){
     for(const auto& [eventInfo, event] : db.getEvents()){
         addMetadataInfo(db, eventInfo);
 
@@ -212,11 +212,26 @@ void ShooterCentral::associateEvents(Database& db){
         }   // End adding of all Guns for the Event
     }   // End adding of all Events
 }
+void addAllMetadataInfo (Database& db){
+    for(const auto& [cartridge, map] : db.getArmory()){
+        for(const auto& [info, armoryGun] : map)
+            addMetadataInfo(db, armoryGun.getGunInfo());
+    }
+
+    for(const auto& [cartridge, map] : db.getStockpile()){
+        for(const auto& [info, stockpileAmmo] : map)
+            addMetadataInfo(db, stockpileAmmo.getAmmoInfo());
+    }
+   
+
+    for(const auto& [info, event] : db.getEvents())
+        addMetadataInfo(db, event.getInfo());
+}
 
 
 
 
-void ShooterCentral::addMetadataInfo(Database& db, const GunMetadata& info){
+void addMetadataInfo(Database& db, const GunMetadata& info){
     if(!db.metadataContains(info.cartridge)){
         if(!db.addCartridge(info.cartridge))
             LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
@@ -227,7 +242,7 @@ void ShooterCentral::addMetadataInfo(Database& db, const GunMetadata& info){
             LAS::log_warn(std::format("addMetadataInfo() could not add WeaponType {}", info.weaponType.getName() ) );
     }
 }
-void ShooterCentral::addMetadataInfo(Database& db, const AmmoMetadata& info){
+void addMetadataInfo(Database& db, const AmmoMetadata& info){
     if(!db.metadataContains(info.manufacturer)){
         if(!db.addManufacturer(info.manufacturer))
             LAS::log_warn(std::format("addMetadataInfo() could not add Manufacturer {}", info.manufacturer.getName()) );
@@ -239,7 +254,7 @@ void ShooterCentral::addMetadataInfo(Database& db, const AmmoMetadata& info){
     }
 
 }
-void ShooterCentral::addMetadataInfo(Database& db, const ShootingEventMetadata& info){
+void addMetadataInfo(Database& db, const ShootingEventMetadata& info){
     if(!db.metadataContains(info.location)){
         if(!db.addLocation(info.location))
             LAS::log_warn(std::format("addMetadataInfo() could not add Location {}", info.location.getName()) );

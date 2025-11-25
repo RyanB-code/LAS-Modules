@@ -86,10 +86,9 @@ private:
 
 
 // Here add item by association for event, gun, ammo
-void associateEvents(Database& );
+void associateEvents    (Database& );
 
-
-
+void addAllMetadataInfo (Database& );
 
 // Adds all items into Database along with appropriate logging
 void addMetadataInfo (Database&, const GunMetadata& );
