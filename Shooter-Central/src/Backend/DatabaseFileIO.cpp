@@ -26,6 +26,7 @@ void from_json(const LAS::json& j, ShootingEventMetadata& data){
     data.date       = std::chrono::floor<std::chrono::days>(stringToTimepoint(dateBuf));
 }
 
+
 void to_json (LAS::json& j, const AmmoMetadata& data){
     j = LAS::json {
         { "name",           data.name },
@@ -47,6 +48,7 @@ void from_json  (const LAS::json& j, AmmoMetadata& data){
 
     j.at("grainWeight").get_to(data.grainWeight);
 }
+
 
 void to_json(LAS::json& j, const GunMetadata& data){
     j = LAS::json{
@@ -83,6 +85,21 @@ void from_json (const LAS::json& j, AmountOfAmmo& data){
     
     data = AmountOfAmmo { infoBuffer, amountBuf };
 }
+
+
+void to_json(LAS::json& j, const StockpileAmmo& data){
+    j["ammoInfo"]       = data.getAmmoInfo();
+    j["amountOnHand"]   = data.getAmountOnHand();
+    j["isActive"]       = data.isActive();
+}
+void from_json(const LAS::json& j, StockpileAmmo& data){
+    AmmoMetadata ammoInfo { j.at("ammoInfo").get<AmmoMetadata>() };
+    data = StockpileAmmo { ammoInfo };
+    data.setActive(j.at("isActive").get<bool>());
+    data.addAmount(j.at("amountOnHand").get<int>());
+}
+
+
 void to_json(LAS::json& j, const GunTrackingAmmoUsed& data){
     LAS::json ammoUsedArray = LAS::json::array();
 
@@ -104,6 +121,19 @@ void from_json(const LAS::json& j, GunTrackingAmmoUsed& data){
 
     data = buf;
 }
+
+
+void to_json(LAS::json& j , const ArmoryGun& data){
+    j["gunInfo"]    = data.getGunInfo();
+    j["isActive"]   = data.isActive();
+}
+void from_json(const LAS::json& j, ArmoryGun& data ){
+    GunMetadata gunInfo { j.at("gunInfo").get<GunMetadata>() };
+    data = ArmoryGun { gunInfo };
+    data.setActive(j.at("isActive").get<bool>());
+}
+
+
 
 void to_json(LAS::json& j, const ShootingEvent& event){
     using LAS::json;
@@ -133,6 +163,11 @@ void from_json(const LAS::json& j, ShootingEvent& event){
     event = buf;
 }
 
+
+
+
+
+
 bool write (std::string directory, const StockpileAmmo& data){
     using LAS::json;
 
@@ -144,11 +179,7 @@ bool write (std::string directory, const StockpileAmmo& data){
     if(!std::filesystem::exists(directory))
 		return false;
     
-    json j = json{
-        { "ammoInfo",       data.getAmmoInfo() },
-        { "amountOnHand",   data.getAmountOnHand() },
-        { "isActive",       data.isActive() }
-    };
+    json j = data;
 
     std::ofstream file{makeFileName(directory, data.getAmmoInfo())};
     file << std::setw(1) << std::setfill('\t') << j;
@@ -167,10 +198,7 @@ bool write (std::string directory, const ArmoryGun& data){
     if(!std::filesystem::exists(directory))
 		return false;
     
-    json j = json{
-        { "gunInfo",        data.getGunInfo() },
-        { "isActive",       data.isActive() }
-    };
+    json j = data;
 
     std::ofstream file{makeFileName(directory, data.getGunInfo())};
     file << std::setw(1) << std::setfill('\t') << j;
@@ -214,6 +242,12 @@ bool read (std::ifstream& file, ShootingEvent& event){
 }
 
 
+
+
+
+
+
+
 bool readEvents(Database& db, const std::filesystem::path& workingDirectory) {
     using namespace LAS;
 
@@ -222,7 +256,7 @@ bool readEvents(Database& db, const std::filesystem::path& workingDirectory) {
 
 	for(auto const& dirEntry : std::filesystem::directory_iterator(workingDirectory)){
         std::ifstream inputFile{ dirEntry.path(), std::ios::in };
-        ShootingEvent event { ShootingEventMetadata { } };
+        ShootingEvent event { };
 
         if(!read(inputFile, event)){
             LAS::log_error(std::format("Failed to create Event object from file [{}]", dirEntry.path().string()));

@@ -27,8 +27,14 @@ void from_json      (const LAS::json&, GunMetadata& );
 void to_json        (LAS::json&, const AmountOfAmmo& );
 void from_json      (const LAS::json&, AmountOfAmmo& );
 
+void to_json        (LAS::json&, const StockpileAmmo& );
+void from_json      (const LAS::json&, StockpileAmmo& );
+
 void to_json        (LAS::json&, const GunTrackingAmmoUsed& );
 void from_json      (const LAS::json&, GunTrackingAmmoUsed& );
+
+void to_json        (LAS::json&, const ArmoryGun& );
+void from_json      (const LAS::json&, ArmoryGun& );
 
 void to_json        (LAS::json&, const ShootingEvent& );
 void from_json      (const LAS::json&, ShootingEvent& );
