@@ -1,6 +1,6 @@
 #include "Events.h"
 
-namespace ShooterCentral{
+namespace ShooterCentral {
 
 
 static std::queue<std::unique_ptr<UIEvent>> eventQueue_UI               { };

@@ -4,11 +4,11 @@
 #include <queue>
 
 // Macros for each type of event to use in the object declaration of derived Events
-#define DATABASE_EVENT_FUNCTIONS(type) virtual Status execute (Database& container) override; \
-                                    virtual std::unique_ptr<DatabaseEvent> clone() const override { return std::make_unique<type>(*this); };
+#define DATABASE_EVENT_FUNCTIONS(type)  virtual Status execute (Database& ) override; \
+                                        virtual std::unique_ptr<DatabaseEvent> clone() const override { return std::make_unique<type>(*this); };
 
-#define UI_EVENT_FUNCTIONS(type)    virtual Status execute (UIController& controller) override; \
-                                    virtual std::unique_ptr<UIEvent>    clone() const override { return std::make_unique<type>(*this); };
+#define UI_EVENT_FUNCTIONS(type)        virtual Status execute (UIController& ) override; \
+                                        virtual std::unique_ptr<UIEvent>    clone() const override { return std::make_unique<type>(*this); };
 
 
 namespace ShooterCentral {
@@ -32,7 +32,7 @@ public:
     DatabaseEvent() = default;
     virtual ~DatabaseEvent() = default;
 
-    virtual Status execute (Database& container) = 0;
+    virtual Status execute (Database& ) = 0;
     virtual std::unique_ptr<DatabaseEvent> clone() const = 0;
 };
 
@@ -41,7 +41,7 @@ public:
     UIEvent() = default;
     virtual ~UIEvent() = default;
 
-    virtual Status execute (UI::UIController& controller) = 0;
+    virtual Status execute (UI::UIController& ) = 0;
     virtual std::unique_ptr<UIEvent> clone() const = 0;
 };
 
