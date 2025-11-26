@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Containers.h"
+#include "Backend/Database.h"
 
 #include <imgui/imgui.h>
 #include <memory>
@@ -63,16 +63,6 @@ constexpr std::array<SubItem, static_cast<size_t>(SubItem::SIZE)> SUB_ITEM_LIST 
     SubItem::GUN_WEAPON_TYPE,
 };
 
-const Cartridge      EMPTY_CARTRIDGE     { };
-const WeaponType     EMPTY_WEAPON_TYPE   { };
-const GunMetadata    EMPTY_GUN_METADATA = {
-    .cartridge      = EMPTY_CARTRIDGE,
-    .weaponType     = EMPTY_WEAPON_TYPE
-};
-const GunAndAmmo     EMPTY_GUN_AND_AMMO { EMPTY_GUN_METADATA };
-
-
-
 
 // Holds data for what is shown that remains between frames
 namespace ScreenData{
@@ -81,12 +71,16 @@ namespace ScreenData{
         bool showEvents     { true };
         bool showStockpile  { true };
 
+        /*
         std::weak_ptr<ShootingEvent>    selectedEvent;
         std::weak_ptr<AssociatedGun>    selectedGun;
         Cartridge                       selectedCartridge { };
+        */
     };
 
+
     struct View {
+        /*
         struct EventTab {
             std::weak_ptr<ShootingEvent>                selectedEvent;
             std::reference_wrapper<const GunAndAmmo>    selectedGun     { std::cref(EMPTY_GUN_AND_AMMO) };
@@ -109,9 +103,11 @@ namespace ScreenData{
         EventTab        eventTab                { };
         GunTab          gunTab                  { };
         StockpileTab    stockpileTab            { };
+        */
     };
 
     struct Add {
+        /*
         static constexpr int MAX_CHAR_INPUT { 64 };
 
         struct SubItemBuffers {
@@ -149,15 +145,18 @@ namespace ScreenData{
         SubItem         subItem         { SubItem::NONE };
         SubItemBuffers  subItemBuffers  { };
         EventBuffer     eventBuffer     { };
+        */
 
     };
 
     struct Edit {
+        /*
         Category category { Category::NONE }; 
 
         std::weak_ptr<ShootingEvent>    selectedEvent;
         std::weak_ptr<AssociatedAmmo>   selectedAmmo;
         std::weak_ptr<AssociatedGun>    selectedGun;
+        */
     };
  
 }   // End ScreenData namespace

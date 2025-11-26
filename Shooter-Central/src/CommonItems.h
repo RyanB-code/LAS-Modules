@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Container Items/AssociatedItems.h"
-
 namespace ShooterCentral {
 
     struct UnsavedChanges {

@@ -2,13 +2,7 @@
 
 namespace ShooterCentral::UI {
 
-UIController::UIController(){
-
-}
-UIController::~UIController() {
-
-}
-void UIController::draw(const Containers& containers, const UnsavedChanges& unsavedChanges) {
+void UIController::draw(const Database& database, const UnsavedChanges& unsavedChanges) {
     // Stores last screen, checks if equal to current screen (set after ImGui does its thing)
     // If not equal, it means an Event changed the screen, so force ImGui to show which tab we want
     // from the Event
@@ -73,8 +67,9 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
 
     switch(currentScreen){
         case Screen::HOME:
-            Home::main(containers, homeData, unsavedChanges);
+            Home::main(database, homeData, unsavedChanges);
             break;
+        /*
         case Screen::VIEW:
             View::main(containers, viewData);
             break;
@@ -84,6 +79,7 @@ void UIController::draw(const Containers& containers, const UnsavedChanges& unsa
         case Screen::EDIT:
 
             break;
+        */
         default:
             LAS::log_warn("SC Screen case not handled");
             break;

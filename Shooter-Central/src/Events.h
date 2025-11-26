@@ -4,8 +4,8 @@
 #include <queue>
 
 // Macros for each type of event to use in the object declaration of derived Events
-#define MODEL_EVENT_FUNCTIONS(type) virtual Status execute (Containers& container) override; \
-                                    virtual std::unique_ptr<ModelEvent> clone() const override { return std::make_unique<type>(*this); };
+#define DATABASE_EVENT_FUNCTIONS(type) virtual Status execute (Database& container) override; \
+                                    virtual std::unique_ptr<DatabaseEvent> clone() const override { return std::make_unique<type>(*this); };
 
 #define UI_EVENT_FUNCTIONS(type)    virtual Status execute (UIController& controller) override; \
                                     virtual std::unique_ptr<UIEvent>    clone() const override { return std::make_unique<type>(*this); };
@@ -14,7 +14,7 @@
 namespace ShooterCentral {
 
 // Forward Declarations
-class Containers;
+class Database;
 
 namespace UI {
     class UIController;
@@ -27,13 +27,13 @@ struct Status {
 };
 
 
-class ModelEvent {
+class DatabaseEvent {
 public:
-    ModelEvent() = default;
-    virtual ~ModelEvent() = default;
+    DatabaseEvent() = default;
+    virtual ~DatabaseEvent() = default;
 
-    virtual Status execute (Containers& container) = 0;
-    virtual std::unique_ptr<ModelEvent> clone() const = 0;
+    virtual Status execute (Database& container) = 0;
+    virtual std::unique_ptr<DatabaseEvent> clone() const = 0;
 };
 
 class UIEvent {
@@ -45,10 +45,10 @@ public:
     virtual std::unique_ptr<UIEvent> clone() const = 0;
 };
 
-bool pushEvent(ModelEvent* event);
+bool pushEvent(DatabaseEvent* event);
 bool pushEvent(UIEvent* event);
 
-void pollEvent (std::unique_ptr<ModelEvent>& event);
+void pollEvent (std::unique_ptr<DatabaseEvent>& event);
 void pollEvent (std::unique_ptr<UIEvent>& event);
     
 } // End ShooterCentral namespace

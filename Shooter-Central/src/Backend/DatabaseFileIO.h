@@ -59,14 +59,6 @@ std::string makeFileName    (std::string, const GunMetadata& );
 std::string makeFileName    (std::string, const AmmoMetadata& );
 std::string makeFileName    (std::string, const ShootingEventMetadata& );
 
-/*
-bool write (std::string directory, const GunMetadata& data);
-bool write (std::string directory, const AmountOfAmmo& data);
-bool write (std::string directory, const ShootingEvent& data);
-*/
-
-
-
 
 }
 

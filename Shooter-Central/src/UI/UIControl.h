@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CommonItems.h"
-#include "Containers.h"
+#include "Backend/Database.h"
 
 #include "Events.h"
 #include "UI/UIData.h"
@@ -13,8 +13,6 @@
 #include <map>
 #include <memory>
 
-#include <iostream> // For testing
-
 
 namespace ShooterCentral::UI {
 
@@ -22,10 +20,10 @@ class Popup;
 
 class UIController {
 public:
-    UIController();
-    ~UIController();
+    UIController()  = default;
+    ~UIController() = default;
 
-    void draw(const Containers& containers, const UnsavedChanges& unsavedChanges);
+    void draw(const Database& database, const UnsavedChanges& unsavedChanges);
 
     void setScreen(const Screen& screen);
     bool setPopup(std::shared_ptr<Popup> popup);

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Container Items/AssociatedItems.h"
+#include "Backend/Database.h"
 #include "CommonItems.h"
+
 #include "UI/UIHelperElements.h"
 #include "UI/UIData.h"
 #include "UI/UIControl.h"
@@ -17,8 +18,10 @@
 namespace ShooterCentral::UI {
 
 namespace Home {
-    void main                               (const Containers& containers, ScreenData::Home& data, const UnsavedChanges& changes);
-
+    void main                               (const Database& database, ScreenData::Home& data, const UnsavedChanges& changes);
+    
+}
+    /*
     void gunWindow                          (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
     void gunWindow_selectedGunInformation   (const AssociatedGun& gun);
     void eventsWindow                       (const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, std::weak_ptr<ShootingEvent>& selected );
@@ -128,6 +131,8 @@ namespace ComboBoxes{
     void  category    (Category& selected);
     void  subItem     (SubItem& selected);
 }
+
+*/
 
 
 }   // End UI namespace

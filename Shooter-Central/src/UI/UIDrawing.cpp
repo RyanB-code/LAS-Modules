@@ -2,7 +2,7 @@
 
 namespace ShooterCentral::UI {
 
-void Home::main (const Containers& containers, ScreenData::Home& data, const UnsavedChanges& changes) {
+void Home::main (const Database& database, ScreenData::Home& data, const UnsavedChanges& changes) {
 
     ImVec2  windowSize { ImGui::GetContentRegionAvail() };
     ImVec2  childWindowSizes { };
@@ -32,10 +32,12 @@ void Home::main (const Containers& containers, ScreenData::Home& data, const Uns
         horizontalLayout = false;
     }
 
-    
+    ImGui::Text("Here in main");
+
+    /* 
     if(data.showGuns){
         if(ImGui::BeginChild("Home Guns", childWindowSizes, 0) )
-            Home::gunWindow(containers.getGunsInArmory(), data.selectedGun);
+            Home::gunWindow(database.getArmory(), data.selectedGun);
         ImGui::EndChild();
     }
 
@@ -56,7 +58,9 @@ void Home::main (const Containers& containers, ScreenData::Home& data, const Uns
             Home::stockpileWindow(containers.getAmountPerCartridge(), data.selectedCartridge); 
         ImGui::EndChild();
     }
+    */
 }
+/*
 void Home::gunWindow  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& weakSelected ){
 
     // Size table correctly
@@ -1611,7 +1615,7 @@ void Add::add_Event_GunsUsedTab(
 
     return std::tuple(applyToStockpile, applyToGuns, returnVal);
 
-*/
+*
 
 
 void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
@@ -2140,5 +2144,7 @@ void ComboBoxes::subItem(SubItem& selected){
         ImGui::EndCombo();
     }
 }
+*/
+
 
 }   // End UI namespace
