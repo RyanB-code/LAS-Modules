@@ -32,15 +32,14 @@ void Home::main (const Database& database, ScreenData::Home& data, const Unsaved
         horizontalLayout = false;
     }
 
-    ImGui::Text("Here in main");
 
-    /* 
     if(data.showGuns){
         if(ImGui::BeginChild("Home Guns", childWindowSizes, 0) )
             Home::gunWindow(database.getArmory(), data.selectedGun);
         ImGui::EndChild();
     }
 
+    /* 
     if(horizontalLayout)
         ImGui::SameLine();
 
@@ -60,8 +59,7 @@ void Home::main (const Database& database, ScreenData::Home& data, const Unsaved
     }
     */
 }
-/*
-void Home::gunWindow  (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& weakSelected ){
+void Home::gunWindow(const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& guns, GunMetadata& selectedGun){
 
     // Size table correctly
     ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
@@ -75,35 +73,30 @@ void Home::gunWindow  (const std::map<Cartridge, std::map<GunMetadata, std::shar
     ImGui::Spacing();
 
     centerNextItemX(tableSize.x); 
-    Tables::selectable_Guns(guns, weakSelected, tableSize);
-
-    std::shared_ptr<AssociatedGun> selected { weakSelected.lock() }; 
-
-    if(!selected)
-        weakSelected.reset();
+    Tables::selectable_Guns(guns, selectedGun, tableSize);
 
     ImGui::Spacing();
     ImGui::Spacing();
-
 
     ImGui::SeparatorText( "Selected Gun" );
-    if(!selected) {
+
+    if(selectedGun == GunMetadata { } ) {
         centerTextDisabled("Select A Gun For More Information");
         return;
     }
 
-    Home::gunWindow_selectedGunInformation(*selected);
+    Home::gunWindow_selectedGunInformation(guns.at(selectedGun.cartridge).at(selectedGun));
 
     return;
 }
-void Home::gunWindow_selectedGunInformation(const AssociatedGun& gun){
+void Home::gunWindow_selectedGunInformation(const ArmoryGun& gun){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
         ImGui::Text("Name:          %s", gunInfo.name.c_str());
-        ImGui::Text("Weapon Type:   %s", gunInfo.weaponType.getName().c_str()); 
-        ImGui::Text("Cartridge:     %s", gunInfo.cartridge.getName().c_str());
+        ImGui::Text("Weapon Type:   %s", gunInfo.weaponType.getName()); 
+        ImGui::Text("Cartridge:     %s", gunInfo.cartridge.getName());
         ImGui::Unindent(20);
     }
     ImGui::EndChild();
@@ -117,6 +110,7 @@ void Home::gunWindow_selectedGunInformation(const AssociatedGun& gun){
     }
     ImGui::EndChild();
 }
+/*
 void Home::eventsWindow(const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, std::weak_ptr<ShootingEvent>& weakSelected ){
 
     // Size the table
@@ -1656,12 +1650,10 @@ void Add::add_Event_GunsUsedTab(
 
     return std::tuple(applyToStockpile, applyToGuns, returnVal);
 
-*
+*/
 
 
-void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, std::weak_ptr<AssociatedGun>& weakSelected, ImVec2 size){
-    std::shared_ptr<AssociatedGun> selected { weakSelected.lock() };
-
+void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& list, GunMetadata& selected, ImVec2 size){
     int row { 0 };
     if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {
         ImGui::TableSetupColumn("Weapon Type",  ImGuiTableColumnFlags_None);
@@ -1673,11 +1665,11 @@ void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, st
 
         for(const auto& [cartridge, map] : list){
             // Do not sort by Cartridge so just ignore it
-            for(const auto& [gunMetadata, assocGunPtr] : map){
-                const GunMetadata& gun {assocGunPtr->getGunInfo()};
+            for(const auto& [gunMetadata, armoryGun] : map){
+                const GunMetadata& gun {armoryGun.getGunInfo()};
                 bool isGunSelected { false };
             
-                if(selected && selected == assocGunPtr)
+                if(selected == gun)
                     isGunSelected = true;
             
                 ImGui::PushID(std::to_string(row).c_str());
@@ -1687,22 +1679,20 @@ void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, st
                     ImGui::TableSetColumnIndex(column);
                     switch( column ){
                         case 0:
-                            ImGui::Selectable(gun.weaponType.getName().c_str(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
+                            ImGui::Selectable(gun.weaponType.getName(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
 
-                            if(isGunSelected){
-                                weakSelected = assocGunPtr;
-                                selected = weakSelected.lock();
-                            }
+                            if(isGunSelected)
+                                selected = gun;
 
                             break;
                         case 1:
-                            ImGui::Text("%s", gun.cartridge.getName().c_str());
+                            ImGui::Text("%s", gun.cartridge.getName());
                             break;
                         case 2:
                             ImGui::Text("%s", gun.name.c_str());
                             break;
                         case 3:
-                            ImGui::Text("%d", assocGunPtr->getRoundCount());
+                            ImGui::Text("%d", armoryGun.getRoundCount());
                             break;
                         default:
                             ImGui::TextDisabled("Broken table");
@@ -1716,6 +1706,7 @@ void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, st
         ImGui::EndTable();
     }
 }
+/*
 void Tables::selectable_EventGunsUsed(const std::vector<GunAndAmmo>& list, std::reference_wrapper<const GunAndAmmo>& selected, ImVec2 size ){
     int row { 0 };
     if(ImGui::BeginTable("Guns Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size)) {

@@ -2,7 +2,6 @@
 
 #include "Backend/Database.h"
 
-#include <imgui/imgui.h>
 #include <memory>
 
 namespace ShooterCentral::UI {
@@ -71,9 +70,10 @@ namespace ScreenData{
         bool showEvents     { true };
         bool showStockpile  { true };
 
+        GunMetadata selectedGun;
+
         /*
         std::weak_ptr<ShootingEvent>    selectedEvent;
-        std::weak_ptr<AssociatedGun>    selectedGun;
         Cartridge                       selectedCartridge { };
         */
     };
