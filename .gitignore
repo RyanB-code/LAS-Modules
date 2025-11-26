@@ -2,4 +2,4 @@ bin
 build
 .vscode
 *.so
-Garage/build/scripts/las-directory.dat
+.cfg

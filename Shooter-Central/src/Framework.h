@@ -1,9 +1,13 @@
 #pragma once
 
-#include "AssociatedItems.h"
+#include "UI/UIControl.h"
+#include "UI/UIHelperElements.h"
 #include "CommonItems.h"
-#include "View.h"
-#include "Containers.h"
+#include "Events.h"
+
+#include "Backend/DatabaseItems.h"
+#include "Backend/Database.h"
+#include "Backend/DatabaseFileIO.h"
 
 #include <LAS/Logging.h>
 #include <LAS/json.h>
@@ -16,66 +20,42 @@
 #include <memory>
 #include <chrono>
 
+#include <iostream> // For testing
+
+
 namespace ShooterCentral{
 
-    class Framework final {
-    public:
-        Framework();
-        ~Framework();
+class Framework final {
+public:
+    Framework();
+    ~Framework();
 
-        struct Filepaths{
-            std::string parentDir;
-            std::string ammoDir;
-            std::string eventsDir;
-            std::string gunsDir;
+    struct Filepaths{
+        std::string parentDir;
+        std::string ammoDir;
+        std::string eventsDir;
+        std::string gunsDir;
 
-            std::string miscDir;
-        };
-
-        bool setup(const std::string& directory, std::shared_ptr<bool> shown);   // Called inside LASM_init
-        
-        void update();
-        void draw();
-
-        static constexpr char TITLE[] = "Shooter Central";
-        static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
-
-    private:
-        Containers          containers      { };
-        UI::UIController    view            { };
-        UnsavedChanges      unsavedChanges  { };
-
-        std::shared_ptr<bool> shown;
-
-        static constexpr char FILENAME_DESCRIPTORS[] = "ItemDescriptors.json";
-
-
-        bool readDir_Guns            (const std::string& dir);
-        bool readDir_Ammo            (const std::string& dir);
-        bool readDir_Events          (const std::string& dir);
-        bool readFile_Descriptors    (const std::string& dir);
-
-        bool writeFile_Descriptors   (std::string dirrectory);
-
-        void buildAssociations();
+        std::string miscDir;
     };
 
-    namespace Setup {
-        bool    setupFilesystem(Framework::Filepaths& paths); // Needs parentDir set first
-    }
+    bool setup(const std::string& directory, std::shared_ptr<bool> shown);   // Called inside LASM_init
+    
+    void update();
+    void draw();
 
-    namespace FileIO { 
+    static constexpr char TITLE[] = "Shooter Central";
+    static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
 
-        std::string makeFileName    (std::string directory, const GunMetadata& data);
-        std::string makeFileName    (std::string directory, const AmmoMetadata& data);
-        std::string makeFileName    (std::string directory, const EventMetadata& data);
+private:
+    std::shared_ptr<bool>   shown;
+    Database                database        { };
+    UI::UIController        view            { };
+    UnsavedChanges          unsavedChanges  { };
+};
 
-        bool write (std::string directory, const GunMetadata& data);
-        bool write (std::string directory, const AmountOfAmmo& data);
-        bool write (std::string directory, const Event& data);
-
-        void read_GunMetadata   (const LAS::json& j, ObjectBuffers::GunMetadata& buffer);
-        void read_AmmoMetadata  (const LAS::json& j, ObjectBuffers::AmmoMetadata& buffer);
-        void read_EventMetadata (const LAS::json& j, ObjectBuffers::EventMetadata& buffer);
-    }
+namespace Setup {
+    bool    setupFilesystem(Framework::Filepaths& paths); // Needs parentDir set first
 }
+    
+}   // End SC namespace
