@@ -40,6 +40,16 @@ private:
     char title[32] = "";
 };
 
+class SimplePopup_Close : public Popup {
+public: 
+   SimplePopup_Close(const char* title, const char* text);
+   ~SimplePopup_Close() = default;
+
+   void show() override;
+private:
+   char text[256] = "";
+};
+
 namespace UIEvents {
     class ShowPopup : public UIEvent {
     public: 
