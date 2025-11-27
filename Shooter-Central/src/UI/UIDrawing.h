@@ -18,16 +18,16 @@
 namespace ShooterCentral::UI {
 
 namespace Home {
-    void main                               (const Database& database, ScreenData::Home& data, const UnsavedChanges& changes);
+    void main                               (const Database&, ScreenData::Home&, const UnsavedChanges&);
+    void gunWindow                          (const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, GunMetadata& selected);
     
-}
-    /*
-    void gunWindow                          (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, std::weak_ptr<AssociatedGun>& selected );
-    void gunWindow_selectedGunInformation   (const AssociatedGun& gun);
-    void eventsWindow                       (const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, std::weak_ptr<ShootingEvent>& selected );
-    void stockpileWindow                    (const std::map<Cartridge, int>& cartridgeList, Cartridge& selected);
+    void gunWindow_selectedGunInformation   (const ArmoryGun& );
+    void eventsWindow                       (const std::map<ShootingEventMetadata, ShootingEvent>&, ShootingEventMetadata& selected );
+    void stockpileWindow                    (const std::map<Cartridge, int>&, Cartridge& selected);
 }
 
+
+/*
 namespace View {
     void main                               (const Containers& containers, ScreenData::View& data);
 
@@ -80,6 +80,7 @@ namespace Add {
                 const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
             );
 }
+*/
 
 // Table drawing
 namespace Tables{
@@ -88,6 +89,7 @@ namespace Tables{
             Cartridge& selected,
             ImVec2 size
         );
+    /*
     void selectable_SingleCartridgeAmmo(
             const std::map<AmmoMetadata, std::shared_ptr<AssociatedAmmo>>& list, 
             std::weak_ptr<AssociatedAmmo>& selected,
@@ -98,16 +100,19 @@ namespace Tables{
             std::weak_ptr<AmmoMetadata>& selected,
             ImVec2 size
         );
+    */
     void selectable_Guns(
-            const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& list, 
-            std::weak_ptr<AssociatedGun>& selected,
-            ImVec2 size 
+            const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, 
+            GunMetadata&,
+            ImVec2  
         );
     void selectable_Events( 
-            const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, 
-            std::weak_ptr<ShootingEvent>& selected,
+            const std::map<ShootingEventMetadata, ShootingEvent>& events, 
+            ShootingEventMetadata& selected,
             ImVec2 size
         );
+}
+    /*
     void selectable_EventGunsUsed(
             const std::vector<GunAndAmmo>& list, 
             std::reference_wrapper<const GunAndAmmo>& gun,

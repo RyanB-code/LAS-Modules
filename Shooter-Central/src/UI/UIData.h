@@ -62,6 +62,11 @@ constexpr std::array<SubItem, static_cast<size_t>(SubItem::SIZE)> SUB_ITEM_LIST 
     SubItem::GUN_WEAPON_TYPE,
 };
 
+static const GunMetadata            EMPTY_GUN_METADATA      { };
+static const AmmoMetadata           EMPTY_AMMO_METADATA     { };
+static const ShootingEventMetadata  EMPTY_EVENT_METADATA    { };
+static const Cartridge              EMPTY_CARTRIDGE         { };    
+
 
 // Holds data for what is shown that remains between frames
 namespace ScreenData{
@@ -70,12 +75,9 @@ namespace ScreenData{
         bool showEvents     { true };
         bool showStockpile  { true };
 
-        GunMetadata selectedGun;
-
-        /*
-        std::weak_ptr<ShootingEvent>    selectedEvent;
-        Cartridge                       selectedCartridge { };
-        */
+        GunMetadata             selectedGun         { };
+        ShootingEventMetadata   selectedEvent       { };
+        Cartridge               selectedCartridge   { };
     };
 
 
@@ -90,20 +92,20 @@ namespace ScreenData{
             std::weak_ptr<AssociatedGun>    selectedGun;
             std::weak_ptr<ShootingEvent>    selectedEvent;
         };
+        */
 
         struct StockpileTab{
             Cartridge                       selectedCartridge { };
-            std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+            //std::weak_ptr<AssociatedAmmo>   selectedAmmo;
         };
 
 
         Category        category                { Category::NONE }; 
         std::string     categoryComboBoxText    { };
 
-        EventTab        eventTab                { };
-        GunTab          gunTab                  { };
+        //EventTab        eventTab                { };
+        //GunTab          gunTab                  { };
         StockpileTab    stockpileTab            { };
-        */
     };
 
     struct Add {

@@ -15,14 +15,15 @@ public:
     Database();
     ~Database() = default;
 
-    const auto& getManufacturers()  const { return manufacturers; }
-    const auto& getCartridges()     const { return cartridges; }
-    const auto& getWeaponTypes()    const { return weaponTypes; }
-    const auto& getLocations()      const { return locations; }
-    const auto& getEventTypes()     const { return eventTypes; }
-    const auto& getEvents()         const { return events; }
-    const auto& getArmory()         const { return armory; }
-    const auto& getStockpile()      const { return stockpile; }
+    const auto& getManufacturers()      const { return manufacturers; }
+    const auto& getCartridges()         const { return cartridges; }
+    const auto& getWeaponTypes()        const { return weaponTypes; }
+    const auto& getLocations()          const { return locations; }
+    const auto& getEventTypes()         const { return eventTypes; }
+    const auto& getEvents()             const { return events; }
+    const auto& getArmory()             const { return armory; }
+    const auto& getStockpile()          const { return stockpile; }
+    const auto& getAmountPerCartridge() const { return amountPerCartridge; }
 
     // Throws if cartridge not found
     const auto& getArmory(const Cartridge& cartridge) const {
