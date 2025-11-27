@@ -164,6 +164,17 @@ bool Popup::buttons_YesOrNo() const{
     return false;
 }
 
+SimplePopup_Close::SimplePopup_Close(const char* setTitle, const char* setText) : Popup(setTitle) {
+    strncpy(text, setText, sizeof(text) - 1);
+    text[sizeof(text) - 1] = '\0';            // Manually null-terminate
+}
+void SimplePopup_Close::show() {
+    UI::centerText(text);
+
+    buttons_Close();
+}
+
+
 namespace UIEvents {
 
     ShowPopup::ShowPopup(std::shared_ptr<Popup> set) : popup { set } {
