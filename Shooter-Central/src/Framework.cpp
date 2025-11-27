@@ -159,19 +159,18 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     return true;
 }
 void Framework::update() {
-    /*
-    std::unique_ptr<ModelEvent> modelEvent;
+    std::unique_ptr<DatabaseEvent> databaseEvent;
     std::unique_ptr<UIEvent> uiEvent;
-    pollEvent(modelEvent);
+    pollEvent(databaseEvent);
     pollEvent(uiEvent);
 
     // Must check bc if no event is queued, pollEvent returns nullptr
-    if(modelEvent){
-        Status s {modelEvent->execute(containers)};
+    if(databaseEvent){
+        Status s {databaseEvent->execute(database)};
 
         if (!s.didSucceed){
-            Popup_CommandFailed p {s.msg};
-            UI::UIEvents::ShowPopup e {std::make_shared<Popup_CommandFailed>(p)};
+            UI::SimplePopup_Close p {"Event Failed", s.msg};
+            UI::UIEvents::ShowPopup e {std::make_shared<UI::SimplePopup_Close>(p)};
             pushEvent(&e);
         }
     }
@@ -180,9 +179,8 @@ void Framework::update() {
 
         // In future have it open a pop-up msg in the UI too
         if (!s.didSucceed)
-            log_error(std::string{s.msg});
+            log_error(std::format("UI Event failed. What: {}", s.msg));
     }
-    */
 
 }
 void Framework::draw() {
