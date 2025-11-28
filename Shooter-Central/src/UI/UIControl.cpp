@@ -69,10 +69,10 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
         case Screen::HOME:
             Home::main(database, homeData, unsavedChanges);
             break;
-        /*
         case Screen::VIEW:
-            View::main(containers, viewData);
+            View::main(database, viewData);
             break;
+        /*
         case Screen::ADD:
             Add::main(containers, addData);
             break;

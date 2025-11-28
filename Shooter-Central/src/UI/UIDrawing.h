@@ -27,14 +27,14 @@ namespace Home {
 }
 
 
-/*
 namespace View {
-    void main                               (const Containers& containers, ScreenData::View& data);
-
-    void gunTab                             (const std::map<Cartridge, std::map<GunMetadata, std::shared_ptr<AssociatedGun>>>& guns, ScreenData::View::GunTab& data );
-    void gunTab_eventsWindow                (const AssociatedGun& gun, std::weak_ptr<ShootingEvent>& selectedEvent);
-    void gunTab_selectedGunInformation      (const AssociatedGun& gun);
-    void gunTab_ammoUsedWindow              (const AssociatedGun& gun);
+    void main                               (const Database&, ScreenData::View& );
+    void gunTab                             (const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, ScreenData::View::GunTab& data );
+    void gunTab_selectedGunInformation      (const ArmoryGun& );
+    void gunTab_ammoUsedWindow              (const ArmoryGun& );
+    void gunTab_eventsWindow                (const ArmoryGun&, ShootingEventMetadata& selectedEvent);
+}
+/*
 
     void eventsTab                          (const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, ScreenData::View::EventTab& data);
     void eventsTab_selectedEventInformation (const ShootingEvent& event);
@@ -111,7 +111,11 @@ namespace Tables{
             ShootingEventMetadata& selected,
             ImVec2 size
         );
-}
+    void selectable_Events( 
+            const std::set<ShootingEventMetadata>& events, 
+            ShootingEventMetadata& selected,
+            ImVec2 size
+        );
     /*
     void selectable_EventGunsUsed(
             const std::vector<GunAndAmmo>& list, 
@@ -120,11 +124,12 @@ namespace Tables{
         );
     
     void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed,                         ImVec2 size);
+    */
     void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,              ImVec2 size);
 
-    void ammoGunsUsed   (const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list,   ImVec2 size);
+    //void ammoGunsUsed   (const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list,   ImVec2 size);
 }
-
+/*
 namespace ListBoxes{
     void cartridges     (const std::map<Cartridge, std::shared_ptr<Cartridge>>& list,                   ImVec2 size);
     void manufacturers  (const std::map<Manufacturer, std::shared_ptr<Manufacturer>>& list,             ImVec2 size);
@@ -132,12 +137,13 @@ namespace ListBoxes{
     void eventTypes     (const std::map<ShootingEventType, std::shared_ptr<ShootingEventType>>& list,   ImVec2 size); 
     void weaponTypes    (const std::map<WeaponType, std::shared_ptr<WeaponType>>& list,                 ImVec2 size);
 }
+*/
+
 namespace ComboBoxes{
     void  category    (Category& selected);
     void  subItem     (SubItem& selected);
 }
 
-*/
 
 
 }   // End UI namespace

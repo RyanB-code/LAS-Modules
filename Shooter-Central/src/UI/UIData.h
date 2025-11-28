@@ -87,12 +87,12 @@ namespace ScreenData{
             std::weak_ptr<ShootingEvent>                selectedEvent;
             std::reference_wrapper<const GunAndAmmo>    selectedGun     { std::cref(EMPTY_GUN_AND_AMMO) };
         };
+        */
 
         struct GunTab{
-            std::weak_ptr<AssociatedGun>    selectedGun;
-            std::weak_ptr<ShootingEvent>    selectedEvent;
+            GunMetadata             selectedGun;
+            ShootingEventMetadata   selectedEvent;
         };
-        */
 
         struct StockpileTab{
             Cartridge                       selectedCartridge { };
@@ -104,7 +104,7 @@ namespace ScreenData{
         std::string     categoryComboBoxText    { };
 
         //EventTab        eventTab                { };
-        //GunTab          gunTab                  { };
+        GunTab          gunTab                  { };
         StockpileTab    stockpileTab            { };
     };
 
