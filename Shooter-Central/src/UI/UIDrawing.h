@@ -19,6 +19,9 @@
 // OPTIMIZE
 // 1. Use Iterators instead of copying for selected items for list
 //  - especially for GunTrackingAmmoUsed in View::eventsTab() items (lots of copying)
+//
+// WIP:
+//  View::stockpile items
 
 namespace ShooterCentral::UI {
 
@@ -42,18 +45,15 @@ namespace View {
     void eventsTab                          (const std::map<ShootingEventMetadata, ShootingEvent>&, ScreenData::View::EventTab& data);
     void eventsTab_selectedEventInformation (const ShootingEvent& event);
     void eventsTab_gunsUsed                 (const ShootingEvent& event, GunTrackingAmmoUsed& selectedGun );
+
+    void stockpileTab(
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+            const std::map<Cartridge, int>& cartridgeList,
+            ScreenData::View::StockpileTab& tabData
+            );
 }
+
 /*
-   void stockpileTab(
-   const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
-   const std::map<Cartridge, int>& cartridgeList,
-   ScreenData::View::StockpileTab& selected
-   );
-
-
-
-}
-
 namespace Add {
     void    main                    (const Containers& containers, ScreenData::Add& data);
     void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
@@ -95,12 +95,12 @@ namespace Tables{
             Cartridge& selected,
             ImVec2 size
         );
-    /*
     void selectable_SingleCartridgeAmmo(
-            const std::map<AmmoMetadata, std::shared_ptr<AssociatedAmmo>>& list, 
-            std::weak_ptr<AssociatedAmmo>& selected,
+            const std::map<AmmoMetadata, StockpileAmmo>& list, 
+            AmmoMetadata& selected,
             ImVec2 size 
             );
+    /*
     void selectable_KnownAmmo(
             const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>& list,       
             std::weak_ptr<AmmoMetadata>& selected,

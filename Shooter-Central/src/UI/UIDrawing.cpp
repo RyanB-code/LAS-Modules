@@ -245,7 +245,7 @@ void View::main(const Database& database, ScreenData::View& data){
             View::eventsTab(database.getEvents(), data.eventTab);
             break;
         case Category::STOCKPILE:
-            
+            View::stockpileTab(database.getStockpile(), database.getAmountPerCartridge(), data.stockpileTab); 
             break;
         default:
            
@@ -529,7 +529,7 @@ void View::eventsTab(
 
         centerNextItemX(buttonSize.x);
         if(ImGui::Button("Deselect", buttonSize))
-            data.selectedEvent == EMPTY_EVENT_METADATA;
+            data.selectedEvent = EMPTY_EVENT_METADATA;
 
         if(!selectedEventValid)
             ImGui::EndDisabled();
@@ -620,8 +620,12 @@ void View::eventsTab_gunsUsed(const ShootingEvent& event, GunTrackingAmmoUsed& s
     centerNextItemX(tableSize.x);
     Tables::amountOfAmmo(selectedGun.getAmmoUsed(), tableSize);
 }
-/*
-void View::stockpileTab(const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList, const std::set<Cartridge>& cartridgeList, std::weak_ptr<AssociatedAmmo>& weakSelected){
+void View::stockpileTab(
+        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList, 
+        const std::map<Cartridge, int>& cartridgeList, 
+        ScreenData::View::StockpileTab& tabData 
+    )
+{
     static constexpr float MIN_WIN_BOTTOM_SIZE_X { 400 };
     static constexpr float MIN_WIN_BOTTOM_SIZE_Y { 600 };
 
@@ -686,65 +690,104 @@ void View::stockpileTab(const std::map<Cartridge, std::map<AmmoMetadata,  std::s
         bottomTableSize.x = MAX_TABLE_SIZE_X;
 
 
-    std::shared_ptr<AssociatedAmmo> selected = weakSelected.lock();
+    static std::string comboText { };
 
-    static Cartridge selectedCartridge { EMPTY_CARTRIDGE };
-    std::string comboText { };
+    bool selectedCartridgeValid { tabData.selectedCartridge != EMPTY_CARTRIDGE };
+    bool selectedAmmoValid      { tabData.selectedAmmo != EMPTY_AMMO_METADATA };
 
-    if(!selected && selectedCartridge == EMPTY_CARTRIDGE)
+    if(!selectedCartridgeValid)
         comboText = "Select A Cartridge";
     else
-        comboText = selectedCartridge.getName();
+        comboText = tabData.selectedCartridge.getName();
 
  
-    if(ImGui::BeginChild("View Event Table", topWindowSize, ImGuiChildFlags_Border)){ 
-        ImGui::SeparatorText( "Select An Event" );
+    if(ImGui::BeginChild("Select Ammo Tab", topWindowSize, ImGuiChildFlags_Border)){ 
+        ImGui::Spacing();
         ImGui::Spacing();
 
-        bool reset          { false };
-        bool applyYOffset   { false };
-
-        ImGui::Indent(20);
+        centerNextItemX(300);
+        ImGui::BeginGroup();
         ImGui::Text("Select Cartridge"); 
         ImGui::SameLine();
+        ImGui::SetNextItemWidth(200);
         
         if (ImGui::BeginCombo("##Cartridge Select Combo", comboText.c_str(), ImGuiComboFlags_HeightSmall)) {
+            for (const auto& [cartridge, amount] : cartridgeList) {
+                const bool isSelected = (tabData.selectedCartridge == cartridge);
 
-            for (const Cartridge& cartridge : cartridgeList) {
-                const bool isSelected = (selectedCartridge == cartridge);
+                if(ImGui::Selectable(cartridge.getName(), isSelected))
+                    tabData.selectedCartridge = cartridge;
 
-                ImGui::Selectable(cartridge.getName().c_str(), isSelected);
-
-                if (isSelected)
+                if(isSelected)
                     ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
         }
+        ImGui::EndGroup();
 
-        ImGui::Unindent(20);
+        selectedCartridgeValid = tabData.selectedCartridge != EMPTY_CARTRIDGE;
 
-        if(selected){
-            centerNextItemX(buttonSize.x);
-            if(ImGui::Button("Deselect", buttonSize)){
-                weakSelected.reset();
-                selected = nullptr;
-                reset = true;
-            }
-            applyYOffset = true;
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(!selectedAmmoValid)
+            ImGui::BeginDisabled();
+
+        centerNextItemX(buttonSize.x);
+        if(ImGui::Button("Deselect", buttonSize))
+            tabData.selectedAmmo = EMPTY_AMMO_METADATA;
+
+        if(!selectedAmmoValid)
+            ImGui::EndDisabled();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(!selectedCartridgeValid) {
+            centerNextItemY(5);
+            centerTextDisabled("Select a Cartridge to See Ammo On Hand");
         }
-
-        centerNextItemX(topTableSize.x);
-        centerNextItemY(topTableSize.y);
-        
-        if(applyYOffset)
-            ImGui::SetCursorPosY(ImGui::GetCursorPos().y + (buttonSize.y * 0.5f) + 2);
-
-        // Table for ammo here
-        //selected = weakSelected.lock();
-        
+        else{
+            centerNextItemX(topTableSize.x);
+            Tables::selectable_SingleCartridgeAmmo(ammoList.at(tabData.selectedCartridge), tabData.selectedAmmo, topTableSize);
+        }
+        selectedAmmoValid = tabData.selectedAmmo != EMPTY_AMMO_METADATA;
     }
     ImGui::EndChild();
 
+
+
+    if(ImGui::BeginChild("Selected Ammo Details", infoWindowSize, ImGuiChildFlags_Border)){
+        ImGui::SeparatorText( "Details" );
+        ImGui::Spacing(); 
+
+        if(!selectedAmmoValid){
+            centerNextItemY(5);
+            centerTextDisabled("Select Ammo to View Detailed Information");
+        }
+        //else
+            //View::eventsTab_selectedEventInformation(events.at(data.selectedEvent));
+    }
+    ImGui::EndChild();
+
+    if(!verticalLayout)
+        ImGui::SameLine();
+
+    if(ImGui::BeginChild("Selected Ammo Guns Used", bottomWindowSize, ImGuiChildFlags_Border)){
+        ImGui::SeparatorText( "Guns Used" );
+        ImGui::Spacing(); 
+
+        if(!selectedAmmoValid) {
+            centerNextItemY(5);
+            centerTextDisabled("Select an Event to View Detailed Information");
+        }
+        //else
+            //View::eventsTab_gunsUsed(events.at(data.selectedEvent), data.selectedGunAmmoUsed);
+    }
+    ImGui::EndChild();
+
+
+}
     /*
     if(ImGui::BeginChild("Selected Event Details", infoWindowSize, ImGuiChildFlags_Border)){
         ImGui::SeparatorText( "Details" );
@@ -782,8 +825,7 @@ void View::stockpileTab(const std::map<Cartridge, std::map<AmmoMetadata,  std::s
     // DO A STAR SLASH HERE
     */
 
-    /*
-}
+/*
 void Add::main(const Containers& containers, ScreenData::Add& data){
 
     static constexpr float MIN_WIN_SIZE_X { 200 };
@@ -1891,16 +1933,12 @@ void Tables::selectable_Cartridges(const std::map<Cartridge, int>& cartridges, C
         ImGui::EndTable();
     }
 }
-/*
-<<<<<<< HEAD:Shooter-Central/src/View.cpp
-=======
 void Tables::selectable_SingleCartridgeAmmo(
-    const std::map<AmmoMetadata, std::shared_ptr<AssociatedAmmo>>& list, 
-    std::weak_ptr<AssociatedAmmo>& weakSelected,
-    ImVec2 size 
-){
-    std::shared_ptr<AssociatedAmmo> selected { weakSelected.lock() };
-
+        const std::map<AmmoMetadata, StockpileAmmo>& list, 
+        AmmoMetadata& selected,
+        ImVec2 size 
+    )
+{
     int row { 0 };
     if(ImGui::BeginTable("Ammo Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
         ImGui::TableSetupColumn("Manufacturer", 0);
@@ -1910,11 +1948,11 @@ void Tables::selectable_SingleCartridgeAmmo(
 
         ImGui::TableHeadersRow();
 
-        for(const auto& [ammoInfo, associatedAmmoPtr] : list){
-            const AssociatedAmmo& associatedAmmo { *associatedAmmoPtr };
+        for(const auto& [key, stockpileAmmo] : list){
+            const AmmoMetadata& ammoInfo { stockpileAmmo.getAmmoInfo() };
             bool isSelected { false };
 
-            if(selected == associatedAmmoPtr)
+            if(selected == ammoInfo)
                 isSelected = true;
 
             ImGui::PushID(std::to_string(row).c_str());
@@ -1924,12 +1962,11 @@ void Tables::selectable_SingleCartridgeAmmo(
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(ammoInfo.manufacturer.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
+                        ImGui::Selectable(ammoInfo.manufacturer.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
 
-                        if(isSelected){
-                            weakSelected = associatedAmmoPtr;
-                            selected = weakSelected.lock();
-                        }
+                        if(isSelected)
+                            selected = ammoInfo;
+
                         break;
                     case 1:
                         ImGui::Text("%s", ammoInfo.name.c_str());
@@ -1938,7 +1975,7 @@ void Tables::selectable_SingleCartridgeAmmo(
                         ImGui::Text("%d", ammoInfo.grainWeight);
                         break;
                     case 3:
-                        ImGui::Text("%d", associatedAmmo.getAmountOfAmmo().getAmount());
+                        ImGui::Text("%d", stockpileAmmo.getAmountOnHand());
                         break;
                     default:
                         ImGui::Text("Broken table");
@@ -1951,6 +1988,7 @@ void Tables::selectable_SingleCartridgeAmmo(
         ImGui::EndTable();
     }
 }
+/*
 void Tables::selectable_KnownAmmo(
     const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>& list,       
     std::weak_ptr<AmmoMetadata>& weakSelected,

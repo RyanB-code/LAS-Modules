@@ -91,10 +91,9 @@ namespace ScreenData{
             GunMetadata             selectedGun;
             ShootingEventMetadata   selectedEvent;
         };
-
         struct StockpileTab{
-            Cartridge                       selectedCartridge { };
-            //std::weak_ptr<AssociatedAmmo>   selectedAmmo;
+            Cartridge       selectedCartridge { };
+            AmmoMetadata    selectedAmmo;
         };
 
 
