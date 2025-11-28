@@ -51,7 +51,10 @@ namespace View {
             const std::map<Cartridge, int>& cartridgeList,
             ScreenData::View::StockpileTab& tabData
             );
+    void stockpileTab_selectedAmmoInformation   (const StockpileAmmo& );
+    void stockpileTab_selectedAmmoGunsUsed      (const std::set<GunMetadata>& );
 }
+
 
 /*
 namespace Add {
@@ -127,10 +130,15 @@ namespace Tables{
             GunTrackingAmmoUsed& gun,
             ImVec2 size     
         );
+    void selectable_gunMetadata(   
+            const std::set<GunMetadata>& guns, 
+            GunMetadata& selected,
+            ImVec2 size
+        );
+
     
     void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed,                         ImVec2 size);
     void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,              ImVec2 size);
-
     //void ammoGunsUsed   (const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list,   ImVec2 size);
 }
 /*
