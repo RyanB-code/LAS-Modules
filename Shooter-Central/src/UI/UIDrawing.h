@@ -14,6 +14,11 @@
 #include <memory>
 
 #include <iostream> // For testing
+                    //
+
+// OPTIMIZE
+// 1. Use Iterators instead of copying for selected items for list
+//  - especially for GunTrackingAmmoUsed in View::eventsTab() items (lots of copying)
 
 namespace ShooterCentral::UI {
 
@@ -33,18 +38,19 @@ namespace View {
     void gunTab_selectedGunInformation      (const ArmoryGun& );
     void gunTab_ammoUsedWindow              (const ArmoryGun& );
     void gunTab_eventsWindow                (const ArmoryGun&, ShootingEventMetadata& selectedEvent);
+
+    void eventsTab                          (const std::map<ShootingEventMetadata, ShootingEvent>&, ScreenData::View::EventTab& data);
+    void eventsTab_selectedEventInformation (const ShootingEvent& event);
+    void eventsTab_gunsUsed                 (const ShootingEvent& event, GunTrackingAmmoUsed& selectedGun );
 }
 /*
+   void stockpileTab(
+   const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
+   const std::map<Cartridge, int>& cartridgeList,
+   ScreenData::View::StockpileTab& selected
+   );
 
-    void eventsTab                          (const std::map<ShootingEventMetadata, std::shared_ptr<ShootingEvent>>& events, ScreenData::View::EventTab& data);
-    void eventsTab_selectedEventInformation (const ShootingEvent& event);
-    void eventsTab_gunsUsed                 (const ShootingEvent& event, std::reference_wrapper<const GunAndAmmo>& selectedGun );
 
-    void stockpileTab(
-            const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>& ammoList,
-            const std::map<Cartridge, int>& cartridgeList,
-            ScreenData::View::StockpileTab& selected
-        );
 
 }
 
@@ -116,15 +122,13 @@ namespace Tables{
             ShootingEventMetadata& selected,
             ImVec2 size
         );
-    /*
     void selectable_EventGunsUsed(
-            const std::vector<GunAndAmmo>& list, 
-            std::reference_wrapper<const GunAndAmmo>& gun,
+            const std::vector<GunTrackingAmmoUsed>& list, 
+            GunTrackingAmmoUsed& gun,
             ImVec2 size     
         );
     
     void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed,                         ImVec2 size);
-    */
     void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,              ImVec2 size);
 
     //void ammoGunsUsed   (const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list,   ImVec2 size);
