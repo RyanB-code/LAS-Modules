@@ -121,7 +121,6 @@ struct ShootingEventMetadata {
     bool operator<  (const ShootingEventMetadata& other) const;
 };
 
-
 struct AmmoMetadata {
     std::string     name            { };
     Cartridge       cartridge       { };
@@ -271,5 +270,6 @@ private:
 
 // Helping Functions
 std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
+std::string printDate(const std::chrono::year_month_day&);
 
 }   // End SC namespace
