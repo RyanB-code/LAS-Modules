@@ -164,7 +164,21 @@ namespace UIEvents {
         controller.setScreenData(editData);
         return Status{true};
     }
+    
+    ShowPopup::ShowPopup(std::shared_ptr<Popup> set) : popup { set } {
 
+    }
+    Status ShowPopup::execute(UIController& controller) {
+        if(controller.setPopup(popup))
+            return Status { true };
+
+        return Status { false, "UIController::setPopup() failed" };
+    }
+
+    Status ClosePopup::execute(UIController& controller) {
+        controller.closePopup();
+        return Status { true };
+    }
 }   // End UIEvents namespace
 
 }   // End SC::UI namespace

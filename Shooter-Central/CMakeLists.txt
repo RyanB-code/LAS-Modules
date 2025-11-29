@@ -15,10 +15,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/Config.h.in" "${CMAKE_CURRENT_SO
 file(GLOB sources1 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp" )
 file(GLOB sources2 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/Backend/*.cpp" )
 file(GLOB sources3 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/UI/*.cpp" )
+file(GLOB sources4 CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/UI/Screens/*.cpp" )
 
 
 # Add lib
-add_library(${PROJECT_NAME} SHARED ${sources1} ${sources2} ${sources3} )
+add_library(${PROJECT_NAME} SHARED ${sources1} ${sources2} ${sources3} ${sources4} )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_SOURCE_DIR}/bin")  # Set output dir
 set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_NAME "name")                            # Leave as name.so to be renamed later

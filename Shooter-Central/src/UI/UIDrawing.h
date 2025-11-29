@@ -22,91 +22,19 @@
 //      - especially for GunTrackingAmmoUsed in View::eventsTab() items (lots of copying)
 //  2. Make SelectableGunMetadata with reset(), operator== compare to empty, for ease of use with UI  
 //  3. Prevent double adding of items for event. make buffer just be a shooting event
+//  
 //  4. Change window sizing for add_Event_GunsUsed tab since it /4 twice 
+//  5. Fix popup close() command
+//  6. fix changing Home::stockpileWindow() view more information command to change to view
+//  7. make separaor text for event add gus screen
 
 //  WIP
 //  - Finalizing adding ammo to event, applying to stockpile and guns on the review screen
 //      the review screen
-//
+//  - search for TODO to see notes about what to add
+//  - 
 
-namespace ShooterCentral::UI {
-
-namespace Home {
-    void main                               (const Database&, ScreenData::Home&, const UnsavedChanges&);
-    void gunWindow                          (const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, GunMetadata& selected);
-    
-    void gunWindow_selectedGunInformation   (const ArmoryGun& );
-    void eventsWindow                       (const std::map<ShootingEventMetadata, ShootingEvent>&, ShootingEventMetadata& selected );
-    void stockpileWindow                    (const std::map<Cartridge, int>&, Cartridge& selected);
-}
-
-
-namespace View {
-    void main                               (const Database&, ScreenData::View& );
-    void gunTab                             (const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, ScreenData::View::GunTab& data );
-    void gunTab_selectedGunInformation      (const ArmoryGun& );
-    void gunTab_ammoUsedWindow              (const ArmoryGun& );
-    void gunTab_eventsWindow                (const ArmoryGun&, ShootingEventMetadata& selectedEvent);
-
-    void eventsTab                          (const std::map<ShootingEventMetadata, ShootingEvent>&, ScreenData::View::EventTab& data);
-    void eventsTab_selectedEventInformation (const ShootingEvent& event);
-    void eventsTab_gunsUsed                 (const ShootingEvent& event, GunTrackingAmmoUsed& selectedGun );
-
-    void stockpileTab(
-            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
-            const std::map<Cartridge, int>& cartridgeList,
-            ScreenData::View::StockpileTab& tabData
-            );
-    void stockpileTab_selectedAmmoInformation   (const StockpileAmmo& );
-    void stockpileTab_selectedAmmoGunsUsed      (const std::set<GunMetadata>& );
-}
-
-
-namespace Add {
-    void    main                    (const Database&, ScreenData::Add& );
-    void    showExistingItemsWindow (const Database&, const SubItem& selected, ImVec2 size); 
-    void    addItemWindow           (const Database&, ScreenData::Add& );
-
-    void    add_Manufacturer        (char* textBuf, size_t size);
-    void    add_Cartridge           (char* textBuf, size_t size);
-    void    add_EventType           (char* textBuf, size_t size);
-    void    add_WeaponType          (char* textBuf, size_t size);
-    void    add_Location            (char* textBuf, size_t size);
-
-    void    add_Event(  
-                ScreenData::Add::EventBuffer& buffer, 
-                size_t size,            
-                const std::set<Location>&,
-                const std::set<ShootingEventType>&,
-                const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
-                const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&
-            );
-    void    add_Event_InformationTab(
-                ScreenData::Add::EventBuffer& buffer, 
-                size_t size,            
-                const std::set<Location>&,
-                const std::set<ShootingEventType>&
-            );
-    bool    add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer);
-    void    add_Event_GunsUsedTab(
-                std::vector<GunTrackingAmmoUsed>& gunsUsed,
-                std::vector<GunTrackingAmmoUsed>::iterator& selectedGun,
-                ScreenData::Add::EventTab_AddItemsScreen& currentTab,
-                const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
-                const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
-            );
-    // Returns true if an insertion happened so itrs can be updated in Add::EventBuffer
-    bool    add_Event_Gun (
-                const std::map<Cartridge, std::map<GunMetadata,  ArmoryGun>>&,
-                std::vector<GunTrackingAmmoUsed>& gunsUsed
-            );
-    bool    add_Event_AmmoForGun (
-                const std::map<AmmoMetadata,  StockpileAmmo>&,
-                AmountOfAmmo& ammo 
-            );
-
-}
-
+/*
 // Table drawing
 namespace Tables{
     void selectable_Cartridges(
@@ -178,6 +106,6 @@ namespace ComboBoxes{
     void  subItem     (SubItem& selected);
 }
 
-
+*/
 
 }   // End UI namespace

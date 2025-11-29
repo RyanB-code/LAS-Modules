@@ -5,7 +5,11 @@
 
 #include "Events.h"
 #include "UI/UIData.h"
-#include "UI/UIDrawing.h"
+#include "Screens/HomeScreen.h"
+#include "Screens/ViewScreen.h"
+#include "Screens/AddScreen.h"
+#include "Screens/EditScreen.h"
+
 
 #include <LAS/Logging.h>
 #include <imgui/imgui.h>
@@ -38,7 +42,6 @@ public:
     void setScreenData(ScreenData::View set);
     void setScreenData(ScreenData::Add set);
     void setScreenData(ScreenData::Edit set);
-
 
 private:
     Screen currentScreen { Screen::HOME };
@@ -115,6 +118,26 @@ namespace UIEvents {
         ScreenData::Edit editData;
 
     }; 
+
+    class ShowPopup : public UIEvent {
+    public: 
+        ShowPopup(std::shared_ptr<Popup>);
+        ~ShowPopup() = default;
+
+        UI_EVENT_FUNCTIONS(ShowPopup)
+    private:
+        std::shared_ptr<Popup> popup; 
+    };
+
+    class ClosePopup : public UIEvent {
+    public:
+        ClosePopup() = default;
+        ~ClosePopup() = default;
+
+
+        UI_EVENT_FUNCTIONS(ClosePopup)
+    };
+
 
 }   // End UIEvents namespace
 
