@@ -816,46 +816,7 @@ void View::stockpileTab_selectedAmmoGunsUsed (const std::set<GunMetadata>& gunsU
         std::cout << "Command move to view this gun\n";
 }
 
-    /*
-    if(ImGui::BeginChild("Selected Event Details", infoWindowSize, ImGuiChildFlags_Border)){
-        ImGui::SeparatorText( "Details" );
-        ImGui::Spacing(); 
-<<<<<<< HEAD:Shooter-Central/src/View.cpp
-=======
-        ImGui::Spacing();
-
-        if(!ammoList.contains(stockpileTab.selectedCartridge)){
-            centerNextItemY(5);
-            centerTextDisabled("Select a Cartridge to View Ammo On Hand");
-        }
-        else{
-            centerNextItemX(bottomTableSize.x);
-            Tables::selectable_SingleCartridgeAmmo(ammoList.at(stockpileTab.selectedCartridge), stockpileTab.selectedAmmo, bottomTableSize);
-        }
->>>>>>> 5-add-screen:Shooter-Central/src/UI/UIDrawing.cpp
-
-        draw_ViewEvents_Details(selected);
-    }
-    ImGui::EndChild();
-
-    if(!verticalLayout)
-        ImGui::SameLine();
-
-    if(ImGui::BeginChild("Selected Event Guns Used", bottomWindowSize, ImGuiChildFlags_Border)){
-        ImGui::SeparatorText( "Guns Used" );
-        ImGui::Spacing(); 
-
-        draw_ViewEvents_GunsUsed(selected);
-    }
-    ImGui::EndChild();
-    
-
-    // DO A STAR SLASH HERE
-    */
-
-/*
-void Add::main(const Containers& containers, ScreenData::Add& data){
-
+void Add::main(const Database& database, ScreenData::Add& data){
     static constexpr float MIN_WIN_SIZE_X { 200 };
     static constexpr float MIN_WIN_SIZE_Y { 600 };
 
@@ -923,7 +884,7 @@ void Add::main(const Containers& containers, ScreenData::Add& data){
 
         centerNextItemX(topTableSize.x);
         centerNextItemY(topTableSize.y);
-        showExistingItemsWindow(containers, data.subItem, topTableSize);
+        showExistingItemsWindow(database, data.subItem, topTableSize);
     }
     ImGui::EndChild();
 
@@ -932,62 +893,60 @@ void Add::main(const Containers& containers, ScreenData::Add& data){
 
         ImGui::Dummy(ImVec2{0.0f, 20.0f});
 
-        addItemWindow(containers, data);
+        addItemWindow(database, data);
     }
     ImGui::EndChild();
 
 }
-void Add::showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size){
-    ImGui::BeginGroup();
+void Add::showExistingItemsWindow (const Database& database, const SubItem& selected, ImVec2 size){
+    ShootingEventMetadata   selectedEvent;
+    GunMetadata             selectedGun;
+    AmmoMetadata            selectedAmmo;
 
-    std::weak_ptr<ShootingEvent> selectedEvent;
-    std::weak_ptr<AssociatedGun> selectedGun;
-    std::weak_ptr<AmmoMetadata> selectedAmmo;
- 
+    ImGui::BeginGroup();
     switch(selected){
         case SubItem::EVENT_EVENT:
             centerTextDisabled("All Events");
-            Tables::selectable_Events(containers.getEvents(), selectedEvent, size);
+            Tables::selectable_Events(database.getEvents(), selectedEvent, size);
 
-            if(selectedEvent.lock())
+            if(selectedEvent != EMPTY_EVENT_METADATA)
                 std::cout << "Command change to view event\n";
 
             break;
         case SubItem::EVENT_TYPE:
             centerTextDisabled("All Event Types");
-            ListBoxes::eventTypes(containers.getEventTypes(), size);
+            ListBoxes::eventTypes(database.getEventTypes(), size);
             break;
         case SubItem::EVENT_LOCATION:
             centerTextDisabled("All Event Locations");
-            ListBoxes::eventLocations(containers.getLocations(), size);
+            ListBoxes::eventLocations(database.getLocations(), size);
             break;
         case SubItem::AMMO_AMMO:
             centerTextDisabled("All Ammo");
-            Tables::selectable_KnownAmmo(containers.getKnownAmmo(), selectedAmmo, size);
+            Tables::selectable_AllAmmo(database.getStockpile(), selectedAmmo, size);
 
-            if(selectedAmmo.lock())
+            if(selectedAmmo != EMPTY_AMMO_METADATA)
                 std::cout << "Change to view ammo command\n";
 
             break;
         case SubItem::AMMO_MANUFACTURER:
             centerTextDisabled("All Manufacturers");
-            ListBoxes::manufacturers(containers.getManufacturers(), size);
+            ListBoxes::manufacturers(database.getManufacturers(), size);
             break;
         case SubItem::GUN_AMMO_CARTRIDGE:
             centerTextDisabled("All Cartridges");
-            ListBoxes::cartridges(containers.getCartridges(), size);
+            ListBoxes::cartridges(database.getCartridges(), size);
             break;
         case SubItem::GUN_GUN:
             centerTextDisabled("All Guns");
-            Tables::selectable_Guns(containers.getGunsInArmory(), selectedGun, size);
+            Tables::selectable_Guns(database.getArmory(), selectedGun, size);
 
-            if(selectedGun.lock())
+            if(selectedGun != EMPTY_GUN_METADATA)
                 std::cout << "Command change to view gun\n";
-
             break;
         case SubItem::GUN_WEAPON_TYPE:
             centerTextDisabled("All Weapon Types");
-            ListBoxes::weaponTypes(containers.getWeaponTypes(), size);
+            ListBoxes::weaponTypes(database.getWeaponTypes(), size);
             break;
         default:
             centerTextDisabled("Select an Item");
@@ -995,16 +954,16 @@ void Add::showExistingItemsWindow (const Containers& containers, const SubItem& 
     }
     ImGui::EndGroup();
 }
-void Add::addItemWindow(const Containers& containers, ScreenData::Add& screenData){
+void Add::addItemWindow(const Database& database, ScreenData::Add& screenData){
     switch(screenData.subItem){
         case SubItem::EVENT_EVENT:
             Add::add_Event(
                     screenData.eventBuffer, 
                     ScreenData::Add::MAX_CHAR_INPUT, 
-                    containers.getLocations(), 
-                    containers.getEventTypes(),
-                    containers.getAmmoStockpile(),
-                    containers.getGunsInArmory()
+                    database.getLocations(), 
+                    database.getEventTypes(),
+                    database.getStockpile(),
+                    database.getArmory()
                 );
             break;
         case SubItem::EVENT_TYPE:
@@ -1048,7 +1007,7 @@ void Add::add_Manufacturer(char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Manufacturer", ImVec2{200,50})){
-        ModelEvents::AddManufacturer e { Manufacturer { textBuf } };
+        DatabaseEvents::AddManufacturer e { Manufacturer { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
@@ -1068,7 +1027,7 @@ void Add::add_Cartridge       (char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Cartrige", ImVec2{200,50})){
-        ModelEvents::AddCartridge e { Cartridge { textBuf } };
+        DatabaseEvents::AddCartridge e { Cartridge { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
@@ -1088,7 +1047,7 @@ void Add::add_EventType       (char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Event Type", ImVec2{200,50})){
-        ModelEvents::AddEventType e { ShootingEventType { textBuf } };
+        DatabaseEvents::AddEventType e { ShootingEventType { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
@@ -1108,7 +1067,7 @@ void Add::add_WeaponType(char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Weapon Type", ImVec2{200,50})){
-        ModelEvents::AddWeaponType e { WeaponType { textBuf } };
+        DatabaseEvents::AddWeaponType e { WeaponType { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
@@ -1128,7 +1087,7 @@ void Add::add_Location(char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Location", ImVec2{200,50})){
-        ModelEvents::AddLocation e { Location { textBuf } };
+        DatabaseEvents::AddLocation e { Location { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
@@ -1137,13 +1096,12 @@ void Add::add_Location(char* textBuf, size_t size){
 void Add::add_Event(  
     ScreenData::Add::EventBuffer& buffer, 
     size_t size,            
-    const std::map<Location,            std::shared_ptr<Location>>&                         locations,
-    const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes,
-    const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
-    const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
+    const std::set<Location>& locations,
+    const std::set<ShootingEventType>& eventTypes,
+    const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& stockpile,
+    const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory
 ){
     typedef ScreenData::Add::EventTab EventTab;
-
 
     static EventTab lastTab;
     ImGuiTabItemFlags eventInfoFlags { 0 }, gunsUsedFlags { 0 }, reviewFlags { 0 };
@@ -1205,8 +1163,8 @@ void Add::add_Event(
 void Add::add_Event_InformationTab(
                 ScreenData::Add::EventBuffer& buffer, 
                 size_t size,            
-                const std::map<Location,            std::shared_ptr<Location>>&                         locations,
-                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes
+                const std::set<Location>& locations,
+                const std::set<ShootingEventType>& eventTypes
 ) {
     if(ImGui::BeginChild("Add Event Directions", ImVec2{ImGui::GetContentRegionAvail().x / 2, 120} ) ) {
         ImGui::Text("Directions");
@@ -1250,32 +1208,28 @@ void Add::add_Event_InformationTab(
 
     ImGui::Text("Location");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Location Combo", buffer.location.getName().c_str(), ImGuiComboFlags_HeightSmall)) {
-        for (const auto& [key, ptr] : locations) {
-            Location& loc { *ptr };
-            const bool isSelected = (buffer.location == loc);
+    if (ImGui::BeginCombo("##Choose Location Combo", buffer.location.getName(), ImGuiComboFlags_HeightSmall)) {
+        for (const auto& loc : locations) {
+            bool isSelected { buffer.location == loc };
 
-            if (ImGui::Selectable(loc.getName().c_str(), isSelected))
+            if (ImGui::Selectable(loc.getName(), isSelected)){
                 buffer.location = loc;
-
-            if (isSelected)
                 ImGui::SetItemDefaultFocus();
+            } 
         }
         ImGui::EndCombo();
     }
 
     ImGui::Text("Event Type");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Event Type Combo", buffer.eventType.getName().c_str(), ImGuiComboFlags_HeightSmall)) {
-        for (const auto& [key, ptr]: eventTypes) {
-            ShootingEventType& et { *ptr };
-            const bool isSelected = (buffer.eventType == et);
+    if (ImGui::BeginCombo("##Choose Event Type Combo", buffer.eventType.getName(), ImGuiComboFlags_HeightSmall)) {
+        for (const auto& et : eventTypes) {
+            bool isSelected {buffer.eventType == et};
 
-            if (ImGui::Selectable(et.getName().c_str(), isSelected))
+            if (ImGui::Selectable(et.getName(), isSelected)){
                 buffer.eventType = et;
-
-            if (isSelected)
                 ImGui::SetItemDefaultFocus();
+            }
         }
         ImGui::EndCombo();
     }
@@ -1316,7 +1270,6 @@ void Add::add_Event_InformationTab(
     ImGui::TextDisabled("(Month)");
     ImGui::SameLine(0, 70);
     ImGui::TextDisabled("(Year)");
-
 }
 bool Add::add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer){
     using namespace std::chrono;
@@ -1329,6 +1282,7 @@ bool Add::add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer
         return false;
     
     const year_month_day  dateBuf { year{buffer.year}, month{buffer.month}, day{buffer.day}};
+
     if(!dateBuf.ok())
         return false;
 
@@ -1336,9 +1290,9 @@ bool Add::add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer
 }
 
 void Add::add_Event_GunsUsedTab(
-    std::vector<std::reference_wrapper<const GunAndAmmo>>& gunsUsed,
-    const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
-    const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
+    std::vector<GunTrackingAmmoUsed>& gunsUsed,
+    const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&    stockpile,
+    const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&     armory
 ){
     // Table size calculations
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -1346,8 +1300,9 @@ void Add::add_Event_GunsUsedTab(
     static int totalGuns { 1 };
     static int curGun { 1 };
     static int ammoTypes { 1 };
-    static std::weak_ptr<AssociatedGun> weakGunPtr { };
-    static std::weak_ptr<AssociatedAmmo> ammoUsed { };
+
+    //static GunMetadata  gunInfo { };
+    //static AmmoMetadata ammoUsed { };
 
     ImVec2 tableSize = { ImGui::GetContentRegionAvail().x-2, 400};
     if(tableSize.x < MIN_TABLE_SIZE_X)
@@ -1386,12 +1341,12 @@ void Add::add_Event_GunsUsedTab(
     ImGui::Separator();
     ImGui::Spacing();
     centerNextItemX(tableSize.x);
-    Tables::selectable_Guns(armory, weakGunPtr, tableSize);
+    //Tables::selectable_Guns(armory, weakGunPtr, tableSize);
 
-    std::shared_ptr<AssociatedGun> selected { weakGunPtr.lock() };
+    //std::shared_ptr<AssociatedGun> selected { weakGunPtr.lock() };
 
-    if(!selected)
-        return;
+    //if(!selected)
+        //return;
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -1409,7 +1364,7 @@ void Add::add_Event_GunsUsedTab(
 
 
     centerNextItemX(tableSize.x);
-    Tables::selectable_SingleCartridgeAmmo(stockpile.at(selected->getGunInfo().cartridge), ammoUsed, tableSize);
+    //Tables::selectable_SingleCartridgeAmmo(stockpile.at(selected->getGunInfo().cartridge), ammoUsed, tableSize);
 
     // NEED TO FIGURE OUT WAY TO ADD MULTIPLE AMMO AND GUN STILL
 
@@ -1729,10 +1684,7 @@ void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, Ar
             // Do not sort by Cartridge so just ignore it
             for(const auto& [gunMetadata, armoryGun] : map){
                 const GunMetadata& gun {armoryGun.getGunInfo()};
-                bool isGunSelected { false };
-            
-                if(selected == gun)
-                    isGunSelected = true;
+                bool isGunSelected { selected == gun };
             
                 ImGui::PushID(std::to_string(row).c_str());
                 ImGui::TableNextRow();
@@ -1741,11 +1693,8 @@ void  Tables::selectable_Guns(const std::map<Cartridge, std::map<GunMetadata, Ar
                     ImGui::TableSetColumnIndex(column);
                     switch( column ){
                         case 0:
-                            ImGui::Selectable(gun.weaponType.getName(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                            if(isGunSelected)
+                            if(ImGui::Selectable(gun.weaponType.getName(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns))
                                 selected = gun;
-
                             break;
                         case 1:
                             ImGui::Text("%s", gun.cartridge.getName());
@@ -1837,10 +1786,7 @@ void Tables::selectable_Events(
         ImGui::TableHeadersRow();
 
         for(const auto& eventInfo : events){
-            bool isEventSelected    { false };
-
-            if(selected == eventInfo)
-                isEventSelected = true;
+            bool isEventSelected    { selected == eventInfo };
 
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -1849,9 +1795,7 @@ void Tables::selectable_Events(
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(printDate(eventInfo.date).c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                        if(isEventSelected)
+                        if(ImGui::Selectable(printDate(eventInfo.date).c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns))
                             selected = eventInfo;
                         break;
                     case 1:
@@ -1883,10 +1827,7 @@ void Tables::selectable_EventGunsUsed(const std::vector<GunTrackingAmmoUsed>& li
 
         for(const auto& gunAmmoUsed : list){
             const GunMetadata& gunInfo {gunAmmoUsed.getGunInfo()};
-            bool isGunSelected { false };
-        
-            if(selected.getGunInfo() == gunInfo)
-                isGunSelected = true;
+            bool isGunSelected { selected.getGunInfo() == gunInfo };
         
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -1895,11 +1836,8 @@ void Tables::selectable_EventGunsUsed(const std::vector<GunTrackingAmmoUsed>& li
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(gunInfo.weaponType.getName(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                        if(isGunSelected)
+                        if(ImGui::Selectable(gunInfo.weaponType.getName(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns))
                             selected = gunAmmoUsed;
-
                         break;
                     case 1:
                         ImGui::Text("%s", gunInfo.cartridge.getName());
@@ -1930,10 +1868,7 @@ void Tables::selectable_Cartridges(const std::map<Cartridge, int>& cartridges, C
         ImGui::TableHeadersRow();
 
         for(const auto& [cartridge, amount] : cartridges){
-            bool isSelected { false };
-
-            if(selected == cartridge)
-                isSelected = true;
+            bool isSelected { selected == cartridge };
 
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -1942,9 +1877,7 @@ void Tables::selectable_Cartridges(const std::map<Cartridge, int>& cartridges, C
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(cartridge.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                        if(isSelected)
+                        if(ImGui::Selectable(cartridge.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
                             selected = cartridge;
                         break;
                     case 1:
@@ -1978,10 +1911,7 @@ void Tables::selectable_SingleCartridgeAmmo(
 
         for(const auto& [key, stockpileAmmo] : list){
             const AmmoMetadata& ammoInfo { stockpileAmmo.getAmmoInfo() };
-            bool isSelected { false };
-
-            if(selected == ammoInfo)
-                isSelected = true;
+            bool isSelected { selected == ammoInfo };
 
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -1990,9 +1920,7 @@ void Tables::selectable_SingleCartridgeAmmo(
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(ammoInfo.manufacturer.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                        if(isSelected)
+                        if(ImGui::Selectable(ammoInfo.manufacturer.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
                             selected = ammoInfo;
 
                         break;
@@ -2016,14 +1944,11 @@ void Tables::selectable_SingleCartridgeAmmo(
         ImGui::EndTable();
     }
 }
-/*
-void Tables::selectable_KnownAmmo(
-    const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>& list,       
-    std::weak_ptr<AmmoMetadata>& weakSelected,
+void Tables::selectable_AllAmmo(
+    const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& list,       
+    AmmoMetadata& selected,
     ImVec2 size
 ){
-    std::shared_ptr<AmmoMetadata> selected { weakSelected.lock() };
-
     int row { 0 };
     if(ImGui::BeginTable("Ammo Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
         ImGui::TableSetupColumn("Cartridge", 0);
@@ -2033,46 +1958,43 @@ void Tables::selectable_KnownAmmo(
 
         ImGui::TableHeadersRow();
 
-        for(const auto& [ammoInfo, ammoInfoPtr] : list){
-            bool isSelected { false };
+        for(const auto& [cartridge, map] : list){
+            for(const auto& [key, stockpileAmmo] : map){
+                const AmmoMetadata& ammoInfo { stockpileAmmo.getAmmoInfo() };
+                bool isSelected { selected == ammoInfo };
 
-            if(selected == ammoInfoPtr)
-                isSelected = true;
+                ImGui::PushID(std::to_string(row).c_str());
+                ImGui::TableNextRow();
 
-            ImGui::PushID(std::to_string(row).c_str());
-            ImGui::TableNextRow();
-
-            for (int column{0}; column < 4; ++column) {
-                ImGui::TableSetColumnIndex(column);
-                switch( column ){
-                    case 0:
-                        if(ImGui::Selectable(ammoInfo.cartridge.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns)){
-                            weakSelected = ammoInfoPtr;
-                            selected = weakSelected.lock();
-                        }
-                        break;
-                    case 1:
-                        ImGui::Text("%s", ammoInfo.manufacturer.getName().c_str());
-                        break;
-                    case 2:
-                        ImGui::Text("%s", ammoInfo.name.c_str());
-                        break;
-                    case 3:
-                        ImGui::Text("%d", ammoInfo.grainWeight);
-                        break;
-                    default:
-                        ImGui::Text("Broken table");
-                        break;
-                }
-            }        
-            ImGui::PopID();
-            ++row;
+                for (int column{0}; column < 4; ++column) {
+                    ImGui::TableSetColumnIndex(column);
+                    switch( column ){
+                        case 0:
+                            if(ImGui::Selectable(ammoInfo.cartridge.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
+                                selected = ammoInfo;
+                            break;
+                        case 1:
+                            ImGui::Text("%s", ammoInfo.manufacturer.getName());
+                            break;
+                        case 2:
+                            ImGui::Text("%s", ammoInfo.name.c_str());
+                            break;
+                        case 3:
+                            ImGui::Text("%d", ammoInfo.grainWeight);
+                            break;
+                        default:
+                            ImGui::Text("Broken table");
+                            break;
+                    }
+                }        
+                ImGui::PopID();
+                ++row;
+            }
         }
         ImGui::EndTable();
     }
 
 }
-*/
 void Tables::amountOfAmmo(const std::vector<AmountOfAmmo>& ammoUsed, ImVec2 size){
     int row { 0 };
     if(ImGui::BeginTable("Ammo Used Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
@@ -2181,10 +2103,7 @@ void Tables::selectable_gunMetadata(
         ImGui::TableHeadersRow();
 
         for(const auto& info : guns){
-            bool isSelected    { false };
-
-            if(selected == info)
-                isSelected = true;
+            bool isSelected    { selected == info };
 
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -2193,9 +2112,7 @@ void Tables::selectable_gunMetadata(
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(info.weaponType.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                        if(isSelected)
+                        if(ImGui::Selectable(info.weaponType.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
                             selected = info;
                         break;
                     case 1:
@@ -2215,100 +2132,56 @@ void Tables::selectable_gunMetadata(
         ImGui::EndTable();
     }
 }
-/*
-void Tables::ammoGunsUsed (
-    const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list, 
-    ImVec2 size
-){
-    int row { 0 };
-    if(ImGui::BeginTable("Gun Details", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
-        ImGui::TableSetupColumn("Weapon Type", 0);
-        ImGui::TableSetupColumn("Name",        0);
-
-        ImGui::TableHeadersRow();
-
-        for(const auto& [gunInfo, gunInfoPtr] : list){
-            bool isSelected { false };
-
-            ImGui::PushID(std::to_string(row).c_str());
-            ImGui::TableNextRow();
-
-            for (int column{0}; column < 2; ++column) {
-                ImGui::TableSetColumnIndex(column);
-                switch( column ){
-                    case 0:
-                        ImGui::Selectable(gunInfo.weaponType.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-                        
-                        if(isSelected)
-                            std::cout << "Gun was selected\n"; // Command to jump to view this ammo next
-
-                        break;
-                    case 1:
-                        ImGui::Text("%s", gunInfo.name.c_str());
-                        break;
-                    default:
-                        ImGui::Text("Broken table");
-                        break;
-                }
-            }        
-            ImGui::PopID();
-            ++row;
-        }
-        ImGui::EndTable();
-    }
-}
-
-void ListBoxes::cartridges(const std::map<Cartridge, std::shared_ptr<Cartridge>>& list, ImVec2 size){
+void ListBoxes::cartridges(const std::set<Cartridge>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Cartridge List Box", size)){
-        for(const auto& [key, ptr] : list) {
+        for(const auto& cartridge : list) {
             bool isSelected { false };
-            ImGui::Selectable(key.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
+            ImGui::Selectable(cartridge.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
         }
         ImGui::EndListBox();
     }
 }
-void ListBoxes::manufacturers(const std::map<Manufacturer, std::shared_ptr<Manufacturer>>& list, ImVec2 size){
+void ListBoxes::manufacturers(const std::set<Manufacturer>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Manufacturer List Box", size)){
-        for(const auto& [key, ptr] : list) {
+        for(const auto& manufacturer : list) {
             bool isSelected { false };
-            ImGui::Selectable(key.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
+            ImGui::Selectable(manufacturer.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
         }
         ImGui::EndListBox();
     }
 }
-void ListBoxes::eventLocations (const std::map<Location, std::shared_ptr<Location>>& list,         ImVec2 size){
+void ListBoxes::eventLocations (const std::set<Location>& list,         ImVec2 size){
     if(ImGui::BeginListBox("##Event Location List Box", size)){
-        for(const auto& [key, ptr] : list) {
+        for(const auto& location : list) {
             bool isSelected { false };
-            ImGui::Selectable(key.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
+            ImGui::Selectable(location.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
         }
         ImGui::EndListBox();
     }
 }
-void ListBoxes::eventTypes(const std::map<ShootingEventType, std::shared_ptr<ShootingEventType>>& list,       ImVec2 size){
+void ListBoxes::eventTypes(const std::set<ShootingEventType>& list,       ImVec2 size){
     if(ImGui::BeginListBox("##Event Type List Box", size)){
-        for(const auto& [key, ptr] : list) {
+        for(const auto& et : list) {
             bool isSelected { false };
-            ImGui::Selectable(key.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
+            ImGui::Selectable(et.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
         }
         ImGui::EndListBox();
     }
 }
-void ListBoxes::weaponTypes(const std::map<WeaponType, std::shared_ptr<WeaponType>>& list,     ImVec2 size){
+void ListBoxes::weaponTypes(const std::set<WeaponType>& list,     ImVec2 size){
     if(ImGui::BeginListBox("##Weapon Type List Box", size)){
-        for(const auto& [key, ptr] : list) {
+        for(const auto& wt : list) {
             bool isSelected { false };
-            ImGui::Selectable(key.getName().c_str(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
+            ImGui::Selectable(wt.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
         }
         ImGui::EndListBox();
     }
 }
-*/
 
 void ComboBoxes::category(Category& selected) {
     std::string text { categoryToString(selected, "Select A Category") };
 
-    if (ImGui::BeginCombo("##Category Select Combo", text.c_str(), ImGuiComboFlags_HeightSmall)) {
+    if (ImGui::BeginCombo("##Category Select Combo", text.c_str(), ImGuiComboFlags_HeightLarge)) {
         for (const Category& category : CATEGORY_LIST) {
             const bool isSelected = (selected == category);
 
@@ -2324,7 +2197,7 @@ void ComboBoxes::category(Category& selected) {
 void ComboBoxes::subItem(SubItem& selected){
     std::string text { subItemToString(selected, "Select A Category") };
 
-    if (ImGui::BeginCombo("##Sub Item Select Combo", text.c_str(), ImGuiComboFlags_HeightSmall)) {
+    if (ImGui::BeginCombo("##Sub Item Select Combo", text.c_str(), ImGuiComboFlags_HeightLarge)) {
         for (const SubItem& item : SUB_ITEM_LIST) {
             const bool isSelected = (selected == item);
 

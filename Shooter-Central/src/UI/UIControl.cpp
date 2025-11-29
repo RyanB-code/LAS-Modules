@@ -72,14 +72,12 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
         case Screen::VIEW:
             View::main(database, viewData);
             break;
-        /*
         case Screen::ADD:
-            Add::main(containers, addData);
+            Add::main(database, addData);
             break;
         case Screen::EDIT:
 
             break;
-        */
         default:
             LAS::log_warn("SC Screen case not handled");
             break;

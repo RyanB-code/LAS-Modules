@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Backend/DatabaseEvents.h"
 #include "Backend/Database.h"
 #include "CommonItems.h"
 
@@ -19,9 +20,6 @@
 // OPTIMIZE
 // 1. Use Iterators instead of copying for selected items for list
 //  - especially for GunTrackingAmmoUsed in View::eventsTab() items (lots of copying)
-//
-// WIP:
-//  View::stockpile items
 
 namespace ShooterCentral::UI {
 
@@ -56,11 +54,10 @@ namespace View {
 }
 
 
-/*
 namespace Add {
-    void    main                    (const Containers& containers, ScreenData::Add& data);
-    void    showExistingItemsWindow (const Containers& containers, const SubItem& selected, ImVec2 size); 
-    void    addItemWindow           (const Containers& containers, ScreenData::Add& data);
+    void    main                    (const Database&, ScreenData::Add& );
+    void    showExistingItemsWindow (const Database&, const SubItem& selected, ImVec2 size); 
+    void    addItemWindow           (const Database&, ScreenData::Add& );
 
     void    add_Manufacturer        (char* textBuf, size_t size);
     void    add_Cartridge           (char* textBuf, size_t size);
@@ -71,25 +68,24 @@ namespace Add {
     void    add_Event(  
                 ScreenData::Add::EventBuffer& buffer, 
                 size_t size,            
-                const std::map<Location,            std::shared_ptr<Location>>&                         locations,
-                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes,
-                const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
-                const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
+                const std::set<Location>&,
+                const std::set<ShootingEventType>&,
+                const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
+                const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&
             );
     void    add_Event_InformationTab(
                 ScreenData::Add::EventBuffer& buffer, 
                 size_t size,            
-                const std::map<Location,            std::shared_ptr<Location>>&                         locations,
-                const std::map<ShootingEventType,   std::shared_ptr<ShootingEventType>>&                eventTypes
+                const std::set<Location>&,
+                const std::set<ShootingEventType>&
             );
     bool    add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer);
     void    add_Event_GunsUsedTab(
-                std::vector<std::reference_wrapper<const GunAndAmmo>>& gunsUsed,
-                const std::map<Cartridge, std::map<AmmoMetadata,  std::shared_ptr<AssociatedAmmo>>>&    stockpile,
-                const std::map<Cartridge, std::map<GunMetadata,   std::shared_ptr<AssociatedGun>>>&     armory
+                std::vector<GunTrackingAmmoUsed>& gunsUsed,
+                const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
+                const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
             );
 }
-*/
 
 // Table drawing
 namespace Tables{
@@ -103,13 +99,11 @@ namespace Tables{
             AmmoMetadata& selected,
             ImVec2 size 
             );
-    /*
-    void selectable_KnownAmmo(
-            const std::map<AmmoMetadata, std::shared_ptr<AmmoMetadata>>& list,       
-            std::weak_ptr<AmmoMetadata>& selected,
+    void selectable_AllAmmo(
+            const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& list,       
+            AmmoMetadata& selected,
             ImVec2 size
         );
-    */
     void selectable_Guns(
             const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, 
             GunMetadata&,
@@ -139,17 +133,14 @@ namespace Tables{
     
     void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed,                         ImVec2 size);
     void amountOfAmmo   (const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,              ImVec2 size);
-    //void ammoGunsUsed   (const std::map<GunMetadata, std::shared_ptr<GunMetadata>>& list,   ImVec2 size);
 }
-/*
 namespace ListBoxes{
-    void cartridges     (const std::map<Cartridge, std::shared_ptr<Cartridge>>& list,                   ImVec2 size);
-    void manufacturers  (const std::map<Manufacturer, std::shared_ptr<Manufacturer>>& list,             ImVec2 size);
-    void eventLocations (const std::map<Location, std::shared_ptr<Location>>& list,                     ImVec2 size);
-    void eventTypes     (const std::map<ShootingEventType, std::shared_ptr<ShootingEventType>>& list,   ImVec2 size); 
-    void weaponTypes    (const std::map<WeaponType, std::shared_ptr<WeaponType>>& list,                 ImVec2 size);
+    void cartridges     (const std::set<Cartridge>&,            ImVec2 size);
+    void manufacturers  (const std::set<Manufacturer>&,         ImVec2 size);
+    void eventLocations (const std::set<Location>&,             ImVec2 size);
+    void eventTypes     (const std::set<ShootingEventType>&,    ImVec2 size); 
+    void weaponTypes    (const std::set<WeaponType>&,           ImVec2 size);
 }
-*/
 
 namespace ComboBoxes{
     void  category    (Category& selected);

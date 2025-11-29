@@ -106,7 +106,6 @@ namespace ScreenData{
     };
 
     struct Add {
-        /*
         static constexpr int MAX_CHAR_INPUT { 64 };
 
         struct SubItemBuffers {
@@ -125,7 +124,7 @@ namespace ScreenData{
             Location            location        { "" };
             ShootingEventType   eventType       { "" };
 
-            std::vector<std::reference_wrapper<const GunAndAmmo>> gunsUsed { };
+            std::vector<GunTrackingAmmoUsed> gunsUsed { };
 
             char notes[MAX_CHAR_INPUT] = "";
             int day     { 0 };
@@ -144,8 +143,6 @@ namespace ScreenData{
         SubItem         subItem         { SubItem::NONE };
         SubItemBuffers  subItemBuffers  { };
         EventBuffer     eventBuffer     { };
-        */
-
     };
 
     struct Edit {
