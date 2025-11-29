@@ -1,0 +1,20 @@
+
+
+OPTIMIZE
+---------------
+  1. Use Iterators instead of copying for selected items for list
+      - especially for GunTrackingAmmoUsed in View::eventsTab() items (lots of copying)
+  2. Make SelectableGunMetadata with reset(), operator== compare to empty, for ease of use with UI  
+  3. Prevent double adding of items for event. make buffer just be a shooting event
+  
+  4. Change window sizing for add_Event_GunsUsed tab since it /4 twice 
+  5. Fix popup close() command
+  6. fix changing Home::stockpileWindow() view more information command to change to view
+  7. make separaor text for event add gus screen
+
+  WIP
+  - Finalizing adding ammo to event, applying to stockpile and guns on the review screen
+      the review screen
+  - search for TODO to see notes about what to add
+  - 
+
