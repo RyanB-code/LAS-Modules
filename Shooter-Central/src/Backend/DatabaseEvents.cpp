@@ -2,7 +2,7 @@
 
 namespace ShooterCentral {
 
-namespace ModelEvents {
+namespace DatabaseEvents {
 
 /* / Full objects
 CreateGun::CreateGun(const ObjectBuffers::GunMetadata& set) : info { set } {
@@ -32,13 +32,14 @@ Status CreateEvent::execute (Containers& container) {
 
     return Status { false, "Failed to create Event object and add to database" };
 }
+*/
 
 // Metadata items
 AddManufacturer::AddManufacturer(const Manufacturer& m) : manufacturer { m } {
 
 }
-Status AddManufacturer::execute (Containers& container) {
-    if(container.manufacturers_add(manufacturer))
+Status AddManufacturer::execute (Database& db) {
+    if(db.addManufacturer(manufacturer))
         return Status{true};
 
     return Status{false, "Failed to add Manufacturer" };
@@ -46,8 +47,8 @@ Status AddManufacturer::execute (Containers& container) {
 AddCartridge::AddCartridge(const Cartridge& c) : cartridge { c } {
 
 }
-Status AddCartridge::execute (Containers& container) {
-    if(container.cartridges_add(cartridge))
+Status AddCartridge::execute (Database& db) {
+    if(db.addCartridge(cartridge))
         return Status{true};
 
     return Status{false, "Failed to add Cartridge" };
@@ -55,8 +56,8 @@ Status AddCartridge::execute (Containers& container) {
 AddEventType::AddEventType(const ShootingEventType& et) : eventType { et } {
 
 }
-Status AddEventType::execute (Containers& container) {
-    if(container.eventTypes_add(eventType))
+Status AddEventType::execute (Database& db) {
+    if(db.addEventType(eventType))
         return Status{true};
 
     return Status{false, "Failed to add ShootingEventType" };
@@ -64,8 +65,8 @@ Status AddEventType::execute (Containers& container) {
 AddWeaponType::AddWeaponType(const WeaponType& wt) : weaponType { wt } {
     
 }
-Status AddWeaponType::execute (Containers& container) {
-    if(container.weaponTypes_add(weaponType))
+Status AddWeaponType::execute (Database& db) {
+    if(db.addWeaponType(weaponType))
         return Status{true};
 
     return Status{false, "Failed to add WeaponType" };
@@ -74,16 +75,15 @@ Status AddWeaponType::execute (Containers& container) {
 AddLocation::AddLocation(const Location& loc) : location { loc } {
     
 }
-Status AddLocation::execute (Containers& container) {
-    if(container.locations_add(location))
+Status AddLocation::execute (Database& db) {
+    if(db.addLocation(location))
         return Status{true};
 
     return Status{false, "Failed to add Location" };
 }
 
-*/
 
-}   // End ModeEvents namespace
+}   // End DatabaseEvents namespace
 
 
 
