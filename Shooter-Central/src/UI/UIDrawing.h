@@ -18,8 +18,16 @@
                     
 
 // OPTIMIZE
-// 1. Use Iterators instead of copying for selected items for list
-//  - especially for GunTrackingAmmoUsed in View::eventsTab() items (lots of copying)
+//  1. Use Iterators instead of copying for selected items for list
+//      - especially for GunTrackingAmmoUsed in View::eventsTab() items (lots of copying)
+//  2. Make SelectableGunMetadata with reset(), operator== compare to empty, for ease of use with UI  
+//  3. Prevent double adding of items for event. make buffer just be a shooting event
+//  4. Change window sizing for add_Event_GunsUsed tab since it /4 twice 
+
+//  WIP
+//  - Finalizing adding ammo to event, applying to stockpile and guns on the review screen
+//      the review screen
+//
 
 namespace ShooterCentral::UI {
 
@@ -82,11 +90,21 @@ namespace Add {
     bool    add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer);
     void    add_Event_GunsUsedTab(
                 std::vector<GunTrackingAmmoUsed>& gunsUsed,
-                std::vector<GunTrackingAmmoUsed>::iterator selectedGun,
+                std::vector<GunTrackingAmmoUsed>::iterator& selectedGun,
                 ScreenData::Add::EventTab_AddItemsScreen& currentTab,
                 const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
                 const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
             );
+    // Returns true if an insertion happened so itrs can be updated in Add::EventBuffer
+    bool    add_Event_Gun (
+                const std::map<Cartridge, std::map<GunMetadata,  ArmoryGun>>&,
+                std::vector<GunTrackingAmmoUsed>& gunsUsed
+            );
+    bool    add_Event_AmmoForGun (
+                const std::map<AmmoMetadata,  StockpileAmmo>&,
+                AmountOfAmmo& ammo 
+            );
+
 }
 
 // Table drawing
@@ -133,9 +151,15 @@ namespace Tables{
         );
     void selectable_gunMetadata(
             std::vector<GunTrackingAmmoUsed>& guns,
-            std::vector<GunTrackingAmmoUsed>::iterator selected,
+            std::vector<GunTrackingAmmoUsed>::iterator& selected,
             ImVec2 size
         );
+    void selectable_AmmoMetadata(
+            const std::map<AmmoMetadata, StockpileAmmo>& list, 
+            AmmoMetadata& selected,
+            ImVec2 size 
+        );
+
 
     
     void amountOfAmmo   (const std::vector<AmountOfAmmo>& ammoUsed,                         ImVec2 size);
