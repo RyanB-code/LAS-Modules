@@ -1132,17 +1132,34 @@ void Add::add_Event(
             buffer.currentTab = EventTab::INFO;
             ImGui::EndTabItem();
         }
-        if(buffer.eventInfoVerified && ImGui::BeginTabItem("Guns and Ammo", nullptr, gunsUsedFlags)){
+        
+        if(!buffer.eventInfoVerified)
+            ImGui::BeginDisabled();
+
+        if(ImGui::BeginTabItem("Guns and Ammo", nullptr, gunsUsedFlags)){
             buffer.currentTab = EventTab::GUNS_AND_AMMO;
             ImGui::EndTabItem();
         }
-        if(buffer.eventInfoVerified && buffer.gunsVerified && ImGui::BeginTabItem("Review And Submit", nullptr, reviewFlags)){
+
+        if(!buffer.eventInfoVerified)
+            ImGui::EndDisabled();
+
+
+        if(!buffer.gunsVerified) 
+            ImGui::BeginDisabled();
+
+        if(ImGui::BeginTabItem("Review And Submit", nullptr, reviewFlags)){
             buffer.currentTab = EventTab::REVIEW_AND_SUBMIT;
             ImGui::EndTabItem();
         }
+
+        if(!buffer.gunsVerified) 
+            ImGui::EndDisabled();
+
+
         ImGui::EndTabBar();
     }
-
+    
     lastTab = buffer.currentTab;
 
     switch(buffer.currentTab){
@@ -1150,7 +1167,7 @@ void Add::add_Event(
             add_Event_InformationTab(buffer, size, locations, eventTypes); 
             break;
         case EventTab::GUNS_AND_AMMO:
-            add_Event_GunsUsedTab(buffer.gunsUsed, stockpile, armory); 
+            add_Event_GunsUsedTab(buffer.gunsUsed, buffer.selectedGun, buffer.addItemsCurrentTab, stockpile, armory); 
             break;
         case EventTab::REVIEW_AND_SUBMIT:
             break;
@@ -1291,6 +1308,8 @@ bool Add::add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer
 
 void Add::add_Event_GunsUsedTab(
     std::vector<GunTrackingAmmoUsed>& gunsUsed,
+    std::vector<GunTrackingAmmoUsed>::iterator selectedGun,
+    ScreenData::Add::EventTab_AddItemsScreen& currentTab,
     const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&    stockpile,
     const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&     armory
 ){
@@ -1310,26 +1329,77 @@ void Add::add_Event_GunsUsedTab(
     if(tableSize.x > MAX_TABLE_SIZE_X)
         tableSize.x = MAX_TABLE_SIZE_X;
 
-    centerNextItemX(300);
-    ImGui::BeginGroup();
-    ImGui::Text("Number of Guns Used");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(100);
-    ImGui::InputInt("##Guns Used", &totalGuns);
-    ImGui::EndGroup();
-
-    if(totalGuns < 1)
-        totalGuns = 1;
-    if(totalGuns > 5)
-        totalGuns = 5;
-
-    if(ImGui::BeginChild("Guns Info", ImVec2{ImGui::GetContentRegionAvail().x/2, 50})){
-        centerText("Information for Gun: ");
-        ImGui::SameLine();
-        ImGui::Text("%d", curGun);
+    if(ImGui::BeginChild("Add Gun Directions", ImVec2{ImGui::GetContentRegionAvail().x / 2, 120} ) ) {
+        ImGui::Text("Directions");
+        ImGui::BulletText("Add type and amount of Ammo used for any number of Guns");
+        ImGui::BulletText("Click the button to proceed to the next step");
     }
     ImGui::EndChild();
 
+    ImGui::SameLine(); 
+
+    if(ImGui::BeginChild("Add Gun Options", ImVec2{ImGui::GetContentRegionAvail().x, 120})){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::Button("Change Me", ImVec2{100, 50});
+    }
+    ImGui::EndChild();
+
+    if(ImGui::BeginChild("Guns Info", ImVec2{ImGui::GetContentRegionAvail().x/4, 400}, ImGuiChildFlags_Border)){
+        ImGui::SeparatorText("Guns Used");
+
+        if(centerButton("Add New Gun", ImVec2{100, 30} ))
+            currentTab = ScreenData::Add::EventTab_AddItemsScreen::GUN;
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        centerNextItemX(ImGui::GetContentRegionAvail().x);
+        Tables::selectable_gunMetadata(gunsUsed, selectedGun, ImVec2{ImGui::GetContentRegionAvail().x-2, 350 });
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Ammo Used", ImVec2{ImGui::GetContentRegionAvail().x/4, 400}, ImGuiChildFlags_Border)){
+        ImGui::SeparatorText("Ammo Used"); 
+
+        if(centerButton("Add New Ammo", ImVec2{100, 30} ))
+            currentTab = ScreenData::Add::EventTab_AddItemsScreen::GUN;
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+    
+        if(selectedGun == gunsUsed.end()){
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to Ammo Used");
+        }
+        else{
+            centerNextItemX(ImGui::GetContentRegionAvail().x);
+            Tables::amountOfAmmo(selectedGun->getAmmoUsed(), ImVec2{ImGui::GetContentRegionAvail().x-2, 350 });
+        }
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+
+    if(ImGui::BeginChild("Add Area", ImVec2{ImGui::GetContentRegionAvail().x, 400}, ImGuiChildFlags_Border)){
+       if(currentTab == ScreenData::Add::EventTab_AddItemsScreen::GUN)
+           ImGui::SeparatorText("Add Gun To Event");
+       else if(currentTab == ScreenData::Add::EventTab_AddItemsScreen::AMMO)
+           ImGui::SeparatorText("Add Ammo Used for Selected Gun");
+       else
+           ImGui::SeparatorText("Broken Case");
+ 
+       centerText("fuck");
+
+    }
+    ImGui::EndChild();
+
+
+    /*
     ImGui::SameLine();
     if(ImGui::BeginChild("Add Button", ImVec2{ImGui::GetContentRegionAvail().x-2, 50})){
        if(centerButton("Submit Current Gun", ImVec2 { 140, 30 }))
@@ -1363,11 +1433,14 @@ void Add::add_Event_GunsUsedTab(
     ImGui::EndGroup();
 
 
+
+
     centerNextItemX(tableSize.x);
     //Tables::selectable_SingleCartridgeAmmo(stockpile.at(selected->getGunInfo().cartridge), ammoUsed, tableSize);
 
     // NEED TO FIGURE OUT WAY TO ADD MULTIPLE AMMO AND GUN STILL
 
+    */
 }
 
 /*
@@ -2131,6 +2204,59 @@ void Tables::selectable_gunMetadata(
         }
         ImGui::EndTable();
     }
+}
+void Tables::selectable_gunMetadata(
+        std::vector<GunTrackingAmmoUsed>& guns,
+        std::vector<GunTrackingAmmoUsed>::iterator selected,
+        ImVec2 size
+    )
+{
+    int row { 0 };
+    if(ImGui::BeginTable("GunMetadata Table", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )){
+        ImGui::TableSetupColumn("WeaponType",   ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Cartridge",    ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Name",         ImGuiTableColumnFlags_None);
+
+        ImGui::TableHeadersRow();
+
+        for(auto itr { guns.begin() }; itr != guns.end(); ++itr){
+            bool isSelected { selected == itr };
+            const GunMetadata& info { itr->getGunInfo() };
+
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 3; ++column){                   
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        if(ImGui::Selectable(info.weaponType.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
+                            selected = itr;
+                        break;
+                    case 1:
+                        ImGui::Text("%s", info.cartridge.getName());
+                        break;
+                    case 2:
+                        ImGui::Text("%s", info.name.c_str());
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
+    }
+
+
+
+
+
+
+
+
 }
 void ListBoxes::cartridges(const std::set<Cartridge>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Cartridge List Box", size)){

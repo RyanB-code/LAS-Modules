@@ -15,7 +15,7 @@
 #include <memory>
 
 #include <iostream> // For testing
-                    //
+                    
 
 // OPTIMIZE
 // 1. Use Iterators instead of copying for selected items for list
@@ -82,6 +82,8 @@ namespace Add {
     bool    add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer);
     void    add_Event_GunsUsedTab(
                 std::vector<GunTrackingAmmoUsed>& gunsUsed,
+                std::vector<GunTrackingAmmoUsed>::iterator selectedGun,
+                ScreenData::Add::EventTab_AddItemsScreen& currentTab,
                 const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
                 const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
             );
@@ -127,6 +129,11 @@ namespace Tables{
     void selectable_gunMetadata(   
             const std::set<GunMetadata>& guns, 
             GunMetadata& selected,
+            ImVec2 size
+        );
+    void selectable_gunMetadata(
+            std::vector<GunTrackingAmmoUsed>& guns,
+            std::vector<GunTrackingAmmoUsed>::iterator selected,
             ImVec2 size
         );
 

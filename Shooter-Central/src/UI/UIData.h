@@ -120,11 +120,16 @@ namespace ScreenData{
             GUNS_AND_AMMO,
             REVIEW_AND_SUBMIT
         };
+        enum class EventTab_AddItemsScreen {
+            GUN,
+            AMMO
+        };
         struct EventBuffer {
             Location            location        { "" };
             ShootingEventType   eventType       { "" };
 
-            std::vector<GunTrackingAmmoUsed> gunsUsed { };
+            std::vector<GunTrackingAmmoUsed>            gunsUsed { };
+            std::vector<GunTrackingAmmoUsed>::iterator  selectedGun { gunsUsed.end() };
 
             char notes[MAX_CHAR_INPUT] = "";
             int day     { 0 };
@@ -136,7 +141,8 @@ namespace ScreenData{
 
             bool eventInfoVerified  { false };
             bool gunsVerified       { false };
-            EventTab currentTab { EventTab::INFO };
+            EventTab currentTab                         { EventTab::INFO };
+            EventTab_AddItemsScreen addItemsCurrentTab  { EventTab_AddItemsScreen::GUN };
         };
 
         Category        category        { Category::NONE }; 
