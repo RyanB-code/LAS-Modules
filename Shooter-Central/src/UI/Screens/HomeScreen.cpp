@@ -123,7 +123,7 @@ void eventsWindow(
         return;
     }
     else
-        eventsWindow_selectedEventInformation(events.at(screenData.selectedEvent));
+        eventsWindow_selectedEventInformation(screenData.selectedEvent);
 
 }
 void eventsWindow_selectedEventInformation(const ShootingEvent& event){
