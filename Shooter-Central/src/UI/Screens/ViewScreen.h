@@ -20,28 +20,54 @@ struct View {
     };
     struct ArmoryWindow{
         GunMetadata             selectedGun;
-        ShootingEventMetadata   selectedEvent;
-
-        static constexpr ImVec2 MIN_WIN_SIZE        { 400, 600 };
-        static constexpr ImVec2 MIN_TABLE_SIZE      { 400, 300 };
-        static constexpr ImVec2 deselectButtonSize  { 100, 40 };
-        static constexpr float  MAX_TOP_TABLE_WIDTH { 600 };     
 
         bool verticalLayout { false };
 
-        ImVec2 topWindowSize        { MIN_WIN_SIZE };
-        ImVec2 bottomWindowSize     { MIN_WIN_SIZE };
-        ImVec2 topTableSize         { MIN_TABLE_SIZE.x, 400 };
-        ImVec2 bottomTableSize      { MIN_TABLE_SIZE.x, 400 };
+        static constexpr ImVec2 deselectButtonSize  { 100, 40 };
+        static constexpr ImVec2 minWinSize          { 400, 600 };
+        static constexpr ImVec2 minTableSize        { 400, 300 };
+        static constexpr float  maxTableWidth       { 800 };     
+
+        ImVec2 topWindowSize        { minWinSize };
+        ImVec2 bottomWindowSize     { minWinSize };
+        ImVec2 topTableSize         { minTableSize.x, 400 };
+        ImVec2 bottomTableSize      { minTableSize.x, 400 };
     };
 
     struct EventsWindow {
-        ShootingEventMetadata selectedEvent;
-        GunTrackingAmmoUsed   selectedGunAmmoUsed;
+        ShootingEventMetadata   selectedEvent   { };
+        GunMetadata             selectedGun     { };
+
+        bool verticalLayout { false };
+
+        static constexpr ImVec2 deselectButtonSize  { 100, 40 };
+        static constexpr ImVec2 minWinSize          { 400, 600 };
+        static constexpr ImVec2 minTableSize        { 400, 300 };
+        static constexpr float  maxTableWidth       { 600 };     
+
+
+        ImVec2 topWindowSize        { minWinSize };
+        ImVec2 bottomWindowSize     { minWinSize };
+        ImVec2 topTableSize         { minTableSize.x, 400 };
+        ImVec2 bottomTableSize      { minTableSize.x, 400 };
     };
     struct StockpileWindow{
         Cartridge       selectedCartridge   { };
         AmmoMetadata    selectedAmmo        { };
+        
+        bool selectedCartridgeValid { false };
+        bool selectedAmmoValid      { false };
+
+        bool verticalLayout { false };
+
+        static constexpr ImVec2 deselectButtonSize  { 100, 40 };
+        static constexpr ImVec2 minWinSize          { 400, 600 };
+        static constexpr ImVec2 minTableSize        { 400, 300 };
+        static constexpr float  maxTableWidth       { 600 };     
+
+
+        ImVec2 windowSize   { minWinSize };
+        ImVec2 tableSize    { minTableSize.x, 400 };
     };
 
     MainWindow      mainWindow      { };
@@ -60,27 +86,26 @@ namespace ArmoryWindow {
     void main(
             const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
             ScreenData::View::ArmoryWindow& screenData 
-            );
+        );
     void selectedGunInformation (const ArmoryGun& );
-    void ammoUsedWindow         (const ArmoryGun& );
-    void eventsWindow           (const ArmoryGun&, ShootingEventMetadata& selectedEvent);
 }
 
-void eventsTab(
-        const std::map<ShootingEventMetadata, 
-        ShootingEvent>&, 
-        ScreenData::View::EventsWindow& data
-    );
-void eventsTab_selectedEventInformation (const ShootingEvent& event);
-void eventsTab_gunsUsed                 (const ShootingEvent& event, GunTrackingAmmoUsed& selectedGun );
+namespace EventsWindow {
+    void main(
+            const std::map<ShootingEventMetadata, ShootingEvent>&, 
+            ScreenData::View::EventsWindow& data
+        );
+    void selectedEventInformation (const ShootingEvent& event);
+}
 
-void stockpileTab(
-        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
-        const std::map<Cartridge, int>& cartridgeList,
-        ScreenData::View::StockpileWindow& tabData
-    );
-void stockpileTab_selectedAmmoInformation   (const StockpileAmmo& );
-void stockpileTab_selectedAmmoGunsUsed      (const std::set<GunMetadata>& );
+namespace StockpileWindow {
+    void main(
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+            const std::map<Cartridge, int>& cartridgeList,
+            ScreenData::View::StockpileWindow& tabData
+        );
+    void selectedAmmoInformation   (const StockpileAmmo& );
+}
 
 
 }   // End SC::UI::View namespace
