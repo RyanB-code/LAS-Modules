@@ -1,102 +1,88 @@
 #include "ViewScreen.h"
 
-namespace ShooterCentral::UI {
+namespace ShooterCentral::UI::View {
 
-void View::main(const Database& database, ScreenData::View& data){
+void main(const Database& database, ScreenData::View& data){
 
+    ImGui::Spacing();
     ImGui::Spacing();
     ImGui::Spacing();
 
     centerNextComboBoxX("Select A Category", 200);
-    ComboBoxes::category(data.category); 
+    ComboBoxes::category(data.mainWindow.category); 
 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    // Show the necessary window herew
-    switch(data.category){
+    switch(data.mainWindow.category){
         case Category::GUNS:
-            View::gunTab(database.getArmory(), data.gunTab);
+            View::ArmoryWindow::main(database.getArmory(), data.armoryWindow);
             break;
         case Category::EVENTS:
-            View::eventsTab(database.getEvents(), data.eventTab);
+            View::eventsTab(database.getEvents(), data.eventsWindow);
             break;
         case Category::STOCKPILE:
-            View::stockpileTab(database.getStockpile(), database.getAmountPerCartridge(), data.stockpileTab); 
+            View::stockpileTab(
+                    database.getStockpile(), 
+                    database.getAmountPerCartridge(), 
+                    data.stockpileWindow
+                ); 
             break;
         default:
            
             break;
     }
 }
-void View::gunTab  (
-        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& guns, 
-        ScreenData::View::GunTab& data 
+void ArmoryWindow::main(
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory, 
+        ScreenData::View::ArmoryWindow& data 
     )
 {
-    static constexpr float MIN_BOTTOM_WIN_SIZE_X { 400 };
-    static constexpr float MIN_BOTTOM_WIN_SIZE_Y { 600 };
+    if(ImGui::GetContentRegionAvail().x < (data.MIN_WIN_SIZE.x * 3) ){
+        data.verticalLayout = true;
 
-    static constexpr float MIN_TABLE_SIZE_X { 400 };
-    static constexpr float MAX_TABLE_SIZE_X { 800 };
-
-    bool verticalLayout = false;
-
-    ImVec2 topWindowSize;
-    ImVec2 bottomWindowSize;
-    ImVec2 topTableSize;
-    ImVec2 bottomTableSize;
-
-    if(ImGui::GetContentRegionAvail().x < (MIN_BOTTOM_WIN_SIZE_X * 3)){
-        verticalLayout = true;
-
-        topWindowSize  = {MIN_BOTTOM_WIN_SIZE_X * 3, MIN_BOTTOM_WIN_SIZE_X * 3};
-        bottomWindowSize = topWindowSize;
+        data.topWindowSize  = ImGui::GetContentRegionAvail();
+        data.bottomWindowSize = data.topWindowSize;
     }
     else{
-        topWindowSize  = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2};
-        if(topWindowSize.x < MIN_BOTTOM_WIN_SIZE_X)
-            topWindowSize.x = MIN_BOTTOM_WIN_SIZE_X;
-        if(topWindowSize.y < MIN_BOTTOM_WIN_SIZE_Y)
-            topWindowSize.y = MIN_BOTTOM_WIN_SIZE_Y;
+        // Minus 5 cus with border it pushes out a little and its annoying
+        data.bottomWindowSize =  ImVec2{ (ImGui::GetContentRegionAvail().x / 3 )-5, ImGui::GetContentRegionAvail().y / 2};
+        data.topWindowSize =     ImVec2{ ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2};
 
-        bottomWindowSize =  { ImGui::GetContentRegionAvail().x / 3, ImGui::GetContentRegionAvail().y / 2};
-        if(bottomWindowSize.x < MIN_BOTTOM_WIN_SIZE_X)
-            bottomWindowSize.x = MIN_BOTTOM_WIN_SIZE_X;
-        if(bottomWindowSize.y < MIN_BOTTOM_WIN_SIZE_Y)
-            bottomWindowSize.y = MIN_BOTTOM_WIN_SIZE_Y;
+        data.verticalLayout = false;
     }
 
+    // Ensure minimum windows
+    if(data.topWindowSize.x < data.MIN_WIN_SIZE.x)
+        data.topWindowSize.x = data.MIN_WIN_SIZE.x;
+    if(data.topWindowSize.y < data.MIN_WIN_SIZE.y)
+        data.topWindowSize.y = data.MIN_WIN_SIZE.y;
 
-    // Size the table
-    topTableSize = { topWindowSize.x-2, 400};
-    if(topTableSize.x < MIN_TABLE_SIZE_X)
-        topTableSize.x = MIN_TABLE_SIZE_X;
-    if(topTableSize.x > MAX_TABLE_SIZE_X)
-        topTableSize.x = MAX_TABLE_SIZE_X;
+    if(data.bottomWindowSize.x < data.MIN_WIN_SIZE.x)
+        data.bottomWindowSize.x = data.MIN_WIN_SIZE.x;
+    if(data.bottomWindowSize.y < data.MIN_WIN_SIZE.y)
+        data.bottomWindowSize.y = data.MIN_WIN_SIZE.y;
 
-    bottomTableSize = { bottomWindowSize.x-2, 400};
-    if(bottomTableSize.x < MIN_TABLE_SIZE_X)
-        bottomTableSize.x = MIN_TABLE_SIZE_X;
-    if(bottomTableSize.x > MAX_TABLE_SIZE_X)
-        bottomTableSize.x = MAX_TABLE_SIZE_X;
-
-
-    // Button size
-    static const ImVec2 buttonSize { 100, 40 };
 
     // AFTER the select table is run, use this for further checking if selected is valid
     bool selectedGunValid { data.selectedGun != EMPTY_GUN_METADATA };
 
-    if(ImGui::BeginChild("View Gun Table", topWindowSize, ImGuiChildFlags_Border)){ 
+    if(ImGui::BeginChild("View Gun Table", data.topWindowSize)){ 
+
+        data.topTableSize.x = ImGui::GetContentRegionAvail().x;
+        if(data.topTableSize.x < data.MIN_TABLE_SIZE.x)
+            data.topTableSize.x = data.MIN_TABLE_SIZE.x;
+        if(data.topTableSize.x > data.MAX_TOP_TABLE_WIDTH)
+            data.topTableSize.x = data.MAX_TOP_TABLE_WIDTH;
+
         ImGui::SeparatorText( "Select A Gun" );
         ImGui::Spacing();
 
         if(!selectedGunValid)
             ImGui::BeginDisabled();
 
-        centerNextItemX(buttonSize.x);
-        if(ImGui::Button("Deselect", buttonSize))
+        centerNextItemX(data.deselectButtonSize.x);
+        if(ImGui::Button("Deselect", data.deselectButtonSize))
             data.selectedGun = EMPTY_GUN_METADATA;
 
         if(!selectedGunValid)
@@ -105,14 +91,22 @@ void View::gunTab  (
         ImGui::Spacing();
         ImGui::Spacing();
 
-        centerNextItemX(topTableSize.x);
-        Tables::Selectable::gunMetadataWithRoundCount(guns, data.selectedGun, topTableSize);
+        centerNextItemX(data.topTableSize.x);
+        Tables::Selectable::gunMetadataWithRoundCount(armory, data.selectedGun, data.topTableSize);
 
         selectedGunValid = data.selectedGun != EMPTY_GUN_METADATA;
     }
     ImGui::EndChild();
 
-    if(ImGui::BeginChild("Selected Gun Details", bottomWindowSize, ImGuiChildFlags_Border)){
+
+    // Now starts bottom Window \\
+
+    if(ImGui::BeginChild("Selected Gun Details", data.bottomWindowSize, ImGuiChildFlags_Border)){
+        // Only need this in one since all bottom windows are the same size
+        data.bottomTableSize.x = ImGui::GetContentRegionAvail().x;
+        if(data.bottomTableSize.x < data.MIN_TABLE_SIZE.x)
+            data.bottomTableSize.x = data.MIN_TABLE_SIZE.x;
+
         ImGui::SeparatorText( "Details" );
         ImGui::Spacing();
 
@@ -121,14 +115,14 @@ void View::gunTab  (
             centerTextDisabled("Select a Gun to View Detailed Information");
         }
         else
-            View::gunTab_selectedGunInformation(guns.at(data.selectedGun.cartridge).at(data.selectedGun));
+            ArmoryWindow::selectedGunInformation(armory.at(data.selectedGun.cartridge).at(data.selectedGun));
     }
     ImGui::EndChild();
 
-    if(!verticalLayout)
+    if(!data.verticalLayout)
         ImGui::SameLine();
 
-    if(ImGui::BeginChild("Selected Gun Events", bottomWindowSize, ImGuiChildFlags_Border)){
+    if(ImGui::BeginChild("Selected Gun Events", data.bottomWindowSize, ImGuiChildFlags_Border)){
         ImGui::SeparatorText( "Events Used" );
         ImGui::Spacing();
 
@@ -137,28 +131,28 @@ void View::gunTab  (
             centerTextDisabled("Select a Gun to View Events");
         }
         else
-            View::gunTab_eventsWindow(guns.at(data.selectedGun.cartridge).at(data.selectedGun), data.selectedEvent);    
+            ArmoryWindow::eventsWindow(armory.at(data.selectedGun.cartridge).at(data.selectedGun), data.selectedEvent);    
     }
     ImGui::EndChild();
 
-    if(!verticalLayout)
+    if(!data.verticalLayout)
         ImGui::SameLine();
 
-    if(ImGui::BeginChild("Selected Gun Ammo Used", bottomWindowSize, ImGuiChildFlags_Border)){
+    if(ImGui::BeginChild("Selected Gun Ammo Used", data.bottomWindowSize, ImGuiChildFlags_Border)){
         ImGui::SeparatorText( "Ammo Used" );
         ImGui::Spacing();
 
         if(!selectedGunValid){
             centerNextItemY(5);
-            centerTextDisabled("Select a Gun to Ammo Used");
+            centerTextDisabled("Select a Gun to View Ammo Used");
         }
         else
-            View::gunTab_ammoUsedWindow(guns.at(data.selectedGun.cartridge).at(data.selectedGun)); 
+            ArmoryWindow::ammoUsedWindow(armory.at(data.selectedGun.cartridge).at(data.selectedGun)); 
     }
     ImGui::EndChild();
 
 }
-void View::gunTab_selectedGunInformation(const ArmoryGun& gun){
+void ArmoryWindow::selectedGunInformation(const ArmoryGun& gun){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     centerNextItemX(200);
@@ -176,7 +170,7 @@ void View::gunTab_selectedGunInformation(const ArmoryGun& gun){
     ImGui::Text("Ammo Types Used:   %d", gun.totalAmmoTypesUsed()); 
     ImGui::EndGroup();
 }
-void View::gunTab_eventsWindow(const ArmoryGun& gun, ShootingEventMetadata& selectedEvent){
+void ArmoryWindow::eventsWindow(const ArmoryGun& gun, ShootingEventMetadata& selectedEvent){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -198,7 +192,7 @@ void View::gunTab_eventsWindow(const ArmoryGun& gun, ShootingEventMetadata& sele
     }
     return;
 }
-void View::gunTab_ammoUsedWindow(const ArmoryGun& gun){
+void ArmoryWindow::ammoUsedWindow(const ArmoryGun& gun){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
     static AmmoMetadata selectedAmmo { };
 
@@ -215,9 +209,9 @@ void View::gunTab_ammoUsedWindow(const ArmoryGun& gun){
     Tables::Selectable::amountOfAmmo(gun.getAmmoUsed(), selectedAmmo, tableSize);
     // TODO - button to view selected ammo here
 }
-void View::eventsTab(
+void eventsTab(
         const std::map<ShootingEventMetadata, ShootingEvent>& events, 
-        ScreenData::View::EventTab& data 
+        ScreenData::View::EventsWindow& data 
 ){
     static constexpr float MIN_WIN_BOTTOM_SIZE_X { 400 };
     static constexpr float MIN_WIN_BOTTOM_SIZE_Y { 600 };
@@ -337,7 +331,7 @@ void View::eventsTab(
     ImGui::EndChild();
 
 }
-void View::eventsTab_selectedEventInformation(const ShootingEvent& event){
+void eventsTab_selectedEventInformation(const ShootingEvent& event){
     const ShootingEventMetadata& info  { event.getInfo() };
 
     centerNextItemX(400);
@@ -355,7 +349,7 @@ void View::eventsTab_selectedEventInformation(const ShootingEvent& event){
     ImGui::Spacing();
     ImGui::TextWrapped("%s", info.notes.c_str());
 }
-void View::eventsTab_gunsUsed(const ShootingEvent& event, GunTrackingAmmoUsed& selectedGun){
+void eventsTab_gunsUsed(const ShootingEvent& event, GunTrackingAmmoUsed& selectedGun){
     const ShootingEventMetadata& info  { event.getInfo() };
 
     static constexpr float MIN_TABLE_SIZE_X { 400 };
@@ -386,10 +380,10 @@ void View::eventsTab_gunsUsed(const ShootingEvent& event, GunTrackingAmmoUsed& s
 
     // TODO - make this appear like the add Gun and Events in side by side mode 
 }
-void View::stockpileTab(
+void stockpileTab(
         const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList, 
         const std::map<Cartridge, int>& cartridgeList, 
-        ScreenData::View::StockpileTab& tabData 
+        ScreenData::View::StockpileWindow& tabData 
     )
 {
     static constexpr float MIN_WIN_BOTTOM_SIZE_X { 400 };
@@ -561,7 +555,7 @@ void View::stockpileTab(
 
 
 }
-void View::stockpileTab_selectedAmmoInformation (const StockpileAmmo& data){
+void stockpileTab_selectedAmmoInformation (const StockpileAmmo& data){
     const AmmoMetadata& ammoInfo  { data.getAmmoInfo() };
 
     centerNextItemX(200);
@@ -579,7 +573,7 @@ void View::stockpileTab_selectedAmmoInformation (const StockpileAmmo& data){
     ImGui::Text("Guns Used In:      %ld", data.getGunsUsed().size()); 
     ImGui::EndGroup();
 }
-void View::stockpileTab_selectedAmmoGunsUsed (const std::set<GunMetadata>& gunsUsed){
+void stockpileTab_selectedAmmoGunsUsed (const std::set<GunMetadata>& gunsUsed){
     static constexpr float MIN_TABLE_SIZE_X { 400 };
     static constexpr float MAX_TABLE_SIZE_X { 800 };
 
