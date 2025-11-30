@@ -112,7 +112,7 @@ void eventsWindow(
     ImGui::Spacing();
    
     centerNextItemX(screenData.tableSize.x);
-    Tables::Selectable::eventsWithGunsUsed(events, screenData.selectedEvent, screenData.tableSize); 
+    Tables::Selectable::eventsWithNumGunsUsed(events, screenData.selectedEvent, screenData.tableSize); 
 
     ImGui::Spacing();
     ImGui::Spacing();

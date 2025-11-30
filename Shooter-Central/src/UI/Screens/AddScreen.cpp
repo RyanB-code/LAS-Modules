@@ -93,7 +93,7 @@ void Add::showExistingItemsWindow (const Database& database, const SubItem& sele
     switch(selected){
         case SubItem::EVENT_EVENT:
             centerTextDisabled("All Events");
-            Tables::Selectable::eventsWithGunsUsed(database.getEvents(), selectedEvent, size);
+            Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), selectedEvent, size);
 
             if(selectedEvent != EMPTY_EVENT_METADATA)
                 std::cout << "Command change to view event\n";

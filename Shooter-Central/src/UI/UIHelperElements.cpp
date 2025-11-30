@@ -459,7 +459,7 @@ void Tables::Selectable::gunMetadataWithRoundCount(
 }
 void Tables::Selectable::gunMetadataWithRoundCount(
         const std::vector<GunTrackingAmmoUsed>& list, 
-        GunTrackingAmmoUsed& selected, 
+        GunMetadata& selected, 
         ImVec2 size 
     )
 {
@@ -474,7 +474,7 @@ void Tables::Selectable::gunMetadataWithRoundCount(
 
         for(const auto& gunAmmoUsed : list){
             const GunMetadata& gunInfo {gunAmmoUsed.getGunInfo()};
-            bool isGunSelected { selected.getGunInfo() == gunInfo };
+            bool isGunSelected { selected == gunInfo };
         
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -484,7 +484,7 @@ void Tables::Selectable::gunMetadataWithRoundCount(
                 switch( column ){
                     case 0:
                         if(ImGui::Selectable(gunInfo.weaponType.getName(), &isGunSelected, ImGuiSelectableFlags_SpanAllColumns))
-                            selected = gunAmmoUsed;
+                            selected = gunInfo;
                         break;
                     case 1:
                         ImGui::Text("%s", gunInfo.cartridge.getName());
@@ -550,7 +550,7 @@ void Tables::Selectable::eventMetadata(
         ImGui::EndTable();
     }
 }
-void Tables::Selectable::eventsWithGunsUsed( 
+void Tables::Selectable::eventsWithNumGunsUsed( 
         const std::map<ShootingEventMetadata, ShootingEvent>& events, 
         ShootingEventMetadata& selected,
         ImVec2 size
@@ -565,12 +565,9 @@ void Tables::Selectable::eventsWithGunsUsed(
 
         ImGui::TableHeadersRow();
 
-        for(const auto& [eventMetadata, event] : events){
+        for(const auto& [key, event] : events){
             const ShootingEventMetadata& eventInfo  { event.getInfo() };
-            bool isEventSelected    { false };
-
-            if(selected == eventInfo)
-                isEventSelected = true;
+            bool isEventSelected    { selected == eventInfo };
 
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -579,9 +576,7 @@ void Tables::Selectable::eventsWithGunsUsed(
                 ImGui::TableSetColumnIndex(column);
                 switch( column ){
                     case 0:
-                        ImGui::Selectable(event.printDate().c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns);
-
-                        if(isEventSelected)
+                        if(ImGui::Selectable(printDate(eventInfo.date).c_str(), &isEventSelected, ImGuiSelectableFlags_SpanAllColumns))
                             selected = eventInfo;
                         break;
                     case 1:
@@ -764,7 +759,6 @@ void ComboBoxes::category(Category& selected) {
         ImGui::EndCombo();
     }
 }
-
 void ComboBoxes::subItem(SubItem& selected){
     std::string text { subItemToString(selected, "Select A Category") };
 
@@ -780,11 +774,6 @@ void ComboBoxes::subItem(SubItem& selected){
         ImGui::EndCombo();
     }
 }
-
-
-
-
-
 
 
 

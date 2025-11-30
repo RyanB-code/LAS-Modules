@@ -68,7 +68,7 @@ namespace Tables{
                 ShootingEventMetadata& selected,
                 ImVec2 size
             );
-        void eventsWithGunsUsed( 
+        void eventsWithNumGunsUsed( 
                 const std::map<ShootingEventMetadata, ShootingEvent>& events, 
                 ShootingEventMetadata& selected,
                 ImVec2 size
@@ -94,8 +94,8 @@ namespace ListBoxes{
 }
 
 namespace ComboBoxes{
-    void  category    (Category& selected);
-    void  subItem     (SubItem& selected);
+    void category   (Category& selected);
+    void subItem    (SubItem& selected);
 }
 
 
