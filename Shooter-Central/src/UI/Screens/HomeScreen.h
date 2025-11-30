@@ -37,7 +37,6 @@ struct Home{
     };
 
 
-
     MainWindow      mainWindow      { };
     EventsWindow    eventsWindow    { };
     GunWindow       gunWindow       { };
