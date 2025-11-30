@@ -28,8 +28,8 @@ struct Home{
         GunMetadata selectedGun      { };
     };
     struct EventsWindow {
-        ImVec2      tableSize        { 0, 300 };
-        ShootingEventMetadata   selectedEvent { };
+        ImVec2 tableSize        { 0, 300 };
+        ShootingEventMetadata selectedEvent { };
     };
     struct StockpileWindow{
         ImVec2      tableSize        { 0, 300 };
