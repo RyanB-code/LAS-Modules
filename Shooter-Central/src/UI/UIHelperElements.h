@@ -60,7 +60,7 @@ namespace Tables{
             );
         void gunMetadataWithRoundCount(
                 const std::vector<GunTrackingAmmoUsed>& list, 
-                GunTrackingAmmoUsed& gun,
+                GunMetadata& gun,
                 ImVec2 size     
             );
         void eventMetadata( 
