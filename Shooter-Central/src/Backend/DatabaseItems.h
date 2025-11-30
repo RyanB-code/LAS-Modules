@@ -252,6 +252,8 @@ public:
     ShootingEvent(const ShootingEventMetadata& setInfo=ShootingEventMetadata{ } );
     ~ShootingEvent() = default;
 
+    void    setInfo (const ShootingEventMetadata& info) { eventInfo = info; }
+
     int     totalGunsUsed   () const;
     bool    addGun          (const GunTrackingAmmoUsed& gun);        // Will not amend existing entries if a gun is already in the container
     bool    hasUsedGun      (const GunMetadata& gun) const;
