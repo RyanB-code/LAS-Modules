@@ -774,6 +774,32 @@ void ComboBoxes::subItem(SubItem& selected){
         ImGui::EndCombo();
     }
 }
+void ComboBoxes::locations  (const std::set<Location>& list, Location& selected){
+    if (ImGui::BeginCombo("##Location Combo", selected.getName(), ImGuiComboFlags_HeightLarge)) {
+        for (const auto& loc : list) {
+            bool isSelected { selected == loc };
+
+            if (ImGui::Selectable(loc.getName(), isSelected)){
+                selected = loc;
+                ImGui::SetItemDefaultFocus();
+            } 
+        }
+        ImGui::EndCombo();
+    }
+}
+void ComboBoxes::eventTypes (const std::set<ShootingEventType>& list, ShootingEventType& selected){
+    if (ImGui::BeginCombo("##Event Type Combo", selected.getName(), ImGuiComboFlags_HeightLarge)) {
+        for (const auto& et : list) {
+            bool isSelected {selected == et};
+
+            if (ImGui::Selectable(et.getName(), isSelected)){
+                selected = et;
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
 
 
 

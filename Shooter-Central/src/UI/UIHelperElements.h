@@ -96,6 +96,10 @@ namespace ListBoxes{
 namespace ComboBoxes{
     void category   (Category& selected);
     void subItem    (SubItem& selected);
+
+    void locations  (const std::set<Location>& list, Location& selected);
+    void eventTypes (const std::set<ShootingEventType>& list, ShootingEventType& selected);
+
 }
 
 
