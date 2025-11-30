@@ -460,6 +460,9 @@ int ArmoryGun::totalAmmoTypesUsed() const {
 ShootingEvent::ShootingEvent(const ShootingEventMetadata& info) : eventInfo {info} {
     gunsUsed.reserve(5);
 }
+int ShootingEvent::totalGunsUsed() const {
+    return gunsUsed.size();
+}
 bool ShootingEvent::addGun(const GunTrackingAmmoUsed& gun) {
     for(const auto& entry : gunsUsed){
         if(gun.getGunInfo() == entry.getGunInfo())
@@ -477,9 +480,27 @@ bool ShootingEvent::hasUsedGun(const GunMetadata& gun) const {
     
     return false;
 }
-int ShootingEvent::totalGunsUsed() const {
-    return gunsUsed.size();
+GunTrackingAmmoUsed& ShootingEvent::getGun(const GunMetadata& gun){
+    for(auto& entry : gunsUsed){
+        if(entry.getGunInfo() == gun)
+            return entry;
+    }
+
+    throw std::out_of_range{
+            std::format("ShootingEvent::getGun(), no GunTrackingAmmoUsed named [{}] found", gun.name)
+        }; 
 }
+const GunTrackingAmmoUsed& ShootingEvent::getGun (const GunMetadata& gun) const{
+    for(const auto& entry : gunsUsed){
+        if(entry.getGunInfo() == gun)
+            return entry;
+    }
+
+    throw std::out_of_range{
+            std::format("ShootingEvent::getGun(), no GunTrackingAmmoUsed named [{}] found", gun.name)
+        }; 
+}
+
 std::string ShootingEvent::printDate() const{
     return std::format("{:%Od %b %Y}", eventInfo.date);
 }

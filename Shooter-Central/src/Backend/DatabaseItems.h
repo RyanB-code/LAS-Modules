@@ -252,9 +252,12 @@ public:
     ShootingEvent(const ShootingEventMetadata& setInfo=ShootingEventMetadata{ } );
     ~ShootingEvent() = default;
 
+    int     totalGunsUsed   () const;
     bool    addGun          (const GunTrackingAmmoUsed& gun);        // Will not amend existing entries if a gun is already in the container
     bool    hasUsedGun      (const GunMetadata& gun) const;
-    int     totalGunsUsed   () const;
+
+    GunTrackingAmmoUsed&        getGun (const GunMetadata& gun);           // throws out_of_range if not found
+    const GunTrackingAmmoUsed&  getGun (const GunMetadata& gun) const;
 
     std::string printDate()     const;
 
