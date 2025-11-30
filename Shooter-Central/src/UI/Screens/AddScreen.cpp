@@ -1,93 +1,77 @@
 #include "AddScreen.h"
 
-namespace ShooterCentral::UI {
+namespace ShooterCentral::UI::Add {
 
-void Add::main(const Database& database, ScreenData::Add& data){
-    static constexpr float MIN_WIN_SIZE_X { 200 };
-    static constexpr float MIN_WIN_SIZE_Y { 600 };
+void main(const Database& database, ScreenData::Add& data){
 
-    static constexpr float MIN_TABLE_SIZE_X { 200 };
-    static constexpr float MAX_TABLE_SIZE_X { 400 };
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::Spacing();
 
-    bool verticalLayout {false};
+    centerNextComboBoxX("   Select An Item", 200);
+    ComboBoxes::subItem(data.subItem);
 
-    ImVec2 topWindowSize;
-    ImVec2 bottomWindowSize;
-    ImVec2 topTableSize;
+    ImGui::Spacing();
+    ImGui::Spacing();
 
-    if(ImGui::GetContentRegionAvail().x < (MIN_WIN_SIZE_X * 2)){
-        verticalLayout = true;
+    // Sizes below the combo box to get proper Y coord after the box
+    data.mainWindowSize = ImVec2{ (ImGui::GetContentRegionAvail().x / 4) * 3, ImGui::GetContentRegionAvail().y };
+    data.infoWindowSize = ImVec2{ (ImGui::GetContentRegionAvail().x / 4) , ImGui::GetContentRegionAvail().y };
 
-        topWindowSize  = {MIN_WIN_SIZE_X * 3, 800};
-        bottomWindowSize = topWindowSize;
+    if(data.infoWindowSize.x < data.minWinSize.x ){
+        data.verticalLayout = true;
+        data.mainWindowSize = ImGui::GetContentRegionAvail();
+        data.infoWindowSize = data.mainWindowSize;
     }
-    else{
-        topWindowSize  = {ImGui::GetContentRegionAvail().x / 2, ImGui::GetContentRegionAvail().y / 2};
-        if(topWindowSize.x < MIN_WIN_SIZE_X)
-            topWindowSize.x = MIN_WIN_SIZE_X;
-        if(topWindowSize.y < MIN_WIN_SIZE_Y)
-            topWindowSize.y = MIN_WIN_SIZE_Y;
+    else
+        data.verticalLayout = false;
 
-        bottomWindowSize =  { ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2};
-        if(bottomWindowSize.x < MIN_WIN_SIZE_X)
-            bottomWindowSize.x = MIN_WIN_SIZE_X;
-        if(bottomWindowSize.y < MIN_WIN_SIZE_Y)
-            bottomWindowSize.y = MIN_WIN_SIZE_Y;
-    }
+    // Ensure minimum windows
+    if(data.mainWindowSize.x < data.minWinSize.x)
+        data.mainWindowSize.x = data.minWinSize.x;
+    if(data.mainWindowSize.y < data.minWinSize.y)
+        data.mainWindowSize.y = data.minWinSize.y;
 
-    // Size the table
-    topTableSize = { topWindowSize.x-2, 400};
-    if(topTableSize.x < MIN_TABLE_SIZE_X)
-        topTableSize.x = MIN_TABLE_SIZE_X;
-    if(topTableSize.x > MAX_TABLE_SIZE_X)
-        topTableSize.x = MAX_TABLE_SIZE_X;
+    if(data.infoWindowSize.x < data.minWinSize.x)
+        data.infoWindowSize.x = data.minWinSize.x;
+    if(data.infoWindowSize.y < data.minWinSize.y)
+        data.infoWindowSize.y = data.minWinSize.y;
 
 
-    if(ImGui::BeginChild("Select Category", topWindowSize, ImGuiChildFlags_Border)){ 
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        centerNextItemY(20);
-        ImGui::BeginGroup();
-
-        centerNextComboBoxX("   Select An Item", 200);
-        ComboBoxes::subItem(data.subItem);
-
-        ImGui::EndGroup();
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-    }
-    ImGui::EndChild();
-
-    if(!verticalLayout)
-        ImGui::SameLine();
-
-    if(ImGui::BeginChild("Existing Items View", topWindowSize, ImGuiChildFlags_Border)){ 
-        ImGui::SeparatorText("View Existing Items"); 
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        centerNextItemX(topTableSize.x);
-        centerNextItemY(topTableSize.y);
-        showExistingItemsWindow(database, data.subItem, topTableSize);
-    }
-    ImGui::EndChild();
-
-    if(ImGui::BeginChild("Add Item Window", bottomWindowSize, ImGuiChildFlags_Border)){ 
+    if(ImGui::BeginChild("Add Item Window", data.mainWindowSize)){ 
         ImGui::SeparatorText("Add Item"); 
-
-        ImGui::Dummy(ImVec2{0.0f, 20.0f});
+        ImGui::Spacing();
+        ImGui::Spacing();
 
         addItemWindow(database, data);
     }
     ImGui::EndChild();
 
+    if(!data.verticalLayout)
+        ImGui::SameLine();
+
+    if(ImGui::BeginChild("Existing Items View", data.infoWindowSize)){ 
+        ImGui::SeparatorText("View Existing Items"); 
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        data.infoTableSize.x = ImGui::GetContentRegionAvail().x-2;
+        if(data.infoTableSize.x < data.minTableSize.x)
+            data.infoTableSize.x = data.minTableSize.x;
+        if(data.infoTableSize.x > data.maxTableWidth)
+            data.infoTableSize.x = data.maxTableWidth;
+
+        centerNextItemX(data.infoTableSize.x);
+        showExistingItemsWindow(database, data.subItem, data.infoTableSize);
+    }
+    ImGui::EndChild();
+
+
 }
-void Add::showExistingItemsWindow (const Database& database, const SubItem& selected, ImVec2 size){
-    ShootingEventMetadata   selectedEvent;
-    GunMetadata             selectedGun;
-    AmmoMetadata            selectedAmmo;
+void showExistingItemsWindow (const Database& database, const SubItem& selected, ImVec2 size){
+    static ShootingEventMetadata   selectedEvent    { };
+    static GunMetadata             selectedGun      { };
+    static AmmoMetadata            selectedAmmo     { };
 
     ImGui::BeginGroup();
     switch(selected){
@@ -95,8 +79,10 @@ void Add::showExistingItemsWindow (const Database& database, const SubItem& sele
             centerTextDisabled("All Events");
             Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), selectedEvent, size);
 
-            if(selectedEvent != EMPTY_EVENT_METADATA)
+            if(selectedEvent != EMPTY_EVENT_METADATA){
                 std::cout << "Command change to view event\n";
+                selectedEvent = EMPTY_EVENT_METADATA;
+            }
 
             // TODO - button here to view the event 
 
@@ -113,8 +99,10 @@ void Add::showExistingItemsWindow (const Database& database, const SubItem& sele
             centerTextDisabled("All Ammo");
             Tables::Selectable::ammoMetadata(database.getStockpile(), selectedAmmo, size);
 
-            if(selectedAmmo != EMPTY_AMMO_METADATA)
+            if(selectedAmmo != EMPTY_AMMO_METADATA){
                 std::cout << "Change to view ammo command\n";
+                selectedAmmo = EMPTY_AMMO_METADATA;
+            }
 
             // TODO - butti here to view the ammo
 
@@ -131,8 +119,10 @@ void Add::showExistingItemsWindow (const Database& database, const SubItem& sele
             centerTextDisabled("All Guns");
             Tables::Selectable::gunMetadataWithRoundCount(database.getArmory(), selectedGun, size);
 
-            if(selectedGun != EMPTY_GUN_METADATA)
+            if(selectedGun != EMPTY_GUN_METADATA){
                 std::cout << "Command change to view gun\n";
+                selectedGun = EMPTY_GUN_METADATA;
+            }
 
             // - TODO - button here to view the gun
             break;
@@ -146,11 +136,11 @@ void Add::showExistingItemsWindow (const Database& database, const SubItem& sele
     }
     ImGui::EndGroup();
 }
-void Add::addItemWindow(const Database& database, ScreenData::Add& screenData){
-    switch(screenData.subItem){
+void addItemWindow(const Database& database, ScreenData::Add& data){
+    switch(data.subItem){
         case SubItem::EVENT_EVENT:
-            Add::add_Event(
-                    screenData.eventBuffer, 
+            EventWindow::main(
+                    data.eventWindow, 
                     ScreenData::Add::MAX_CHAR_INPUT, 
                     database.getLocations(), 
                     database.getEventTypes(),
@@ -159,25 +149,25 @@ void Add::addItemWindow(const Database& database, ScreenData::Add& screenData){
                 );
             break;
         case SubItem::EVENT_TYPE:
-            Add::add_EventType(screenData.subItemBuffers.eventType, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_EventType(data.subItemBuffers.eventType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::EVENT_LOCATION: 
-            Add::add_Location(screenData.subItemBuffers.location, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Location(data.subItemBuffers.location, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::AMMO_AMMO:
        
             break;
         case SubItem::AMMO_MANUFACTURER:
-            Add::add_Manufacturer(screenData.subItemBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Manufacturer(data.subItemBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::GUN_AMMO_CARTRIDGE:
-            Add::add_Cartridge(screenData.subItemBuffers.cartridge, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Cartridge(data.subItemBuffers.cartridge, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         case SubItem::GUN_GUN:
 
             break;
         case SubItem::GUN_WEAPON_TYPE:
-            Add::add_WeaponType(screenData.subItemBuffers.weaponType, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_WeaponType(data.subItemBuffers.weaponType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         default:
             centerTextDisabled("Select an Item");
@@ -185,7 +175,7 @@ void Add::addItemWindow(const Database& database, ScreenData::Add& screenData){
     }
  
 }
-void Add::add_Manufacturer(char* textBuf, size_t size){
+void add_Manufacturer(char* textBuf, size_t size){
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Manufacturer to choose from when creating Ammo.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -205,7 +195,7 @@ void Add::add_Manufacturer(char* textBuf, size_t size){
         resetText(textBuf, size);
     }
 }
-void Add::add_Cartridge       (char* textBuf, size_t size){
+void add_Cartridge       (char* textBuf, size_t size){
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Cartridge to choose from when creating Ammo and Guns.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -225,7 +215,7 @@ void Add::add_Cartridge       (char* textBuf, size_t size){
         resetText(textBuf, size);
     }
 }
-void Add::add_EventType       (char* textBuf, size_t size){
+void add_EventType       (char* textBuf, size_t size){
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Event Type to choose from when creating an Event");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -245,7 +235,7 @@ void Add::add_EventType       (char* textBuf, size_t size){
         resetText(textBuf, size);
     }
 }
-void Add::add_WeaponType(char* textBuf, size_t size){
+void add_WeaponType(char* textBuf, size_t size){
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Weapon Type to choose from when creating a gun.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -265,7 +255,7 @@ void Add::add_WeaponType(char* textBuf, size_t size){
         resetText(textBuf, size);
     }
 }
-void Add::add_Location(char* textBuf, size_t size){
+void add_Location(char* textBuf, size_t size){
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Location to choose from when creating an Event.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -285,167 +275,112 @@ void Add::add_Location(char* textBuf, size_t size){
         resetText(textBuf, size);
     }
 }
-void Add::add_Event(  
-    ScreenData::Add::EventBuffer& buffer, 
-    size_t size,            
-    const std::set<Location>& locations,
-    const std::set<ShootingEventType>& eventTypes,
-    const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& stockpile,
-    const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory
-){
-    typedef ScreenData::Add::EventTab EventTab;
-
-    static EventTab lastTab;
-    ImGuiTabItemFlags eventInfoFlags { 0 }, gunsUsedFlags { 0 }, reviewFlags { 0 };
-    bool applyForce { false };
-
-    if(lastTab != buffer.currentTab)
-        applyForce = true;
-
-    if(applyForce){
-        switch(buffer.currentTab){
-            case EventTab::INFO:
-                eventInfoFlags   |= ImGuiTabItemFlags_SetSelected;
-                break;
-            case EventTab::GUNS_AND_AMMO:
-                gunsUsedFlags    |= ImGuiTabItemFlags_SetSelected;
-                break;
-            case EventTab::REVIEW_AND_SUBMIT:
-                reviewFlags      |= ImGuiTabItemFlags_SetSelected;
-                break;
-            default:
-                LAS::log_warn("SC Add Event Tab case not handled");
-                break;
-        }
-    }
-
+void EventWindow::main(  
+        ScreenData::Add::EventWindow& data, 
+        size_t notesSize,            
+        const std::set<Location>& locations,
+        const std::set<ShootingEventType>& eventTypes,
+        const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& stockpile,
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory
+    )
+{
     if(ImGui::BeginTabBar("Add Event Tabs")){
-        if(ImGui::BeginTabItem("Event Information", nullptr, eventInfoFlags)){
-            buffer.currentTab = EventTab::INFO;
+        if(ImGui::BeginTabItem("Event Information")){
+            eventMetadata(data, notesSize, locations, eventTypes); 
             ImGui::EndTabItem();
         }
         
-        if(!buffer.eventInfoVerified)
+        if(!data.eventInfoVerified)
             ImGui::BeginDisabled();
 
-        if(ImGui::BeginTabItem("Guns and Ammo", nullptr, gunsUsedFlags)){
-            buffer.currentTab = EventTab::GUNS_AND_AMMO;
+        if(ImGui::BeginTabItem("Guns and Ammo")){
+            gunsAndAmmo(data.event, stockpile, armory); 
             ImGui::EndTabItem();
         }
 
-        if(!buffer.eventInfoVerified)
+        if(!data.eventInfoVerified)
             ImGui::EndDisabled();
 
 
-        if(!buffer.gunsVerified) 
+        if(!data.gunsVerified) 
             ImGui::BeginDisabled();
 
-        if(ImGui::BeginTabItem("Review And Submit", nullptr, reviewFlags)){
-            buffer.currentTab = EventTab::REVIEW_AND_SUBMIT;
+        if(ImGui::BeginTabItem("Review And Submit")){
+            ImGui::Text("fuck");
             ImGui::EndTabItem();
         }
 
-        if(!buffer.gunsVerified) 
+        if(!data.gunsVerified) 
             ImGui::EndDisabled();
 
 
         ImGui::EndTabBar();
     }
-    
-    lastTab = buffer.currentTab;
-
-    switch(buffer.currentTab){
-        case EventTab::INFO:
-            add_Event_InformationTab(buffer, size, locations, eventTypes); 
-            break;
-        case EventTab::GUNS_AND_AMMO:
-            add_Event_GunsUsedTab(buffer.gunsUsed, buffer.selectedGun, buffer.addItemsCurrentTab, stockpile, armory); 
-            break;
-        case EventTab::REVIEW_AND_SUBMIT:
-            break;
-        default:
-            LAS::log_warn("SC Add Event Tab case not handled");
-            break;
-    }
-
 }
-void Add::add_Event_InformationTab(
-                ScreenData::Add::EventBuffer& buffer, 
-                size_t size,            
-                const std::set<Location>& locations,
-                const std::set<ShootingEventType>& eventTypes
-) {
-    if(ImGui::BeginChild("Add Event Directions", ImVec2{ImGui::GetContentRegionAvail().x / 2, 120} ) ) {
-        ImGui::Text("Directions");
-        ImGui::BulletText("Navigate through the tabs to proceed to create the Event");
-        ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
-    }
-    ImGui::EndChild();
+void EventWindow::eventMetadata(
+        ScreenData::Add::EventWindow& eventWindow, 
+        size_t notesSize,            
+        const std::set<Location>& locations,
+        const std::set<ShootingEventType>& eventTypes
+    ) 
+{
+    typedef ScreenData::Add::EventWindow::MetadataWindow MetadataWindow;
+    MetadataWindow& data { eventWindow.metadataWindow };
+    using namespace std::chrono;
 
-    ImGui::SameLine(); 
+    ImGui::Indent(20);
+    ImGui::Text("Directions");
+    ImGui::BulletText("Navigate through the tabs to proceed to create the Event");
+    ImGui::BulletText("Once filled out, verify the information to continue");
+    ImGui::Unindent();
 
-    if(ImGui::BeginChild("Add Event Options", ImVec2{ImGui::GetContentRegionAvail().x, 120})){
+    if(centerButton("Verify Information", eventWindow.verifyButtonSize)){
+        eventWindow.triedToVerifyEventInfo = true;
 
-        ImGui::Spacing();
-        ImGui::Spacing();
+        ymd date { year{data.year}, month{data.month}, day{data.day} };
 
-        if(ImGui::BeginChild("Apply Amounts", ImVec2{ImGui::GetContentRegionAvail().x/2, 110})) {
-            ImGui::Text("Apply to Stockpile");
-            ImGui::SameLine(135);
-            ImGui::Checkbox("##Apply To Stockpile", &buffer.applyToStockpile);
+        if(verifyMetadata(data.selectedLocation, data.selectedET, date) ){
+            eventWindow.eventInfoVerified = true;
+            eventWindow.triedToVerifyEventInfo = false;
 
-            ImGui::Text("Apply to Armory");
-            ImGui::SameLine(135);
-            ImGui::Checkbox("##Apply To Guns", &buffer.applyToArmory);
+            eventWindow.event.setInfo ( ShootingEventMetadata { 
+                    std::string{data.notes},
+                    data.selectedLocation,
+                    data.selectedET,
+                    date
+                }
+            );
+
+            data = MetadataWindow { };
         }
-        ImGui::EndChild();
-
     }
-    ImGui::EndChild();
 
-    if(centerButton("Next", ImVec2{200,50})){
-        if(add_Event_verifyInformation(buffer)){
-            buffer.currentTab = ScreenData::Add::EventTab::GUNS_AND_AMMO;
-            buffer.eventInfoVerified = true;
-            std::cout << "verified\n";
-        }
-        else
-            std::cout << "Popup verify failed\n";
-    }
+    if(eventWindow.eventInfoVerified)
+        centerTextDisabled("(Proceed to Next Tab)");
+    else if(eventWindow.triedToVerifyEventInfo)
+        centerTextDisabled("(Make Sure Data is Correct)");
+    else
+        ImGui::Dummy( ImVec2 { 0, ImGui::CalcTextSize("PLACEHOLDER").y } );
+
+    ImGui::Spacing();
+    ImGui::Spacing();
 
     ImGui::SeparatorText("Input Event Information");
+    ImGui::Spacing();
+    ImGui::Spacing();
 
+    ImGui::Indent(20);
     ImGui::Text("Location");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Location Combo", buffer.location.getName(), ImGuiComboFlags_HeightSmall)) {
-        for (const auto& loc : locations) {
-            bool isSelected { buffer.location == loc };
-
-            if (ImGui::Selectable(loc.getName(), isSelected)){
-                buffer.location = loc;
-                ImGui::SetItemDefaultFocus();
-            } 
-        }
-        ImGui::EndCombo();
-    }
+    ComboBoxes::locations(locations, data.selectedLocation);
 
     ImGui::Text("Event Type");
     ImGui::SameLine(100);
-    if (ImGui::BeginCombo("##Choose Event Type Combo", buffer.eventType.getName(), ImGuiComboFlags_HeightSmall)) {
-        for (const auto& et : eventTypes) {
-            bool isSelected {buffer.eventType == et};
-
-            if (ImGui::Selectable(et.getName(), isSelected)){
-                buffer.eventType = et;
-                ImGui::SetItemDefaultFocus();
-            }
-        }
-        ImGui::EndCombo();
-    }
+    ComboBoxes::eventTypes(eventTypes, data.selectedET);
 
     ImGui::Text("Notes");
     ImGui::SameLine(100);
-    ImGui::InputTextMultiline("##Input Notes", buffer.notes, size, ImVec2{ImGui::GetContentRegionAvail().x, 100}, ImGuiInputTextFlags_CtrlEnterForNewLine);
+    ImGui::InputTextMultiline("##Input Notes", data.notes, notesSize, ImVec2{600, 100}, ImGuiInputTextFlags_CtrlEnterForNewLine);
     ImGui::SameLine();
     ImGui::TextDisabled("(May be left blank)");
 
@@ -454,13 +389,13 @@ void Add::add_Event_InformationTab(
     ImGui::Text("Date");
     ImGui::SameLine(100);
     ImGui::SetNextItemWidth(100);
-    ImGui::InputInt("##Input Day", &buffer.day);
+    ImGui::InputInt("##Input Day", &data.day);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(100);
-    ImGui::InputInt("##Input Month", &buffer.month);
+    ImGui::InputInt("##Input Month", &data.month);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(100);
-    ImGui::InputInt("##Input Year", &buffer.year);
+    ImGui::InputInt("##Input Year", &data.year);
 
     // Button to auto fill today's date
     ImGui::SameLine(0, 30);
@@ -468,9 +403,9 @@ void Add::add_Event_InformationTab(
         const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
 
         const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
-        buffer.day = static_cast<unsigned>(ymd.day());
-        buffer.month = static_cast<unsigned>(ymd.month());
-        buffer.year = static_cast<int>(ymd.year());
+        data.day = static_cast<unsigned>(ymd.day());
+        data.month = static_cast<unsigned>(ymd.month());
+        data.year = static_cast<int>(ymd.year());
     }
     // Grayed out details, approximate centers of text box did the trick
     ImGui::SetCursorPosX(125);
@@ -479,32 +414,33 @@ void Add::add_Event_InformationTab(
     ImGui::TextDisabled("(Month)");
     ImGui::SameLine(0, 70);
     ImGui::TextDisabled("(Year)");
+    ImGui::Unindent();
 }
-bool Add::add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer){
+bool EventWindow::verifyMetadata(
+       Location& location,
+       ShootingEventType& et,
+       ymd date
+   )
+{
     using namespace std::chrono;
 
-    static const ScreenData::Add::EventBuffer EMPTY_BUFFER { }; 
-
-    if(EMPTY_BUFFER.location == buffer.location)
+    if(location == EMPTY_LOCATION)
         return false;
-    if(EMPTY_BUFFER.eventType == buffer.eventType)
+    if(et == EMPTY_EVENT_TYPE)
         return false;
     
-    const year_month_day  dateBuf { year{buffer.year}, month{buffer.month}, day{buffer.day}};
-
-    if(!dateBuf.ok())
+    if(!date.ok())
         return false;
 
     return true;
 }
 
-void Add::add_Event_GunsUsedTab(
-    std::vector<GunTrackingAmmoUsed>& gunsUsed,
-    std::vector<GunTrackingAmmoUsed>::iterator& selectedGun,
-    ScreenData::Add::EventTab_AddItemsScreen& currentTab,
+void EventWindow::gunsAndAmmo(
+    ShootingEvent& event,
     const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&    stockpile,
     const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&     armory
 ){
+    /*
     // Table size calculations
     static constexpr float MIN_TABLE_SIZE_X { 400 };
     static constexpr float MAX_TABLE_SIZE_X { 800 };
@@ -611,9 +547,10 @@ void Add::add_Event_GunsUsedTab(
         }
     }
     ImGui::EndChild();
+    */
 }
 
-bool Add::add_Event_Gun (
+bool EventWindow::add_Event_Gun (
         const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& allGuns,
         std::vector<GunTrackingAmmoUsed>& gunsUsed
     )
@@ -654,7 +591,7 @@ bool Add::add_Event_Gun (
 
     return false;
 }
-bool Add::add_Event_AmmoForGun (
+bool EventWindow::add_Event_AmmoForGun (
         const std::map<AmmoMetadata,  StockpileAmmo>& ammoList,
         AmountOfAmmo& ammoUsed
     )

@@ -22,41 +22,47 @@ struct Add {
         char cartridge[MAX_CHAR_INPUT]      = "";
         char location[MAX_CHAR_INPUT]       = "";
         char eventType[MAX_CHAR_INPUT]      = "";
-    };
-    enum class EventTab {
-        INFO,
-        GUNS_AND_AMMO,
-        REVIEW_AND_SUBMIT
-    };
-    enum class EventTab_AddItemsScreen {
-        GUN,
-        AMMO
-    };
-    struct EventBuffer {
-        Location            location        { "" };
-        ShootingEventType   eventType       { "" };
+    }; 
+    struct EventWindow {
+        struct MetadataWindow {
+            ShootingEventType   selectedET          { };
+            Location            selectedLocation    { };
 
-        std::vector<GunTrackingAmmoUsed>            gunsUsed { };
-        std::vector<GunTrackingAmmoUsed>::iterator  selectedGun { gunsUsed.end() };
+            char notes[MAX_CHAR_INPUT] = "";
+            int day     { 0 };
+            int month   { 0 };
+            int year    { 0 };
+        };
 
-        char notes[MAX_CHAR_INPUT] = "";
-        int day     { 0 };
-        int month   { 0 };
-        int year    { 0 };
+        MetadataWindow metadataWindow { };
 
-        bool applyToStockpile   { true };
-        bool applyToArmory      { true };
-
-        bool eventInfoVerified  { false };
+        ShootingEvent event { };
+        bool eventInfoVerified          { false };
+        bool triedToVerifyEventInfo     { false };
         bool gunsVerified       { false };
-        EventTab currentTab                         { EventTab::INFO };
-        EventTab_AddItemsScreen addItemsCurrentTab  { EventTab_AddItemsScreen::GUN };
+
+        static constexpr ImVec2 verifyButtonSize { 150, 40 };
     };
+
+
+    EventWindow     eventWindow     { };
 
     Category        category        { Category::NONE }; 
     SubItem         subItem         { SubItem::NONE };
     SubItemBuffers  subItemBuffers  { };
-    EventBuffer     eventBuffer     { };
+
+    bool verticalLayout { false };
+
+    static constexpr ImVec2 deselectButtonSize  { 100, 40 };
+    static constexpr ImVec2 minWinSize          { 400, 600 };
+    static constexpr ImVec2 minTableSize        { 300, 400 };
+    static constexpr float  maxTableWidth       { 800 };     
+
+    ImVec2 mainWindowSize   { minWinSize };
+    ImVec2 infoWindowSize   { minWinSize };
+    ImVec2 infoTableSize    { minTableSize };
+ 
+
 };
 
 }   // End Sc::UI::ScreenData
@@ -73,39 +79,44 @@ void add_EventType           (char* textBuf, size_t size);
 void add_WeaponType          (char* textBuf, size_t size);
 void add_Location            (char* textBuf, size_t size);
 
-void add_Event(  
-        ScreenData::Add::EventBuffer& buffer, 
-        size_t size,            
-        const std::set<Location>&,
-        const std::set<ShootingEventType>&,
-        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
-        const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&
-    );
-void add_Event_InformationTab(
-        ScreenData::Add::EventBuffer& buffer, 
-        size_t size,            
-        const std::set<Location>&,
-        const std::set<ShootingEventType>&
-    );
-bool add_Event_verifyInformation(const ScreenData::Add::EventBuffer& buffer);
-void add_Event_GunsUsedTab(
-        std::vector<GunTrackingAmmoUsed>& gunsUsed,
-        std::vector<GunTrackingAmmoUsed>::iterator& selectedGun,
-        ScreenData::Add::EventTab_AddItemsScreen& currentTab,
-        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
-        const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
-    );
+namespace EventWindow {
 
-// Returns true if an insertion happened so itrs can be updated in Add::EventBuffer
-bool add_Event_Gun (
-        const std::map<Cartridge, std::map<GunMetadata,  ArmoryGun>>&,
-        std::vector<GunTrackingAmmoUsed>& gunsUsed
-    );
-bool add_Event_AmmoForGun (
-        const std::map<AmmoMetadata,  StockpileAmmo>&,
-        AmountOfAmmo& ammo 
-    );
+    void main(  
+            ScreenData::Add::EventWindow& eventWindow, 
+            size_t notesSize,            
+            const std::set<Location>&,
+            const std::set<ShootingEventType>&,
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
+            const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&
+        );
+    void eventMetadata(
+            ScreenData::Add::EventWindow& buffer, 
+            size_t notesSize,            
+            const std::set<Location>&,
+            const std::set<ShootingEventType>&
+        );
+    bool verifyMetadata(
+            Location& location,
+            ShootingEventType& et,
+            ymd date
+        );
+    void gunsAndAmmo(
+            ShootingEvent& event,
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
+            const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
+        );
 
+
+    // Returns true if an insertion happened so itrs can be updated in Add::EventBuffer
+    bool add_Event_Gun (
+            const std::map<Cartridge, std::map<GunMetadata,  ArmoryGun>>&,
+            std::vector<GunTrackingAmmoUsed>& gunsUsed
+        );
+    bool add_Event_AmmoForGun (
+            const std::map<AmmoMetadata,  StockpileAmmo>&,
+            AmountOfAmmo& ammo 
+        );
+}   // End EventWindow
 
 }   // End SC::UI::Add
 
