@@ -1,94 +1,82 @@
 #include "HomeScreen.h"
 
-namespace ShooterCentral::UI {
+namespace ShooterCentral::UI::Home {
 
-void Home::main (const Database& database, ScreenData::Home& data, const UnsavedChanges& changes) {
+void main (const Database& database, ScreenData::Home& screenData, const UnsavedChanges& changes) {
+    UI::ScreenData::Home::MainWindow& data { screenData.mainWindow };
 
-    ImVec2  windowSize { ImGui::GetContentRegionAvail() };
-    ImVec2  childWindowSizes { };
-    bool    horizontalLayout { false };
-
-    int numShown { 0 }; // Number of child windows
-
-    if(data.showGuns)
-        ++numShown;
-
-    if(data.showEvents)
-        ++numShown;
-
-    if(data.showStockpile)
-        ++numShown;
+    data.oneThirdWindowSize.x = ImGui::GetContentRegionAvail().x / 3;
+    data.oneThirdWindowSize.y = ImGui::GetContentRegionAvail().y / 3;
 
 
-    // Horizontal bigger than vertical, display tabs side by side
-    if( (windowSize.x / numShown) > (windowSize.y / numShown ) ){
-        childWindowSizes.x = windowSize.x / numShown;
-        childWindowSizes.y = windowSize.y;
-        horizontalLayout = true;
+    if(data.oneThirdWindowSize.x < data.MIN_WIN_SIZE.x ){
+        data.childWindowSize.x = ImGui::GetContentRegionAvail().x;
+        data.verticalLayout = true;
     }
     else{
-        childWindowSizes.x = windowSize.x;
-        childWindowSizes.y = windowSize.y / numShown;
-        horizontalLayout = false;
+        data.childWindowSize.x = data.oneThirdWindowSize.x;
+        data.verticalLayout = false;
     }
 
+    if(data.oneThirdWindowSize.y < data.MIN_WIN_SIZE.y )
+        data.childWindowSize.y = data.MIN_WIN_SIZE.y;
+    else
+        data.childWindowSize.y = ImGui::GetContentRegionAvail().y;
 
-    if(data.showGuns){
-        if(ImGui::BeginChild("Home Guns", childWindowSizes, 0) )
-            Home::gunWindow(database.getArmory(), data.selectedGun);
-        ImGui::EndChild();
-    }
+    if(data.childWindowSize.x < data.MIN_WIN_SIZE.x )
+        data.childWindowSize.x = data.MIN_WIN_SIZE.x;
 
-     
-    if(horizontalLayout)
+
+    if(ImGui::BeginChild("Home Guns", data.childWindowSize, 0) )
+        Home::gunWindow(database.getArmory(), screenData.gunWindow);
+    ImGui::EndChild();
+
+    if(!data.verticalLayout)
         ImGui::SameLine();
 
-    if(data.showEvents){
-        if(ImGui::BeginChild("Home Events", childWindowSizes, 0) )
-            Home::eventsWindow(database.getEvents(), data.selectedEvent);
-        ImGui::EndChild();
-    }
+    if(ImGui::BeginChild("Home Events", data.childWindowSize, 0) )
+        Home::eventsWindow(database.getEvents(), screenData.eventsWindow);
+    ImGui::EndChild();
 
-    if(horizontalLayout)
+    if(!data.verticalLayout)
         ImGui::SameLine();
 
-    if(data.showStockpile){
-        if(ImGui::BeginChild("Home Stockpile", childWindowSizes, 0) )
-            Home::stockpileWindow(database.getAmountPerCartridge(), data.selectedCartridge); 
-        ImGui::EndChild();
-    }
+    if(ImGui::BeginChild("Home Stockpile", data.childWindowSize, 0) )
+        Home::stockpileWindow(database.getAmountPerCartridge(), screenData.stockpileWindow); 
+    ImGui::EndChild();
 }
-void Home::gunWindow(const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& guns, GunMetadata& selectedGun){
+void gunWindow(
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& guns, 
+        UI::ScreenData::Home::GunWindow& screenData
+    )
+{
+    screenData.tableSize.x = ImGui::GetContentRegionAvail().x;
 
-    // Size table correctly
-    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
+    if(screenData.tableSize.x < 400)
+        screenData.tableSize.x = 400;
+    if(screenData.tableSize.x > 800)
+        screenData.tableSize.x = 800;
 
-    if(tableSize.x < 400)
-        tableSize.x = 400;
-    if(tableSize.x > 800)
-        tableSize.x = 800;
 
-    ImGui::SeparatorText( "Guns In Armory" );
-    ImGui::Spacing();
-
-    centerNextItemX(tableSize.x); 
-    Tables::Selectable::gunMetadataWithRoundCount(guns, selectedGun, tableSize);
-
+    ImGui::SeparatorText( "Armory" );
     ImGui::Spacing();
     ImGui::Spacing();
 
+    centerNextItemX(screenData.tableSize.x); 
+    Tables::Selectable::gunMetadataWithRoundCount(guns, screenData.selectedGun, screenData.tableSize);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
     ImGui::SeparatorText( "Selected Gun" );
 
-    if(selectedGun == GunMetadata { } ) {
+    if(screenData.selectedGun == EMPTY_GUN_METADATA) 
         centerTextDisabled("Select A Gun For More Information");
-        return;
-    }
-
-    Home::gunWindow_selectedGunInformation(guns.at(selectedGun.cartridge).at(selectedGun));
-
-    return;
+    else
+        gunWindow_selectedGunInformation(
+                guns.at(screenData.selectedGun.cartridge).at(screenData.selectedGun)
+            );
 }
-void Home::gunWindow_selectedGunInformation(const ArmoryGun& gun){
+void gunWindow_selectedGunInformation(const ArmoryGun& gun){
     const GunMetadata& gunInfo  { gun.getGunInfo() };
 
     if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
@@ -105,59 +93,55 @@ void Home::gunWindow_selectedGunInformation(const ArmoryGun& gun){
     if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Text("Round Count:       %d", gun.getRoundCount()    );
         ImGui::Text("Events Used In:    %d", gun.totalEventsUsed()  ); 
-        //ImGui::Text("Last Event:        %s", 
     }
     ImGui::EndChild();
 }
-void Home::eventsWindow(const std::map<ShootingEventMetadata, ShootingEvent>& events, ShootingEventMetadata& selected ){
-
-    // Size the table
-    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
-    if(tableSize.x < 400)
-        tableSize.x = 400;
-    if(tableSize.x > 800)
-        tableSize.x = 800;
+void eventsWindow(
+        const std::map<ShootingEventMetadata, ShootingEvent>& events, 
+        UI::ScreenData::Home::EventsWindow& screenData 
+    )
+{
+    screenData.tableSize.x = ImGui::GetContentRegionAvail().x;
+    if(screenData.tableSize.x < 400)
+        screenData.tableSize.x = 400;
+    if(screenData.tableSize.x > 800)
+        screenData.tableSize.x = 800;
 
     ImGui::SeparatorText( "Events" );
     ImGui::Spacing();
-
-    centerNextItemX(tableSize.x);
-    Tables::Selectable::eventsWithGunsUsed(events, selected, tableSize); 
+    ImGui::Spacing();
+   
+    centerNextItemX(screenData.tableSize.x);
+    Tables::Selectable::eventsWithGunsUsed(events, screenData.selectedEvent, screenData.tableSize); 
 
     ImGui::Spacing();
     ImGui::Spacing();
-
-    ImGui::Indent(20);
-    ImGui::Text("Events:       %ld", events.size()); 
-    ImGui::Unindent(20);
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
     ImGui::SeparatorText( "Selected Event" );
 
-    if(selected == EMPTY_EVENT_METADATA) {
+    if(screenData.selectedEvent == EMPTY_EVENT_METADATA) {
         centerTextDisabled("Select An Event For More Information");
         return;
     }
+    else
+        eventsWindow_selectedEventInformation(events.at(screenData.selectedEvent));
 
-    // Show selected event information
-    const ShootingEvent& selectedEvent          { events.at(selected) };
-    const ShootingEventMetadata& selectedInfo   { selectedEvent.getInfo() };
+}
+void eventsWindow_selectedEventInformation(const ShootingEvent& event){
+    const ShootingEventMetadata& info   { event.getInfo() };
 
     if(ImGui::BeginChild("Selected Event Details", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
         ImGui::TextDisabled("Date: ");
         ImGui::SameLine(100);
-        ImGui::Text("%s", selectedEvent.printDate().c_str());
+        ImGui::Text("%s", printDate(info.date).c_str());
 
         ImGui::TextDisabled("Location: ");
         ImGui::SameLine(100);
-        ImGui::Text("%s", selectedInfo.location.getName());
+        ImGui::Text("%s", info.location.getName());
 
         ImGui::TextDisabled("Event Type: ");
         ImGui::SameLine(100);
-        ImGui::Text("%s", selectedInfo.eventType.getName());
+        ImGui::Text("%s", info.eventType.getName());
     }
     ImGui::EndChild();
 
@@ -165,39 +149,34 @@ void Home::eventsWindow(const std::map<ShootingEventMetadata, ShootingEvent>& ev
 
     if(ImGui::BeginChild("Selected Event Notes", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         centerTextDisabled("Notes");
-        ImGui::TextWrapped("%s", selectedInfo.notes.c_str());
+        ImGui::TextWrapped("%s", info.notes.c_str());
     }
     ImGui::EndChild();
 }
-void Home::stockpileWindow(const std::map<Cartridge, int>& cartridgeList, Cartridge& selected){
 
-    // Size the table
-    ImVec2 tableSize { ImGui::GetContentRegionAvail().x-2, 200};
-
-    if(tableSize.x < 400)
-        tableSize.x = 400;
-    if(tableSize.x > 800)
-        tableSize.x = 800;
+void stockpileWindow(
+        const std::map<Cartridge, int>& cartridgeList,
+        UI::ScreenData::Home::StockpileWindow& screenData
+    )
+{
+    screenData.tableSize.x = ImGui::GetContentRegionAvail().x;
+    if(screenData.tableSize.x < 400)
+        screenData.tableSize.x = 400;
+    if(screenData.tableSize.x > 800)
+        screenData.tableSize.x = 800;
 
     ImGui::SeparatorText( "Ammo Stockpile" );
-
-    ImGui::Spacing();
-    centerNextItemX(tableSize.x);
-    Tables::Selectable::cartridgeAmountOnHand(cartridgeList, selected, tableSize);
-
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Indent(20);
-    ImGui::Text("Cartridges in Stockpile:       %ld", cartridgeList.size()); 
-    ImGui::Unindent(20);
+    centerNextItemX(screenData.tableSize.x);
+    Tables::Selectable::cartridgeAmountOnHand(cartridgeList, screenData.selectedCartridge, screenData.tableSize);
 
     ImGui::Spacing();
     ImGui::Spacing();
-
     ImGui::SeparatorText( "Selected Cartridge" );
 
-    if(selected == EMPTY_CARTRIDGE) {
+    if(screenData.selectedCartridge == EMPTY_CARTRIDGE) {
         centerTextDisabled("Select A Cartridge For More Information");
         return;
     }
