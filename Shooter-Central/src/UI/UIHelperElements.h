@@ -49,8 +49,8 @@ namespace Tables{
                 ImVec2 size
             );
         void gunMetadata(
-                std::vector<GunTrackingAmmoUsed>& guns,
-                std::vector<GunTrackingAmmoUsed>::iterator& selected,
+                const std::vector<GunTrackingAmmoUsed>& guns,
+                GunMetadata& selectedGun,
                 ImVec2 size
             );
         void gunMetadataWithRoundCount(

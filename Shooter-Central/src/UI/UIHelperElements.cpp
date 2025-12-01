@@ -361,8 +361,8 @@ void Tables::Selectable::gunMetadata(
     }
 }
 void Tables::Selectable::gunMetadata(
-        std::vector<GunTrackingAmmoUsed>& guns,
-        std::vector<GunTrackingAmmoUsed>::iterator& selected,
+        const std::vector<GunTrackingAmmoUsed>& guns,
+        GunMetadata& selected,
         ImVec2 size
     )
 {
@@ -374,9 +374,9 @@ void Tables::Selectable::gunMetadata(
 
         ImGui::TableHeadersRow();
 
-        for(auto itr { guns.begin() }; itr != guns.end(); ++itr){
-            bool isSelected { selected == itr };
-            const GunMetadata& info { itr->getGunInfo() };
+        for(const auto& gunTrackingAmmoUsed : guns){
+            const GunMetadata& info { gunTrackingAmmoUsed.getGunInfo() };
+            bool isSelected { selected == selected};
 
             ImGui::PushID(std::to_string(row).c_str());
             ImGui::TableNextRow();
@@ -386,7 +386,7 @@ void Tables::Selectable::gunMetadata(
                 switch( column ){
                     case 0:
                         if(ImGui::Selectable(info.weaponType.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
-                            selected = itr;
+                            selected = info;
                         break;
                     case 1:
                         ImGui::Text("%s", info.cartridge.getName());
