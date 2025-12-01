@@ -143,7 +143,7 @@ namespace EventWindow {
         );
     void addAmmoToGun (
             GunMetadata& selected,
-            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>&
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&
         );
 }   // End EventWindow
 
