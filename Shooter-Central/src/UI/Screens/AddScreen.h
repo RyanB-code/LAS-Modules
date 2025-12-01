@@ -33,8 +33,38 @@ struct Add {
             int month   { 0 };
             int year    { 0 };
         };
+        struct GunsAndAmmoWindow {
+            struct AddGunWindow {
+                GunMetadata selectedGun { };
 
-        MetadataWindow metadataWindow { };
+                bool selectedGunValid { false };
+                static constexpr ImVec2 buttonSize { 100, 40 };
+            };
+
+            static constexpr ImVec2 buttonSize          { 100, 40 };
+            static constexpr ImVec2 minWinSize          { 400, 600 };
+            static constexpr ImVec2 minTableSize        { 300, 400 };
+            static constexpr float  maxTableWidth       { 800 };     
+            static constexpr float  optionsWinHeight    { 100 };
+
+            GunMetadata    selectedGun     { };
+            AmmoMetadata   selectedAmmo    { };
+
+            AddGunWindow addGunWindow { };
+
+            bool verticalLayout     { false };
+            bool selectedGunValid   { false };
+           
+            ImVec2 optionsWinSize   { minWinSize.x, optionsWinHeight };
+            ImVec2 mainWindowSize   { minWinSize };
+            ImVec2 viewWindowSize   { minWinSize };
+            
+            ImVec2 mainTableSize    { minTableSize };
+            ImVec2 viewTableSize    { minTableSize };
+        };
+
+        MetadataWindow      metadataWindow      { };
+        GunsAndAmmoWindow   gunsAndAmmoWindow   { };
 
         ShootingEvent event { };
         bool eventInfoVerified          { false };
@@ -44,6 +74,10 @@ struct Add {
         static constexpr ImVec2 verifyButtonSize { 150, 40 };
     };
 
+    static constexpr ImVec2 deselectButtonSize  { 100, 40 };
+    static constexpr ImVec2 minWinSize          { 400, 600 };
+    static constexpr ImVec2 minTableSize        { 300, 400 };
+    static constexpr float  maxTableWidth       { 800 };     
 
     EventWindow     eventWindow     { };
 
@@ -52,11 +86,6 @@ struct Add {
     SubItemBuffers  subItemBuffers  { };
 
     bool verticalLayout { false };
-
-    static constexpr ImVec2 deselectButtonSize  { 100, 40 };
-    static constexpr ImVec2 minWinSize          { 400, 600 };
-    static constexpr ImVec2 minTableSize        { 300, 400 };
-    static constexpr float  maxTableWidth       { 800 };     
 
     ImVec2 mainWindowSize   { minWinSize };
     ImVec2 infoWindowSize   { minWinSize };
@@ -89,7 +118,7 @@ namespace EventWindow {
             const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
             const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&
         );
-    void eventMetadata(
+    void eventMetadataWindow(
             ScreenData::Add::EventWindow& buffer, 
             size_t notesSize,            
             const std::set<Location>&,
@@ -100,21 +129,21 @@ namespace EventWindow {
             ShootingEventType& et,
             ymd date
         );
-    void gunsAndAmmo(
+    void gunsAndAmmoWindow(
+            ScreenData::Add::EventWindow& data, 
             ShootingEvent& event,
             const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
             const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
         );
-
-
-    // Returns true if an insertion happened so itrs can be updated in Add::EventBuffer
-    bool add_Event_Gun (
+    void addGun(
+            ScreenData::Add::EventWindow::GunsAndAmmoWindow::AddGunWindow& data, 
+            ShootingEvent& event, 
             const std::map<Cartridge, std::map<GunMetadata,  ArmoryGun>>&,
-            std::vector<GunTrackingAmmoUsed>& gunsUsed
+            const ImVec2& tableSize
         );
-    bool add_Event_AmmoForGun (
-            const std::map<AmmoMetadata,  StockpileAmmo>&,
-            AmountOfAmmo& ammo 
+    void addAmmoToGun (
+            GunMetadata& selected,
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>&
         );
 }   // End EventWindow
 
