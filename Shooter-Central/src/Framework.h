@@ -45,7 +45,7 @@ public:
     void draw();
 
     static constexpr char TITLE[] = "Shooter Central";
-    static constexpr char COMMAND_GROUP_NAME[] = "sc"; 
+    static constexpr char SHORT_TAG[] = "sc"; 
 
 private:
     std::shared_ptr<bool>   shown;

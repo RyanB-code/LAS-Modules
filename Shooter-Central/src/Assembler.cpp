@@ -17,7 +17,7 @@ bool LASM_loadModuleInfo(LAS::Information::ModuleInfo& moduleInfo){
     moduleInfo.moduleVersion    = Information::Version{SC_VERSION_MAJOR, SC_VERSION_MINOR, SC_VERSION_PATCH};
 
     moduleInfo.title            = Framework::TITLE;
-    moduleInfo.commandGroupName = Framework::COMMAND_GROUP_NAME;
+    moduleInfo.shortTag         = Framework::SHORT_TAG;
 
     moduleInfo.updateFunction   = std::function<void()>{std::bind(&Framework::update, &application)};
     moduleInfo.drawFunction     = std::function<void()>{std::bind(&Framework::draw, &application)};

@@ -75,10 +75,9 @@ bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setSho
     Filepaths paths {directory};
 
     if(!setupFilesystem(paths)){
-        log_critical("Failed to setup filesystem");
+        log_fatal("Failed to setup filesystem");
         return false;
     }
-
 
     if(!readGuns(database, std::filesystem::path(paths.gunsDir)))
         log_error("Failed reading Guns");
