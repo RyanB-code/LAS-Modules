@@ -35,30 +35,39 @@ struct Add {
         };
         struct GunsAndAmmoWindow {
             struct AddGunWindow {
-                GunMetadata selectedGun { };
+                GunMetadata     selectedGun     { };
 
-                bool selectedGunValid { false };
+                bool selectedGunValid   { false };
+
+                static constexpr ImVec2 buttonSize { 100, 40 };
+            };
+            struct AddAmmoWindow {
+                AmmoMetadata selectedAmmo { };
+                int amountBuffer { 0 };
+
+                bool isAmountOfAmmoValid { false };
                 static constexpr ImVec2 buttonSize { 100, 40 };
             };
 
             static constexpr ImVec2 buttonSize          { 100, 40 };
-            static constexpr ImVec2 minWinSize          { 400, 600 };
+            static constexpr ImVec2 minWinSize          { 400, 400 };
             static constexpr ImVec2 minTableSize        { 300, 400 };
             static constexpr float  maxTableWidth       { 800 };     
             static constexpr float  optionsWinHeight    { 100 };
 
+            AddAmmoWindow   addAmmoWindow   { };
+            AddGunWindow    addGunWindow    { };
+
             GunMetadata    selectedGun     { };
             AmmoMetadata   selectedAmmo    { };
 
-            AddGunWindow addGunWindow { };
-
             bool verticalLayout     { false };
             bool selectedGunValid   { false };
+            bool selectedAmmoValid  { false };
            
             ImVec2 optionsWinSize   { minWinSize.x, optionsWinHeight };
             ImVec2 mainWindowSize   { minWinSize };
             ImVec2 viewWindowSize   { minWinSize };
-            
             ImVec2 mainTableSize    { minTableSize };
             ImVec2 viewTableSize    { minTableSize };
         };
@@ -142,8 +151,10 @@ namespace EventWindow {
             const ImVec2& tableSize
         );
     void addAmmoToGun (
-            GunMetadata& selected,
-            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&
+            ScreenData::Add::EventWindow::GunsAndAmmoWindow::AddAmmoWindow& data, 
+            GunTrackingAmmoUsed& selected,
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
+            const ImVec2& tableSize
         );
 }   // End EventWindow
 

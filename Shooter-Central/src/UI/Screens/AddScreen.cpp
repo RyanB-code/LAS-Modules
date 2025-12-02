@@ -14,13 +14,15 @@ void main(const Database& database, ScreenData::Add& data){
     ImGui::Spacing();
     ImGui::Spacing();
 
+    const ImVec2 regionAvail { ImGui::GetContentRegionAvail() };
+
     // Sizes below the combo box to get proper Y coord after the box
-    data.mainWindowSize = ImVec2{ (ImGui::GetContentRegionAvail().x / 4) * 3, ImGui::GetContentRegionAvail().y };
-    data.infoWindowSize = ImVec2{ (ImGui::GetContentRegionAvail().x / 4) , ImGui::GetContentRegionAvail().y };
+    data.mainWindowSize = ImVec2{ regionAvail.x / 4 * 3, regionAvail.y };
+    data.infoWindowSize = ImVec2{ regionAvail.x / 4 - 10, regionAvail.y };
 
     if(data.infoWindowSize.x < data.minWinSize.x ){
         data.verticalLayout = true;
-        data.mainWindowSize = ImGui::GetContentRegionAvail();
+        data.mainWindowSize = regionAvail;
         data.infoWindowSize = data.mainWindowSize;
     }
     else
@@ -460,7 +462,7 @@ void EventWindow::gunsAndAmmoWindow(
 
     // Do this after directions since that will be unchanging
     regionAvail = ImGui::GetContentRegionAvail();
-    data.mainWindowSize = ImVec2 { (regionAvail.x / 4 ) * 2 - 5, regionAvail.y }; // Minus 5 for offset stuff
+    data.mainWindowSize = ImVec2 { (regionAvail.x / 4 ) * 2 - 30, regionAvail.y }; // Minus 30 for offset stuff
     data.viewWindowSize = ImVec2 { (regionAvail.x / 4 ), regionAvail.y };
 
     if(data.viewWindowSize.x < data.minWinSize.x){
@@ -485,6 +487,25 @@ void EventWindow::gunsAndAmmoWindow(
 
     if(ImGui::BeginChild("Guns Used", data.viewWindowSize)){
         ImGui::SeparatorText("Guns Used");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(!data.selectedGunValid)
+            ImGui::BeginDisabled();
+
+        if(centerButton("Remove Gun", data.buttonSize)){
+            event.removeGun(data.selectedGun);
+            data.selectedGun    = EMPTY_GUN_METADATA;
+            data.selectedAmmo   = EMPTY_AMMO_METADATA;
+
+            data.selectedGunValid = false;
+            ImGui::BeginDisabled();
+        }
+
+        if(!data.selectedGunValid)
+            ImGui::EndDisabled();
+
+
         ImGui::Spacing();
         ImGui::Spacing();
 
@@ -513,11 +534,33 @@ void EventWindow::gunsAndAmmoWindow(
             centerTextDisabled("Select a Gun to View Ammo Used");
         }
         else{
+
+            if(!data.selectedAmmoValid)
+                ImGui::BeginDisabled();
+
+            if(centerButton("Remove Ammo", data.buttonSize)){
+                event.getGun(data.selectedGun).removeAmmoUsed(data.selectedAmmo);
+
+                data.selectedAmmo = EMPTY_AMMO_METADATA;
+                data.selectedAmmoValid = false;
+
+                ImGui::BeginDisabled();
+            }
+            
+            if(!data.selectedAmmoValid)
+                ImGui::EndDisabled();
+
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             centerNextItemX(data.viewTableSize.x);
-            Tables::amountOfAmmo(
+            Tables::Selectable::amountOfAmmo(
                     event.getGun(data.selectedGun).getAmmoUsed(), 
+                    data.selectedAmmo,
                     data.viewTableSize
                 );
+            data.selectedAmmoValid = data.selectedAmmo != EMPTY_AMMO_METADATA;
         }
     }
     ImGui::EndChild();
@@ -542,7 +585,13 @@ void EventWindow::gunsAndAmmoWindow(
                 ImGui::BeginDisabled();
 
             if(ImGui::BeginTabItem("Add Ammo")){
-                addAmmoToGun(data.selectedGun, stockpile);
+                if(!event.hasUsedGun(data.selectedGun)){
+                    centerNextItemY(5);
+                    centerTextDisabled("Select A Gun To Add Ammo");
+                }
+                else 
+                    addAmmoToGun(data.addAmmoWindow, event.getGun(data.selectedGun), stockpile, data.mainTableSize);
+
                 ImGui::EndTabItem();
             }
 
@@ -587,43 +636,45 @@ void EventWindow::addGun (
 
     ImGui::Spacing();
     ImGui::Spacing();
+
+    centerText("All Guns");
+
+    ImGui::Spacing();
+    ImGui::Spacing();
     
     centerNextItemX(tableSize.x);
     Tables::Selectable::gunMetadataWithRoundCount(armory, data.selectedGun, tableSize);
 }
 void EventWindow::addAmmoToGun (
-        GunMetadata& selected,
-        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&
+        ScreenData::Add::EventWindow::GunsAndAmmoWindow::AddAmmoWindow& data, 
+        GunTrackingAmmoUsed& selected,
+        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& stockpile,
+        const ImVec2& tableSize
     )
 {
-    /*
-    static constexpr float MIN_TABLE_SIZE_X { 400 };
-    static constexpr float MAX_TABLE_SIZE_X { 800 };
+    const Cartridge& gunCartridge { selected.getGunInfo().cartridge };
 
-    ImVec2 tableSize = { ImGui::GetContentRegionAvail().x-2, 400};
-    if(tableSize.x < MIN_TABLE_SIZE_X)
-        tableSize.x = MIN_TABLE_SIZE_X;
-    if(tableSize.x > MAX_TABLE_SIZE_X)
-        tableSize.x = MAX_TABLE_SIZE_X;
-
+    if(!stockpile.contains(gunCartridge)){
+        centerNextItemY(5);
+        centerTextDisabled(std::format("Stockpile contains no Ammo for cartridge '{}'", gunCartridge.getName())); 
+        return;
+    }
+    
     ImGui::Spacing();
     ImGui::Spacing();
 
-    static AmmoMetadata selectedAmmo { };
-    static int amountBuffer { 0 };
+    data.isAmountOfAmmoValid = (data.selectedAmmo != EMPTY_AMMO_METADATA && data.amountBuffer > 0);
 
-    bool isAmmoValid { selectedAmmo != EMPTY_AMMO_METADATA && amountBuffer > 0 };
-
-    if(!isAmmoValid)
+    if(!data.isAmountOfAmmoValid)
         ImGui::BeginDisabled();
 
-    if(centerButton("Add Ammo", ImVec2 { 100, 30 })){
-        ammoUsed = AmountOfAmmo { selectedAmmo, amountBuffer }; 
-        selectedAmmo = EMPTY_AMMO_METADATA;
-        amountBuffer = 0;
+    if(centerButton("Add Ammo", data.buttonSize)){
+        selected.addAmmoUsed( AmountOfAmmo { data.selectedAmmo, data.amountBuffer });
+        data.selectedAmmo = EMPTY_AMMO_METADATA;
+        data.amountBuffer = 0;
     }
 
-    if(!isAmmoValid)
+    if(!data.isAmountOfAmmoValid)
         ImGui::EndDisabled();
 
     ImGui::Spacing();
@@ -635,15 +686,19 @@ void EventWindow::addAmmoToGun (
     ImGui::Text("Amount"); 
     ImGui::SameLine();
     ImGui::SetNextItemWidth(200);
-    ImGui::InputInt("##Amount Of Ammo", &amountBuffer, 1, 50);
+    ImGui::InputInt("##Amount Of Ammo", &data.amountBuffer, 1, 50);
     ImGui::EndGroup();
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    centerText(std::format("All {} ammo", gunCartridge.getName()));
 
     ImGui::Spacing();
     ImGui::Spacing();
     
     centerNextItemX(tableSize.x);
-    Tables::Selectable::ammoAmountOnHand(ammoList, selectedAmmo, tableSize);
-    */
+    Tables::Selectable::ammoAmountOnHand(stockpile.at(gunCartridge), data.selectedAmmo, tableSize);
 }
 
 
