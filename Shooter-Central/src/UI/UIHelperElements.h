@@ -38,6 +38,16 @@ namespace Tables{
                 AmmoMetadata& selected,
                 ImVec2 size 
             );
+        void amountOfAmmo(
+                const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,
+                AmmoMetadata& selected,
+                ImVec2 size
+                );
+        void amountOfAmmo(
+                const std::vector<AmountOfAmmo> ammoUsed,
+                AmmoMetadata& selected,
+                const ImVec2& size
+                );
         void cartridgeAmountOnHand (
                 const std::map<Cartridge, int>& cartridges, 
                 Cartridge& selected,
@@ -71,11 +81,6 @@ namespace Tables{
         void eventsWithNumGunsUsed( 
                 const std::map<ShootingEventMetadata, ShootingEvent>& events, 
                 ShootingEventMetadata& selected,
-                ImVec2 size
-            );
-        void amountOfAmmo(
-                const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,
-                AmmoMetadata& selected,
                 ImVec2 size
             );
     }   // End Selectable namespace

@@ -276,6 +276,103 @@ void Tables::Selectable::ammoAmountOnHand(
         ImGui::EndTable();
     }
 }
+void Tables::Selectable::amountOfAmmo(  
+        const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, 
+        AmmoMetadata& selected,
+        ImVec2 size
+    )
+{
+    int row { 0 };
+    if(ImGui::BeginTable("Detailed Cartridge Breakdown", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
+        ImGui::TableSetupColumn("Manufacturer", 0);
+        ImGui::TableSetupColumn("Name",         0);
+        ImGui::TableSetupColumn("Grain Weight", 0);
+        ImGui::TableSetupColumn("Amount Used",  0);
+
+        ImGui::TableHeadersRow();
+
+        for(const auto& [info, amountOfAmmo] : ammoUsed){
+            bool isItemSelected { false };
+
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 4; ++column) {
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        if(ImGui::Selectable(info.manufacturer.getName(), &isItemSelected, ImGuiSelectableFlags_SpanAllColumns))
+                            selected = info;
+                        break;
+                    case 1:
+                        ImGui::Text("%s", info.name.c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%d", info.grainWeight);
+                        break;
+                    case 3:
+                        ImGui::Text("%d", amountOfAmmo.getAmount());
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }        
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
+    }
+}
+void Tables::Selectable::amountOfAmmo(
+        const std::vector<AmountOfAmmo> ammoUsed,
+        AmmoMetadata& selected,
+        const ImVec2& size
+    )
+{
+    int row { 0 };
+    if(ImGui::BeginTable("Amount Of Ammo Table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
+        ImGui::TableSetupColumn("Manufacturer", 0);
+        ImGui::TableSetupColumn("Name",         0);
+        ImGui::TableSetupColumn("Grain Weight", 0);
+        ImGui::TableSetupColumn("Amount Used",  0);
+
+        ImGui::TableHeadersRow();
+
+        for(const auto& amountOfAmmo: ammoUsed){
+            const AmmoMetadata& info { amountOfAmmo.getAmmoInfo() };
+            bool isItemSelected { selected == info };
+
+            ImGui::PushID(std::to_string(row).c_str());
+            ImGui::TableNextRow();
+
+            for (int column{0}; column < 4; ++column) {
+                ImGui::TableSetColumnIndex(column);
+                switch( column ){
+                    case 0:
+                        if(ImGui::Selectable(info.manufacturer.getName(), &isItemSelected, ImGuiSelectableFlags_SpanAllColumns))
+                            selected = info;
+                        break;
+                    case 1:
+                        ImGui::Text("%s", info.name.c_str());
+                        break;
+                    case 2:
+                        ImGui::Text("%d", info.grainWeight);
+                        break;
+                    case 3:
+                        ImGui::Text("%d", amountOfAmmo.getAmount());
+                        break;
+                    default:
+                        ImGui::Text("Broken table");
+                        break;
+                }
+            }        
+            ImGui::PopID();
+            ++row;
+        }
+        ImGui::EndTable();
+    }
+}
 void Tables::Selectable::cartridgeAmountOnHand(
         const std::map<Cartridge, int>& cartridges, 
         Cartridge& selected, 
@@ -599,54 +696,7 @@ void Tables::Selectable::eventsWithNumGunsUsed(
         ImGui::EndTable();
     }
 }
-void Tables::Selectable::amountOfAmmo(  
-        const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed, 
-        AmmoMetadata& selected,
-        ImVec2 size
-    )
-{
-    int row { 0 };
-    if(ImGui::BeginTable("Detailed Cartridge Breakdown", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_HighlightHoveredColumn, size )) {
-        ImGui::TableSetupColumn("Manufacturer", 0);
-        ImGui::TableSetupColumn("Name",         0);
-        ImGui::TableSetupColumn("Grain Weight", 0);
-        ImGui::TableSetupColumn("Amount Used",  0);
 
-        ImGui::TableHeadersRow();
-
-        for(const auto& [info, amountOfAmmo] : ammoUsed){
-            bool isItemSelected { false };
-
-            ImGui::PushID(std::to_string(row).c_str());
-            ImGui::TableNextRow();
-
-            for (int column{0}; column < 4; ++column) {
-                ImGui::TableSetColumnIndex(column);
-                switch( column ){
-                    case 0:
-                        if(ImGui::Selectable(info.manufacturer.getName(), &isItemSelected, ImGuiSelectableFlags_SpanAllColumns))
-                            selected = info;
-                        break;
-                    case 1:
-                        ImGui::Text("%s", info.name.c_str());
-                        break;
-                    case 2:
-                        ImGui::Text("%d", info.grainWeight);
-                        break;
-                    case 3:
-                        ImGui::Text("%d", amountOfAmmo.getAmount());
-                        break;
-                    default:
-                        ImGui::Text("Broken table");
-                        break;
-                }
-            }        
-            ImGui::PopID();
-            ++row;
-        }
-        ImGui::EndTable();
-    }
-}
 void Tables::amountOfAmmo(
         const std::vector<AmountOfAmmo>& ammoUsed, 
         ImVec2 size
