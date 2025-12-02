@@ -103,6 +103,8 @@ private:
 
 
 struct ShootingEventMetadata {
+    static constexpr int MAX_CHAR_NOTES { 256 };
+
     std::string         notes       { };
     Location            location    { };
     ShootingEventType   eventType   { };
