@@ -79,9 +79,31 @@ struct Add {
             ImVec2 mainTableSize    { minTableSize };
             ImVec2 viewTableSize    { minTableSize };
         };
+        struct ReviewWindow {
+            static constexpr ImVec2 buttonSize          { 100, 40 };
+            static constexpr ImVec2 minWinSize          { 400, 400 };
+            static constexpr ImVec2 minTableSize        { 300, 400 };
+            static constexpr float  maxTableWidth       { 800 };     
+
+            GunMetadata selectedGun { };
+
+            bool selectedGunValid   { };
+            bool eventMetadataValid { };
+
+            bool verticalLayout { false };
+
+            bool applyToArmory      { true };
+            bool applyToStockpile   { true };
+
+            ImVec2 optionsWinSize   { minWinSize.x, 100 };
+            ImVec2 reviewWinSize    { minWinSize };
+            ImVec2 tableSize        { minTableSize };
+        };
 
         MetadataWindow      metadataWindow      { };
         GunsAndAmmoWindow   gunsAndAmmoWindow   { };
+        ReviewWindow        reviewWindow        { };
+
 
         ShootingEvent event { };
     };
@@ -136,9 +158,9 @@ namespace EventWindow {
             const std::set<ShootingEventType>&
         );
     bool verifyMetadata(
-            Location& location,
-            ShootingEventType& et,
-            ymd date
+            const Location& location,
+            const ShootingEventType& et,
+            const ymd& date
         );
     void gunsAndAmmoWindow(
             ScreenData::Add::EventWindow& data, 
@@ -158,6 +180,11 @@ namespace EventWindow {
             const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
             const ImVec2& tableSize
         );
+    void review(
+            ScreenData::Add::EventWindow::ReviewWindow& data,
+            ShootingEvent& event
+        );
+    bool verifyEvent(const ShootingEvent& event);
 }   // End EventWindow
 
 }   // End SC::UI::Add

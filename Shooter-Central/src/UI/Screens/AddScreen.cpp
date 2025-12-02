@@ -296,7 +296,7 @@ void EventWindow::main(
             ImGui::EndTabItem();
         }
         if(ImGui::BeginTabItem("Review And Submit")){
-            ImGui::Text("fuck");
+            review(data.reviewWindow, data.event); 
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
@@ -463,9 +463,9 @@ void EventWindow::eventMetadataWindow(
     ImGui::Unindent();
 }
 bool EventWindow::verifyMetadata(
-       Location& location,
-       ShootingEventType& et,
-       ymd date
+       const Location& location,
+       const ShootingEventType& et,
+       const ymd& date
    )
 {
     using namespace std::chrono;
@@ -740,7 +740,223 @@ void EventWindow::addAmmoToGun (
     centerNextItemX(tableSize.x);
     Tables::Selectable::ammoAmountOnHand(stockpile.at(gunCartridge), data.selectedAmmo, tableSize);
 }
+void EventWindow::review(
+        ScreenData::Add::EventWindow::ReviewWindow& data,
+        ShootingEvent& event
+    )
+{
+    const ImVec2 regionAvail { ImGui::GetContentRegionAvail() };
+    data.optionsWinSize = ImVec2{ regionAvail.x / 2 - 5, data.optionsWinSize.y };
+    data.reviewWinSize  = ImVec2{ regionAvail.x / 3 - 10, regionAvail.y - data.optionsWinSize.y - 5};
+
+    if(data.reviewWinSize.x < data.minWinSize.x ){
+        data.verticalLayout = true;
+        data.optionsWinSize.x = regionAvail.x;
+        data.reviewWinSize = regionAvail;
+    }
+    else
+        data.verticalLayout = false;
+
+    if(data.optionsWinSize.x < data.minWinSize.x)
+        data.optionsWinSize.x = data.minWinSize.x;
+
+    if(data.reviewWinSize.x < data.minWinSize.x)
+        data.reviewWinSize.x = data.minWinSize.x;
+    if(data.reviewWinSize.y < data.minWinSize.y)
+        data.reviewWinSize.y = data.minWinSize.y;
+
+    if(ImGui::BeginChild("Directions", data.optionsWinSize)){
+        ImGui::Indent(20);
+        ImGui::Text("Directions");
+        ImGui::BulletText("Review the following information before submitting");
+        ImGui::BulletText("Must save before exiting LAS otherwise changes will not be made");
+        ImGui::Unindent();
+    }
+    ImGui::EndChild();
+
+    if(!data.verticalLayout)
+        ImGui::SameLine();
+
+    if(ImGui::BeginChild("Options", data.optionsWinSize)){
+        const ImVec2 childSizes { ImGui::GetContentRegionAvail().x / 2 - 5, ImGui::GetContentRegionAvail().y - 30 };
+
+        centerTextDisabled("Options And Confirm");
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(ImGui::BeginChild("Apply", childSizes)){ 
+            ImGui::Text("Apply to Stockpile");
+            ImGui::SameLine(150);
+            ImGui::Checkbox("##Apply To Stockpile", &data.applyToStockpile);
+
+            ImGui::Text("Apply to Armory");
+            ImGui::SameLine(150);
+            ImGui::Checkbox("##Apply To Guns", &data.applyToArmory);
+        }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+        if(ImGui::BeginChild("Submit", childSizes )){ 
+            centerNextItemX(data.buttonSize.x * 2 + 20); // 20 is dummy size
+            ImGui::BeginGroup();
+
+            if(ImGui::Button("Add Event", data.buttonSize)){
+                if(verifyEvent(event)){
+                    // todo - command reset event window
+                    // todo - popup success
+                    std::cout << "event verified and add to list command\n";
+                }
+                else{
+                    // todo - popup it failed
+                    std::cout << "verify event failed\n";
+                }
+            }
+            ImGui::SameLine();
+            ImGui::Dummy( ImVec2 { 20, 10} );
+            ImGui::SameLine();
+            if(ImGui::Button("Reset All", data.buttonSize)){
+               // todo command reset all event window 
+            }
+            ImGui::EndGroup();
+        }    
+        ImGui::EndChild();
+    }
+    ImGui::EndChild();
 
 
+    if(ImGui::BeginChild("Event Information", data.reviewWinSize)){
+        ImGui::SeparatorText("Event Information");
+        ImGui::Spacing();
+        ImGui::Spacing();
 
+        const ShootingEventMetadata& info  { event.getInfo() };
+        if(info == EMPTY_EVENT_METADATA)
+            data.eventMetadataValid = false;
+        else
+            data.eventMetadataValid = true;
+
+        if(!data.eventMetadataValid) {
+            centerNextItemY(5);
+            centerTextDisabled("Enter Event Information");
+        }
+        else{
+            centerNextItemX(400);
+            ImGui::BeginGroup();
+            ImGui::Text("Date:              %s", event.printDate().c_str());
+            ImGui::Text("Location:          %s", info.location.getName());
+            ImGui::Text("Event Type:        %s", info.eventType.getName()); 
+            ImGui::EndGroup();
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::SeparatorText("Notes");
+            ImGui::Spacing();
+            ImGui::Indent(20);
+            ImGui::TextWrapped("%s", info.notes.c_str());
+            ImGui::Unindent();
+        }
+    }
+    ImGui::EndChild();
+
+    if(!data.verticalLayout)
+        ImGui::SameLine();
+
+    if(ImGui::BeginChild("Guns Used", data.reviewWinSize)){
+        ImGui::SeparatorText("Guns Used");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        data.tableSize.x = ImGui::GetContentRegionAvail().x-2;
+        if(data.tableSize.x < data.minTableSize.x)
+            data.tableSize.x = data.minTableSize.x;
+        if(data.tableSize.x > data.maxTableWidth)
+            data.tableSize.x = data.maxTableWidth;
+
+        if(event.getGunsUsed().empty()) {
+            centerNextItemY(5);
+            centerTextDisabled("No Guns added to Event");
+        }
+        else{
+            centerNextItemX(data.tableSize.x);
+            Tables::Selectable::gunMetadataWithRoundCount(event.getGunsUsed(), data.selectedGun, data.tableSize);
+        }
+    }
+    ImGui::EndChild();
+
+    if(!data.verticalLayout)
+        ImGui::SameLine();
+
+    if(ImGui::BeginChild("Ammo Used", data.reviewWinSize)){
+        ImGui::SeparatorText("Ammo Used");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        static size_t lastSize { 0 };
+        const size_t currentSize { event.getGunsUsed().size() };
+
+        // Ensure if size changes reset selected gun metadata
+        if(lastSize != currentSize){
+            data.selectedGun = EMPTY_GUN_METADATA;
+            lastSize = currentSize;
+        }
+
+        if(data.selectedGun == EMPTY_GUN_METADATA) {
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to View Ammo Used");
+        }
+        else if(event.getGun(data.selectedGun).getAmmoUsed().empty()){
+            centerNextItemY(5);
+            centerTextDisabled(std::format("No Ammo used for '{}'", data.selectedGun.name));
+        }
+        else{
+            centerNextItemX(data.tableSize.x);
+            Tables::amountOfAmmo(
+                    event.getGun(data.selectedGun).getAmmoUsed(), 
+                    data.tableSize
+                );
+        }
+    }
+    ImGui::EndChild();
 }
+bool EventWindow::verifyEvent(const ShootingEvent& event){
+    const auto& eventInfo { event.getInfo() };
+    if(!verifyMetadata(eventInfo.location, eventInfo.eventType, eventInfo.date)){
+        std::cout << "failed event metadata\n";
+        return false;
+    }
+
+    if(event.getGunsUsed().size() <= 0){
+        std::cout << "no guns\n";
+        return false;
+    }
+
+    for(const auto& gun : event.getGunsUsed()){
+        const auto& gunInfo { gun.getGunInfo() };
+
+        if(gunInfo == EMPTY_GUN_METADATA){
+            std::cout << "failed gun metadata\n";
+            return false;
+        }
+
+        if(gun.getAmmoUsed().size() <= 0){
+            std::cout << "no ammo for a gun\n";
+            return false;
+        }
+
+        for(const auto& amountOfAmmo : gun.getAmmoUsed() ){
+            const auto& ammoInfo { amountOfAmmo.getAmmoInfo() };
+
+            if(ammoInfo == EMPTY_AMMO_METADATA || amountOfAmmo.getAmount() <= 0){
+                std::cout << "failed ammo check\n";
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+}   // End SC::UI::Add
