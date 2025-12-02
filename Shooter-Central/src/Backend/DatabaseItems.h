@@ -199,6 +199,7 @@ public:
     ~GunTrackingAmmoUsed() = default;
 
     bool    addAmmoUsed     (const AmountOfAmmo& ammo);
+    bool    removeAmmoUsed  (const AmmoMetadata& ammo);
     bool    hasUsedAmmo     (const AmmoMetadata& ammo) const;
     int     totalAmmoUsed   () const;
     int     totalRoundsShot () const;
@@ -256,6 +257,7 @@ public:
 
     int     totalGunsUsed   () const;
     bool    addGun          (const GunTrackingAmmoUsed& gun);        // Will not amend existing entries if a gun is already in the container
+    bool    removeGun       (const GunMetadata& gun);
     bool    hasUsedGun      (const GunMetadata& gun) const;
 
     GunTrackingAmmoUsed&        getGun (const GunMetadata& gun);           // throws out_of_range if not found

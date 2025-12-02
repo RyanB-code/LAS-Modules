@@ -358,6 +358,20 @@ bool GunTrackingAmmoUsed::addAmmoUsed(const AmountOfAmmo& ammo) {
 
     return true;
 }
+bool GunTrackingAmmoUsed::removeAmmoUsed  (const AmmoMetadata& info){
+    bool found { false };
+
+    for(auto itr { ammoUsed.begin() }; itr != ammoUsed.end(); ++itr){
+        if(itr->getAmmoInfo() == info){
+            ammoUsed.erase(itr);
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
+
 bool GunTrackingAmmoUsed::hasUsedAmmo(const AmmoMetadata& ammo) const {
     for(const auto& entry : ammoUsed){
         if(ammo == entry.getAmmoInfo())
@@ -472,6 +486,20 @@ bool ShootingEvent::addGun(const GunTrackingAmmoUsed& gun) {
     gunsUsed.emplace_back(gun);
     return true;
 }
+bool ShootingEvent::removeGun       (const GunMetadata& gun){
+    bool gunFound { false };
+
+    for(auto itr { gunsUsed.begin() }; itr != gunsUsed.end(); ++itr){
+        if(itr->getGunInfo() == gun){
+            gunsUsed.erase(itr);
+            gunFound = true;
+            break;
+        }
+    }
+
+    return gunFound;
+}
+
 bool ShootingEvent::hasUsedGun(const GunMetadata& gun) const {
     for(const auto& entry : gunsUsed){
         if(entry.getGunInfo() == gun)
