@@ -23,15 +23,25 @@ struct Add {
         char location[MAX_CHAR_INPUT]       = "";
         char eventType[MAX_CHAR_INPUT]      = "";
     }; 
+
     struct EventWindow {
         struct MetadataWindow {
             ShootingEventType   selectedET          { };
             Location            selectedLocation    { };
 
-            char notes[MAX_CHAR_INPUT] = "";
+            char notes[ShootingEventMetadata::MAX_CHAR_NOTES] = "";
             int day     { 0 };
             int month   { 0 };
             int year    { 0 };
+
+            bool triedToVerifyEventInfo     { false };
+
+            static constexpr ImVec2 buttonSize { 100, 40 };
+            static constexpr ImVec2 minWinSize { 200, 100 };
+
+            ImVec2 mainWinSize  { minWinSize };
+            ImVec2 infoWinSize  { minWinSize };
+
         };
         struct GunsAndAmmoWindow {
             struct AddGunWindow {
@@ -53,7 +63,6 @@ struct Add {
             static constexpr ImVec2 minWinSize          { 400, 400 };
             static constexpr ImVec2 minTableSize        { 300, 400 };
             static constexpr float  maxTableWidth       { 800 };     
-            static constexpr float  optionsWinHeight    { 100 };
 
             AddAmmoWindow   addAmmoWindow   { };
             AddGunWindow    addGunWindow    { };
@@ -65,7 +74,6 @@ struct Add {
             bool selectedGunValid   { false };
             bool selectedAmmoValid  { false };
            
-            ImVec2 optionsWinSize   { minWinSize.x, optionsWinHeight };
             ImVec2 mainWindowSize   { minWinSize };
             ImVec2 viewWindowSize   { minWinSize };
             ImVec2 mainTableSize    { minTableSize };
@@ -76,11 +84,6 @@ struct Add {
         GunsAndAmmoWindow   gunsAndAmmoWindow   { };
 
         ShootingEvent event { };
-        bool eventInfoVerified          { false };
-        bool triedToVerifyEventInfo     { false };
-        bool gunsVerified       { false };
-
-        static constexpr ImVec2 verifyButtonSize { 150, 40 };
     };
 
     static constexpr ImVec2 deselectButtonSize  { 100, 40 };
@@ -99,8 +102,6 @@ struct Add {
     ImVec2 mainWindowSize   { minWinSize };
     ImVec2 infoWindowSize   { minWinSize };
     ImVec2 infoTableSize    { minTableSize };
- 
-
 };
 
 }   // End Sc::UI::ScreenData
@@ -128,7 +129,8 @@ namespace EventWindow {
             const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>&
         );
     void eventMetadataWindow(
-            ScreenData::Add::EventWindow& buffer, 
+            ScreenData::Add::EventWindow::MetadataWindow& data, 
+            ShootingEvent& event,
             size_t notesSize,            
             const std::set<Location>&,
             const std::set<ShootingEventType>&

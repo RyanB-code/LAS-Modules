@@ -143,7 +143,7 @@ void addItemWindow(const Database& database, ScreenData::Add& data){
         case SubItem::EVENT_EVENT:
             EventWindow::main(
                     data.eventWindow, 
-                    ScreenData::Add::MAX_CHAR_INPUT, 
+                    ShootingEventMetadata::MAX_CHAR_NOTES, 
                     database.getLocations(), 
                     database.getEventTypes(),
                     database.getStockpile(),
@@ -288,82 +288,126 @@ void EventWindow::main(
 {
     if(ImGui::BeginTabBar("Add Event Tabs")){
         if(ImGui::BeginTabItem("Event Information")){
-            eventMetadataWindow(data, notesSize, locations, eventTypes); 
+            eventMetadataWindow(data.metadataWindow, data.event, notesSize, locations, eventTypes); 
             ImGui::EndTabItem();
         }
-        
-        if(!data.eventInfoVerified)
-            ImGui::BeginDisabled();
-
         if(ImGui::BeginTabItem("Guns and Ammo")){
             gunsAndAmmoWindow(data, data.event, stockpile, armory); 
             ImGui::EndTabItem();
         }
-
-        if(!data.eventInfoVerified)
-            ImGui::EndDisabled();
-
-
-        if(!data.gunsVerified) 
-            ImGui::BeginDisabled();
-
         if(ImGui::BeginTabItem("Review And Submit")){
             ImGui::Text("fuck");
             ImGui::EndTabItem();
         }
-
-        if(!data.gunsVerified) 
-            ImGui::EndDisabled();
-
-
         ImGui::EndTabBar();
     }
 }
 void EventWindow::eventMetadataWindow(
-        ScreenData::Add::EventWindow& eventWindow, 
+        ScreenData::Add::EventWindow::MetadataWindow& data, 
+        ShootingEvent& event,
         size_t notesSize,            
         const std::set<Location>& locations,
         const std::set<ShootingEventType>& eventTypes
     ) 
 {
-    typedef ScreenData::Add::EventWindow::MetadataWindow MetadataWindow;
-    MetadataWindow& data { eventWindow.metadataWindow };
     using namespace std::chrono;
 
-    ImGui::Indent(20);
-    ImGui::Text("Directions");
-    ImGui::BulletText("Navigate through the tabs to proceed to create the Event");
-    ImGui::BulletText("Once filled out, verify the information to continue");
-    ImGui::Unindent();
+    const ImVec2 regionAvail { ImGui::GetContentRegionAvail() };
 
-    if(centerButton("Verify Information", eventWindow.verifyButtonSize)){
-        eventWindow.triedToVerifyEventInfo = true;
+    data.mainWinSize = ImVec2{ regionAvail.x, (data.minWinSize.y + data.buttonSize.y + 30) }; // Only enough for whats needed plus padding
 
-        ymd date { year{data.year}, month{data.month}, day{data.day} };
+    // Ensure minimum windows
+    if(data.mainWinSize.x < (data.minWinSize.x * 2) )
+        data.mainWinSize.x = data.minWinSize.x;
+    if(data.mainWinSize.y < data.minWinSize.y)
+        data.mainWinSize.y = data.minWinSize.y;
 
-        if(verifyMetadata(data.selectedLocation, data.selectedET, date) ){
-            eventWindow.eventInfoVerified = true;
-            eventWindow.triedToVerifyEventInfo = false;
 
-            eventWindow.event.setInfo ( ShootingEventMetadata { 
-                    std::string{data.notes},
-                    data.selectedLocation,
-                    data.selectedET,
-                    date
-                }
-            );
+    if(ImGui::BeginChild("Info Window", data.mainWinSize)){
+        data.infoWinSize = ImVec2{ (ImGui::GetContentRegionAvail().x / 2 ) - 5, data.minWinSize.y };
 
-            data = MetadataWindow { };
+        if(data.infoWinSize.x < data.minWinSize.x)
+            data.infoWinSize.x = data.minWinSize.x;
+        if(data.infoWinSize.y < data.minWinSize.y)
+            data.infoWinSize.y = data.minWinSize.y;
+
+        if(ImGui::BeginChild("Directions Window", data.infoWinSize)){
+            ImGui::Indent(20);
+            ImGui::Text("Directions");
+            ImGui::BulletText("Navigate through the tabs to proceed to create the Event");
+            ImGui::BulletText("Once filled out, verify the information to continue");
+            ImGui::Unindent();
         }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+
+        if(ImGui::BeginChild("Event Metadata Buffer", data.infoWinSize)){
+            const ShootingEventMetadata& info { event.getInfo() };
+
+            if(info != EMPTY_EVENT_METADATA){
+                if(ImGui::BeginChild("Info", ImVec2 { ImGui::GetContentRegionAvail().x / 2, ImGui::GetContentRegionAvail().y })) {
+                    centerTextDisabled("Event Information");
+                    ImGui::Separator();
+
+                    ImGui::TextDisabled("Date: ");
+                    ImGui::SameLine(100);
+                    ImGui::Text("%s", printDate(info.date).c_str());
+
+                    ImGui::TextDisabled("Location: ");
+                    ImGui::SameLine(100);
+                    ImGui::Text("%s", info.location.getName());
+
+                    ImGui::TextDisabled("Event Type: ");
+                    ImGui::SameLine(100);
+                    ImGui::Text("%s", info.eventType.getName());
+                }
+                ImGui::EndChild();
+
+                ImGui::SameLine();
+
+                if(ImGui::BeginChild("Notes", ImGui::GetContentRegionAvail() )){
+                    centerTextDisabled("Notes");
+                    ImGui::Separator();
+                    ImGui::Text("%s", info.notes.c_str());
+                }
+                ImGui::EndChild();
+            }
+        }
+        ImGui::EndChild();
+        
+        if(centerButton("Submit", data.buttonSize)){
+            data.triedToVerifyEventInfo = true;
+
+            ymd date { year{data.year}, month{data.month}, day{data.day} };
+
+            if(verifyMetadata(data.selectedLocation, data.selectedET, date) ){
+                data.triedToVerifyEventInfo = false;
+
+                event.setInfo ( ShootingEventMetadata { 
+                        std::string{data.notes},
+                        data.selectedLocation,
+                        data.selectedET,
+                        date
+                    }
+                );
+                data.selectedET = EMPTY_EVENT_TYPE;
+                data.selectedLocation = EMPTY_LOCATION;
+                data.day = 0;
+                data.month = 0;
+                data.year = 0;
+                resetText(data.notes, ShootingEventMetadata::MAX_CHAR_NOTES);
+            }
+        }
+
+        if(data.triedToVerifyEventInfo)
+            centerTextDisabled("(Make Sure Data is Correct)");
+        else
+            ImGui::Dummy( ImVec2 { 0, ImGui::CalcTextSize("PLACEHOLDER").y } );
     }
+    ImGui::EndChild();
 
-    if(eventWindow.eventInfoVerified)
-        centerTextDisabled("(Proceed to Next Tab)");
-    else if(eventWindow.triedToVerifyEventInfo)
-        centerTextDisabled("(Make Sure Data is Correct)");
-    else
-        ImGui::Dummy( ImVec2 { 0, ImGui::CalcTextSize("PLACEHOLDER").y } );
-
+ 
     ImGui::Spacing();
     ImGui::Spacing();
 
@@ -446,19 +490,15 @@ void EventWindow::gunsAndAmmoWindow(
 {
     ScreenData::Add::EventWindow::GunsAndAmmoWindow& data { eventWindow.gunsAndAmmoWindow };
 
+    ImGui::Indent(20);
+    ImGui::Text("Directions");
+    ImGui::BulletText("Add type and amount of Ammo used for any number of Guns");
+    ImGui::BulletText("Click the button to proceed to the next step");
+    ImGui::Unindent();
+
+    ImGui::Dummy( ImVec2 {0, 50} );
+
     static ImVec2 regionAvail { ImGui::GetContentRegionAvail() };
-    regionAvail = ImGui::GetContentRegionAvail();
-
-    data.optionsWinSize.x = regionAvail.x;
-    if(data.optionsWinSize.x < data.minWinSize.x)
-        data.optionsWinSize.x = data.minWinSize.x;
-
-    if(ImGui::BeginChild("Add Gun Directions", data.optionsWinSize) ){
-        ImGui::Text("Directions");
-        ImGui::BulletText("Add type and amount of Ammo used for any number of Guns");
-        ImGui::BulletText("Click the button to proceed to the next step");
-    }
-    ImGui::EndChild();
 
     // Do this after directions since that will be unchanging
     regionAvail = ImGui::GetContentRegionAvail();
