@@ -363,6 +363,7 @@ bool GunTrackingAmmoUsed::removeAmmoUsed  (const AmmoMetadata& info){
 
     for(auto itr { ammoUsed.begin() }; itr != ammoUsed.end(); ++itr){
         if(itr->getAmmoInfo() == info){
+            roundCount -= itr->getAmount();
             ammoUsed.erase(itr);
             found = true;
             break;
