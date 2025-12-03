@@ -64,12 +64,34 @@ void gunWindow(
 
     centerNextItemX(screenData.tableSize.x); 
     Tables::Selectable::gunMetadataWithRoundCount(guns, screenData.selectedGun, screenData.tableSize);
+    screenData.selectedGunValid = screenData.selectedGun != EMPTY_GUN_METADATA;
 
     ImGui::Spacing();
     ImGui::Spacing();
-    ImGui::SeparatorText( "Selected Gun" );
 
-    if(screenData.selectedGun == EMPTY_GUN_METADATA) 
+    if(!screenData.selectedGunValid)
+        ImGui::BeginDisabled();
+
+    if(centerButton("View Details", screenData.buttonSize)){
+        ScreenData::View newBuffer { };
+        newBuffer.mainWindow.category = Category::GUNS;
+        newBuffer.armoryWindow.selectedGun = screenData.selectedGun;
+
+        UIEvents::SetScreenData::View setScreenData { newBuffer };
+        UIEvents::SetScreen setScreen {Screen::VIEW};
+
+        pushEvent(&setScreenData);
+        pushEvent(&setScreen); 
+    }
+
+    if(!screenData.selectedGunValid)
+        ImGui::EndDisabled();
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+    ImGui::SeparatorText( "Gun Quick Info" );
+
+    if(!screenData.selectedGunValid) 
         centerTextDisabled("Select A Gun For More Information");
     else
         gunWindow_selectedGunInformation(
@@ -113,12 +135,35 @@ void eventsWindow(
    
     centerNextItemX(screenData.tableSize.x);
     Tables::Selectable::eventsWithNumGunsUsed(events, screenData.selectedEvent, screenData.tableSize); 
+    screenData.selectedEventValid = screenData.selectedEvent != EMPTY_EVENT_METADATA;
 
     ImGui::Spacing();
     ImGui::Spacing();
-    ImGui::SeparatorText( "Selected Event" );
 
-    if(screenData.selectedEvent == EMPTY_EVENT_METADATA) {
+    if(!screenData.selectedEventValid) 
+        ImGui::BeginDisabled();
+
+    if(centerButton("View Details", screenData.buttonSize)){
+        ScreenData::View newBuffer { };
+        newBuffer.mainWindow.category = Category::EVENTS;
+        newBuffer.eventsWindow.selectedEvent = screenData.selectedEvent;
+
+        UIEvents::SetScreenData::View setScreenData { newBuffer };
+        UIEvents::SetScreen setScreen {Screen::VIEW};
+
+        pushEvent(&setScreenData);
+        pushEvent(&setScreen); 
+    }
+
+    if(!screenData.selectedEventValid) 
+        ImGui::EndDisabled();
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::SeparatorText( "Event Quick Info" );
+
+    if(!screenData.selectedEventValid) {
         centerTextDisabled("Select An Event For More Information");
         return;
     }
@@ -171,31 +216,28 @@ void stockpileWindow(
 
     centerNextItemX(screenData.tableSize.x);
     Tables::Selectable::cartridgeAmountOnHand(cartridgeList, screenData.selectedCartridge, screenData.tableSize);
+    screenData.selectedCartridgeValid = screenData.selectedCartridge != EMPTY_CARTRIDGE;
 
     ImGui::Spacing();
     ImGui::Spacing();
-    ImGui::SeparatorText( "Selected Cartridge" );
 
-    if(screenData.selectedCartridge == EMPTY_CARTRIDGE) {
-        centerTextDisabled("Select A Cartridge For More Information");
-        return;
+    if(!screenData.selectedCartridgeValid) 
+        ImGui::BeginDisabled();
+
+    if(centerButton("View Details", screenData.buttonSize)){
+        ScreenData::View newBuffer { };
+        newBuffer.mainWindow.category = Category::STOCKPILE;
+        newBuffer.stockpileWindow.selectedCartridge = screenData.selectedCartridge;
+
+        UIEvents::SetScreenData::View setScreenData { newBuffer };
+        UIEvents::SetScreen setScreen {Screen::VIEW};
+
+        pushEvent(&setScreenData);
+        pushEvent(&setScreen); 
     }
 
-    if(ImGui::BeginChild("Selected Cartridge Details", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
-        if(centerButton("View More Information", ImVec2 { 200, 50 })){
-            ScreenData::View newBuffer { };
-            newBuffer.mainWindow.category = Category::STOCKPILE;
-            newBuffer.stockpileWindow.selectedCartridge = screenData.selectedCartridge;
-
-            UIEvents::SetScreenData_View setScreenData { newBuffer };
-            UIEvents::SetScreen setScreen {Screen::VIEW};
-
-            pushEvent(&setScreenData);
-            pushEvent(&setScreen); 
-        }
-    }
-    ImGui::EndChild();
-
+    if(!screenData.selectedCartridgeValid) 
+        ImGui::EndDisabled();
 }
 
 }   // End SC::UI namespace

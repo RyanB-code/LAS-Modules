@@ -81,16 +81,28 @@ struct Home{
         bool    verticalLayout      { false };
     };
     struct GunWindow {
+        static constexpr ImVec2 buttonSize { 100, 40 };
+
         ImVec2      tableSize        { 0, 300 };
         GunMetadata selectedGun      { };
+
+        bool selectedGunValid { false };
     };
     struct EventsWindow {
+        static constexpr ImVec2 buttonSize { 100, 40 };
+
         ImVec2 tableSize        { 0, 300 };
         ShootingEventMetadata selectedEvent { };
+
+        bool selectedEventValid { false };
     };
     struct StockpileWindow{
+        static constexpr ImVec2 buttonSize { 100, 40 };
+
         ImVec2      tableSize        { 0, 300 };
         Cartridge   selectedCartridge { };
+
+        bool selectedCartridgeValid { false };
     };
 
 
