@@ -25,17 +25,17 @@ enum class Category {
 enum class SubItem {
     NONE,
 
-    EVENT_EVENT,
+    EVENT,
     EVENT_TYPE,
-    EVENT_LOCATION,
+    LOCATION,
 
-    AMMO_AMMO,
-    AMMO_MANUFACTURER,
+    AMMO,
+    MANUFACTURER,
 
-    GUN_AMMO_CARTRIDGE,
+    CARTRIDGE,
 
-    GUN_GUN,
-    GUN_WEAPON_TYPE,
+    GUN,
+    WEAPON_TYPE,
 
     SIZE
 };
@@ -48,19 +48,17 @@ constexpr std::array<Category, static_cast<size_t>(Category::SIZE)> CATEGORY_LIS
     Category::STOCKPILE
 };
 constexpr std::array<SubItem, static_cast<size_t>(SubItem::SIZE)> SUB_ITEM_LIST {
+    // Alphabetocal Order
     SubItem::NONE,
-
-    SubItem::EVENT_EVENT,
+        
+    SubItem::AMMO,
+    SubItem::CARTRIDGE,
+    SubItem::EVENT,
     SubItem::EVENT_TYPE,
-    SubItem::EVENT_LOCATION,
-
-    SubItem::AMMO_AMMO,
-    SubItem::AMMO_MANUFACTURER,
-
-    SubItem::GUN_AMMO_CARTRIDGE,
-
-    SubItem::GUN_GUN,
-    SubItem::GUN_WEAPON_TYPE,
+    SubItem::GUN,
+    SubItem::LOCATION,
+    SubItem::MANUFACTURER,
+    SubItem::WEAPON_TYPE,
 };
 
 static const GunMetadata            EMPTY_GUN_METADATA      { };

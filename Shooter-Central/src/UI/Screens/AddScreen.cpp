@@ -77,7 +77,7 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
 
     ImGui::BeginGroup();
     switch(selected){
-        case SubItem::EVENT_EVENT:
+        case SubItem::EVENT:
             centerTextDisabled("All Events");
             Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), selectedEvent, size);
 
@@ -93,11 +93,11 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
             centerTextDisabled("All Event Types");
             ListBoxes::eventTypes(database.getEventTypes(), size);
             break;
-        case SubItem::EVENT_LOCATION:
+        case SubItem::LOCATION:
             centerTextDisabled("All Event Locations");
             ListBoxes::eventLocations(database.getLocations(), size);
             break;
-        case SubItem::AMMO_AMMO:
+        case SubItem::AMMO:
             centerTextDisabled("All Ammo");
             Tables::Selectable::ammoMetadata(database.getStockpile(), selectedAmmo, size);
 
@@ -109,15 +109,15 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
             // TODO - butti here to view the ammo
 
             break;
-        case SubItem::AMMO_MANUFACTURER:
+        case SubItem::MANUFACTURER:
             centerTextDisabled("All Manufacturers");
             ListBoxes::manufacturers(database.getManufacturers(), size);
             break;
-        case SubItem::GUN_AMMO_CARTRIDGE:
+        case SubItem::CARTRIDGE:
             centerTextDisabled("All Cartridges");
             ListBoxes::cartridges(database.getCartridges(), size);
             break;
-        case SubItem::GUN_GUN:
+        case SubItem::GUN:
             centerTextDisabled("All Guns");
             Tables::Selectable::gunMetadataWithRoundCount(database.getArmory(), selectedGun, size);
 
@@ -128,7 +128,7 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
 
             // - TODO - button here to view the gun
             break;
-        case SubItem::GUN_WEAPON_TYPE:
+        case SubItem::WEAPON_TYPE:
             centerTextDisabled("All Weapon Types");
             ListBoxes::weaponTypes(database.getWeaponTypes(), size);
             break;
@@ -140,7 +140,7 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
 }
 void addItemWindow(const Database& database, ScreenData::Add& data){
     switch(data.subItem){
-        case SubItem::EVENT_EVENT:
+        case SubItem::EVENT:
             EventWindow::main(
                     data.eventWindow, 
                     ShootingEventMetadata::MAX_CHAR_NOTES, 
@@ -153,22 +153,22 @@ void addItemWindow(const Database& database, ScreenData::Add& data){
         case SubItem::EVENT_TYPE:
             Add::add_EventType(data.subItemBuffers.eventType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
-        case SubItem::EVENT_LOCATION: 
+        case SubItem::LOCATION: 
             Add::add_Location(data.subItemBuffers.location, ScreenData::Add::MAX_CHAR_INPUT);
             break;
-        case SubItem::AMMO_AMMO:
+        case SubItem::AMMO:
        
             break;
-        case SubItem::AMMO_MANUFACTURER:
+        case SubItem::MANUFACTURER:
             Add::add_Manufacturer(data.subItemBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
             break;
-        case SubItem::GUN_AMMO_CARTRIDGE:
+        case SubItem::CARTRIDGE:
             Add::add_Cartridge(data.subItemBuffers.cartridge, ScreenData::Add::MAX_CHAR_INPUT);
             break;
-        case SubItem::GUN_GUN:
+        case SubItem::GUN:
 
             break;
-        case SubItem::GUN_WEAPON_TYPE:
+        case SubItem::WEAPON_TYPE:
             Add::add_WeaponType(data.subItemBuffers.weaponType, ScreenData::Add::MAX_CHAR_INPUT);
             break;
         default:

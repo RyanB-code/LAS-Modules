@@ -74,28 +74,28 @@ std::string subItemToString (const SubItem& item, const std::string& noneStr){
             else
                 return noneStr;
             break;
-        case SubItem::EVENT_EVENT:
+        case SubItem::EVENT:
             return std::string {"Event"};
             break;
         case SubItem::EVENT_TYPE:
             return std::string {"Event Type"};
             break;
-        case SubItem::EVENT_LOCATION:
-            return std::string {"Event Location"};
+        case SubItem::LOCATION:
+            return std::string {"Location"};
             break;
-        case SubItem::AMMO_AMMO:
+        case SubItem::AMMO:
             return std::string {"Ammo"};
             break;
-        case SubItem::AMMO_MANUFACTURER:
+        case SubItem::MANUFACTURER:
             return std::string {"Manufacuter"};
             break;
-        case SubItem::GUN_AMMO_CARTRIDGE:
+        case SubItem::CARTRIDGE:
             return std::string {"Cartridge"};
             break;
-        case SubItem::GUN_GUN:
+        case SubItem::GUN:
             return  std::string {"Gun"};
             break;
-        case SubItem::GUN_WEAPON_TYPE:
+        case SubItem::WEAPON_TYPE:
             return std::string {"Weapon Type"};
             break;
         default:
