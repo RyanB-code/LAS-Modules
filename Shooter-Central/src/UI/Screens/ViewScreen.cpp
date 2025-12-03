@@ -455,7 +455,7 @@ void StockpileWindow::main(
     ImGui::EndChild();
 
     if(ImGui::BeginChild("Selected Ammo Details", data.windowSize)){
-        ImGui::SeparatorText( "Details" );
+        ImGui::SeparatorText( "Selected Ammo Details" );
         ImGui::Spacing(); 
         ImGui::Spacing();
 
