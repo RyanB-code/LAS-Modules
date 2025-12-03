@@ -50,5 +50,5 @@ bool pushEvent(UIEvent* event);
 
 void pollEvent (std::unique_ptr<DatabaseEvent>& event);
 void pollEvent (std::unique_ptr<UIEvent>& event);
-    
+
 } // End ShooterCentral namespace
