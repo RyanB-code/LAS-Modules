@@ -817,6 +817,8 @@ void EventWindow::review(
             ImGui::SameLine();
             if(ImGui::Button("Reset All", data.buttonSize)){
                // todo command reset all event window 
+                UIEvents::ResetAddEventWindow resetBuffers { };
+               pushEvent(&resetBuffers);
             }
             ImGui::EndGroup();
         }    

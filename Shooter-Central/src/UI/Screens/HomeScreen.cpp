@@ -183,19 +183,15 @@ void stockpileWindow(
 
     if(ImGui::BeginChild("Selected Cartridge Details", ImVec2{ImGui::GetContentRegionAvail().x, 75}, 0)){
         if(centerButton("View More Information", ImVec2 { 200, 50 })){
-            std::cout << "Command to change to view ammo for cartridge here\n";
-
-            /*
             ScreenData::View newBuffer { };
-            newBuffer.category = Category::STOCKPILE;
-            newBuffer.stockpileTab.selectedCartridge = selected;
+            newBuffer.mainWindow.category = Category::STOCKPILE;
+            newBuffer.stockpileWindow.selectedCartridge = screenData.selectedCartridge;
 
             UIEvents::SetScreenData_View setScreenData { newBuffer };
             UIEvents::SetScreen setScreen {Screen::VIEW};
 
             pushEvent(&setScreenData);
             pushEvent(&setScreen); 
-            */
         }
     }
     ImGui::EndChild();
