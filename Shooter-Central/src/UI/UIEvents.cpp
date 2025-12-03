@@ -10,36 +10,39 @@ Status SetScreen::execute (UIController& controller){
     return Status{true};
 }
 
-SetScreenData_Home::SetScreenData_Home(ScreenData::Home set) : homeData { set } {
-        
-}
-Status SetScreenData_Home::execute (UIController& controller){
-    controller.setScreenData(homeData);
-    return Status{true};
-}
-SetScreenData_View::SetScreenData_View(ScreenData::View set) : viewData { set } {
-        
-}
-Status SetScreenData_View::execute (UIController& controller){
-    controller.setScreenData(viewData);
-    return Status{true};
-}
+namespace SetScreenData {
 
-SetScreenData_Add::SetScreenData_Add(ScreenData::Add set) : addData { set } {
-        
-}
-Status SetScreenData_Add::execute (UIController& controller){
-    controller.setScreenData(addData);
-    return Status{true};
-}
+    Home::Home(ScreenData::Home set) : homeData { set } {
+            
+    }
+    Status Home::execute (UIController& controller){
+        controller.setScreenData(homeData);
+        return Status{true};
+    }
+    View::View(ScreenData::View set) : viewData { set } {
+            
+    }
+    Status View::execute (UIController& controller){
+        controller.setScreenData(viewData);
+        return Status{true};
+    }
 
-SetScreenData_Edit::SetScreenData_Edit(ScreenData::Edit set) : editData { set } {
-        
-}
-Status SetScreenData_Edit::execute (UIController& controller){
-    controller.setScreenData(editData);
-    return Status{true};
-}
+    Add::Add(ScreenData::Add set) : addData { set } {
+            
+    }
+    Status Add::execute (UIController& controller){
+        controller.setScreenData(addData);
+        return Status{true};
+    }
+
+    Edit::Edit(ScreenData::Edit set) : editData { set } {
+            
+    }
+    Status Edit::execute (UIController& controller){
+        controller.setScreenData(editData);
+        return Status{true};
+    }
+}   // SetScreenData namespace
 
 ShowPopup::ShowPopup(std::shared_ptr<Popup> set) : popup { set } {
 
@@ -64,7 +67,7 @@ Status ResetAddEventWindow::execute(UIController& controller) {
     auto addWindow { controller.getScreenData_Add() };
     addWindow.eventWindow = screenData;
 
-    SetScreenData_Add amend {addWindow};
+    SetScreenData::Add amend {addWindow};
     pushEvent(&amend);
     return Status{true, "test status resetAddEventWindow"};
 }

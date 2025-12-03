@@ -22,49 +22,54 @@ private:
     Screen screen;
 };
 
-class SetScreenData_Home : public UIEvent {
-public:
-    SetScreenData_Home(ScreenData::Home set);
-    ~SetScreenData_Home() = default;
+namespace SetScreenData {
 
-    UI_EVENT_FUNCTIONS(SetScreenData_Home)
-private:
-    ScreenData::Home homeData;
+    class Home : public UIEvent {
+    public:
+        Home(ScreenData::Home set);
+        ~Home() = default;
 
-};
+        UI_EVENT_FUNCTIONS(Home)
+    private:
+        ScreenData::Home homeData;
 
-class SetScreenData_View : public UIEvent {
-public:
-    SetScreenData_View(ScreenData::View set);
-    ~SetScreenData_View() = default;
+    };
 
-    UI_EVENT_FUNCTIONS(SetScreenData_View)
-private:
-    ScreenData::View viewData;
+    class View : public UIEvent {
+    public:
+        View(ScreenData::View set);
+        ~View() = default;
 
-};
+        UI_EVENT_FUNCTIONS(View)
+    private:
+        ScreenData::View viewData;
 
-class SetScreenData_Add : public UIEvent {
-public:
-    SetScreenData_Add(ScreenData::Add set);
-    ~SetScreenData_Add() = default;
+    };
 
-    UI_EVENT_FUNCTIONS(SetScreenData_Add)
-private:
-    ScreenData::Add addData;
+    class Add : public UIEvent {
+    public:
+        Add(ScreenData::Add set);
+        ~Add() = default;
 
-};
+        UI_EVENT_FUNCTIONS(Add)
+    private:
+        ScreenData::Add addData;
 
-class SetScreenData_Edit : public UIEvent {
-public:
-    SetScreenData_Edit(ScreenData::Edit set);
-    ~SetScreenData_Edit() = default;
+    };
 
-    UI_EVENT_FUNCTIONS(SetScreenData_Edit)
-private:
-    ScreenData::Edit editData;
+    class Edit : public UIEvent {
+    public:
+        Edit(ScreenData::Edit set);
+        ~Edit() = default;
 
-}; 
+        UI_EVENT_FUNCTIONS(Edit)
+    private:
+        ScreenData::Edit editData;
+
+    }; 
+
+}   // SetScreenData namespace
+
 
 class ShowPopup : public UIEvent {
 public: 

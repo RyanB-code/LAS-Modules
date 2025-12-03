@@ -3,9 +3,7 @@
 #include "Events.h"
 #include "Database.h"
 
-namespace ShooterCentral {
-
-namespace DatabaseEvents {
+namespace ShooterCentral::DatabaseEvents {
 
     /*
     class CreateGun : public DatabaseEvent {
@@ -28,73 +26,75 @@ namespace DatabaseEvents {
     private:
         ObjectBuffers::AmmoMetadata info;
     };
-    class CreateEvent : public DatabaseEvent {
-    public:
-        CreateEvent(const ObjectBuffers::ShootingEventMetadata& set);
-        ~CreateEvent() = default;
-
-        DatabaseL_EVENT_FUNCTIONS(CreateEvent)
-
-    private:
-        ObjectBuffers::ShootingEventMetadata info;
-    };
     */
 
+namespace Add {
+
+    class Event : public DatabaseEvent {
+        public:
+            Event(const ShootingEvent& set);
+            ~Event() = default;
+
+            DATABASE_EVENT_FUNCTIONS(Event)
+
+        private:
+            ShootingEvent event;
+    };
+
+
     // Metadata items
-    class AddManufacturer : public DatabaseEvent {
+    class Manufacturer : public DatabaseEvent {
         public:
-            AddManufacturer(const Manufacturer& m);
-            ~AddManufacturer() = default;
+            Manufacturer(const ShooterCentral::Manufacturer& m);
+            ~Manufacturer() = default;
 
-            DATABASE_EVENT_FUNCTIONS(AddManufacturer)
+            DATABASE_EVENT_FUNCTIONS(Manufacturer)
 
         private:
-            Manufacturer manufacturer;
+                ShooterCentral::Manufacturer manufacturer;
     };
-    class AddCartridge : public DatabaseEvent {
+    class Cartridge : public DatabaseEvent {
         public:
-            AddCartridge(const Cartridge& c);
-            ~AddCartridge() = default;
+            Cartridge(const ShooterCentral::Cartridge& c);
+            ~Cartridge() = default;
 
-            DATABASE_EVENT_FUNCTIONS(AddCartridge)
+            DATABASE_EVENT_FUNCTIONS(Cartridge)
 
         private:
-            Cartridge cartridge;
+            ShooterCentral::Cartridge cartridge;
     };
-    class AddEventType : public DatabaseEvent {
+    class EventType : public DatabaseEvent {
         public:
-            AddEventType(const ShootingEventType& et);
-            ~AddEventType() = default;
+            EventType(const ShooterCentral::ShootingEventType& et);
+            ~EventType() = default;
 
-            DATABASE_EVENT_FUNCTIONS(AddEventType)
+            DATABASE_EVENT_FUNCTIONS(EventType)
 
         private:
-                ShootingEventType eventType;
+            ShooterCentral::ShootingEventType eventType;
     };
-    class AddWeaponType : public DatabaseEvent {
-    public:
-        AddWeaponType(const WeaponType& wt);
-        ~AddWeaponType() = default;
+    class WeaponType : public DatabaseEvent {
+        public:
+            WeaponType(const ShooterCentral::WeaponType& wt);
+            ~WeaponType() = default;
 
-        DATABASE_EVENT_FUNCTIONS(AddWeaponType)
+            DATABASE_EVENT_FUNCTIONS(WeaponType)
 
-    private:
-        WeaponType weaponType;
+        private:
+            ShooterCentral::WeaponType weaponType;
     };
 
-    class AddLocation : public DatabaseEvent {
-    public:
-        AddLocation(const Location& loc);
-        ~AddLocation() = default;
+    class Location : public DatabaseEvent {
+        public:
+            Location(const ShooterCentral::Location& loc);
+            ~Location() = default;
 
-        DATABASE_EVENT_FUNCTIONS(AddLocation)
+            DATABASE_EVENT_FUNCTIONS(Location)
 
-    private:
-        Location location;
+        private:
+            ShooterCentral::Location location;
     };
+}   // Add namespace
 
 }   // End DatabaseEvents namespace
-
-
-}   // End SC namespace
 

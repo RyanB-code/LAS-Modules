@@ -1,8 +1,6 @@
 #include "DatabaseEvents.h"
 
-namespace ShooterCentral {
-
-namespace DatabaseEvents {
+namespace ShooterCentral::DatabaseEvents {
 
 /* / Full objects
 CreateGun::CreateGun(const ObjectBuffers::GunMetadata& set) : info { set } {
@@ -35,56 +33,56 @@ Status CreateEvent::execute (Containers& container) {
 */
 
 // Metadata items
-AddManufacturer::AddManufacturer(const Manufacturer& m) : manufacturer { m } {
+namespace Add {
+Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer { m } {
 
 }
-Status AddManufacturer::execute (Database& db) {
+Status Manufacturer::execute (Database& db) {
     if(db.addManufacturer(manufacturer))
         return Status{true};
 
     return Status{false, "Failed to add Manufacturer" };
 }
-AddCartridge::AddCartridge(const Cartridge& c) : cartridge { c } {
+Cartridge::Cartridge(const ShooterCentral::Cartridge& c) : cartridge { c } {
 
 }
-Status AddCartridge::execute (Database& db) {
+Status Cartridge::execute (Database& db) {
     if(db.addCartridge(cartridge))
         return Status{true};
 
     return Status{false, "Failed to add Cartridge" };
 }
-AddEventType::AddEventType(const ShootingEventType& et) : eventType { et } {
+EventType::EventType(const ShooterCentral::ShootingEventType& et) : eventType { et } {
 
 }
-Status AddEventType::execute (Database& db) {
+Status EventType::execute (Database& db) {
     if(db.addEventType(eventType))
         return Status{true};
 
     return Status{false, "Failed to add ShootingEventType" };
 }
-AddWeaponType::AddWeaponType(const WeaponType& wt) : weaponType { wt } {
+WeaponType::WeaponType(const ShooterCentral::WeaponType& wt) : weaponType { wt } {
     
 }
-Status AddWeaponType::execute (Database& db) {
+Status WeaponType::execute (Database& db) {
     if(db.addWeaponType(weaponType))
         return Status{true};
 
     return Status{false, "Failed to add WeaponType" };
 }
 
-AddLocation::AddLocation(const Location& loc) : location { loc } {
+Location::Location(const ShooterCentral::Location& loc) : location { loc } {
     
 }
-Status AddLocation::execute (Database& db) {
+Status Location::execute (Database& db) {
     if(db.addLocation(location))
         return Status{true};
 
     return Status{false, "Failed to add Location" };
 }
 
+}   // Add namespace
 
 }   // End DatabaseEvents namespace
 
 
-
-}   // End SC namespace
