@@ -1,9 +1,10 @@
 #pragma once
 
+#include "Events.h"
+#include "CommonItems.h"
 #include "UI/UIControl.h"
 #include "UI/UIHelperElements.h"
-#include "CommonItems.h"
-#include "Events.h"
+#include "UI/UIEvents.h"
 
 #include "Backend/DatabaseItems.h"
 #include "Backend/Database.h"
