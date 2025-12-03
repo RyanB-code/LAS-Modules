@@ -178,6 +178,7 @@ void addItemWindow(const Database& database, ScreenData::Add& data){
  
 }
 void add_Manufacturer(char* textBuf, size_t size){
+    ImGui::Indent(20);
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Manufacturer to choose from when creating Ammo.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -185,19 +186,21 @@ void add_Manufacturer(char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     ImGui::Text("Manufacturer");
-    ImGui::SameLine(100);
+    ImGui::SameLine(150);
     ImGui::InputText("##Input Manufacturer", textBuf, size);
+    ImGui::Unindent();
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Manufacturer", ImVec2{200,50})){
-        DatabaseEvents::AddManufacturer e { Manufacturer { textBuf } };
+        DatabaseEvents::Add::Manufacturer e { Manufacturer { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
     }
 }
 void add_Cartridge       (char* textBuf, size_t size){
+    ImGui::Indent(20);
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Cartridge to choose from when creating Ammo and Guns.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -205,19 +208,21 @@ void add_Cartridge       (char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     ImGui::Text("Cartridge");
-    ImGui::SameLine(100);
+    ImGui::SameLine(150);
     ImGui::InputText("##Input Cartridge", textBuf, size);
+    ImGui::Unindent();
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Cartrige", ImVec2{200,50})){
-        DatabaseEvents::AddCartridge e { Cartridge { textBuf } };
+        DatabaseEvents::Add::Cartridge e { Cartridge { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
     }
 }
 void add_EventType       (char* textBuf, size_t size){
+    ImGui::Indent(20);
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Event Type to choose from when creating an Event");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -225,19 +230,21 @@ void add_EventType       (char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     ImGui::Text("Event Type");
-    ImGui::SameLine(100);
+    ImGui::SameLine(150);
     ImGui::InputText("##Input Event Type", textBuf, size);
+    ImGui::Unindent();
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Event Type", ImVec2{200,50})){
-        DatabaseEvents::AddEventType e { ShootingEventType { textBuf } };
+        DatabaseEvents::Add::EventType e { ShootingEventType { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
     }
 }
 void add_WeaponType(char* textBuf, size_t size){
+    ImGui::Indent(20);
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Weapon Type to choose from when creating a gun.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -245,19 +252,21 @@ void add_WeaponType(char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
     
     ImGui::Text("Weapon Type");
-    ImGui::SameLine(100);
+    ImGui::SameLine(150);
     ImGui::InputText("##Input Weapon Type", textBuf, size, ImGuiInputTextFlags_CharsUppercase);
+    ImGui::Unindent();
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Weapon Type", ImVec2{200,50})){
-        DatabaseEvents::AddWeaponType e { WeaponType { textBuf } };
+        DatabaseEvents::Add::WeaponType e { WeaponType { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
     }
 }
 void add_Location(char* textBuf, size_t size){
+    ImGui::Indent(20);
     ImGui::Text("Directions");
     ImGui::BulletText("This will add a new Location to choose from when creating an Event.");
     ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
@@ -265,13 +274,14 @@ void add_Location(char* textBuf, size_t size){
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     ImGui::Text("Location");
-    ImGui::SameLine(100);
+    ImGui::SameLine(150);
     ImGui::InputText("##Input Location", textBuf, size);
+    ImGui::Unindent();
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
     if(centerButton("Add Location", ImVec2{200,50})){
-        DatabaseEvents::AddLocation e { Location { textBuf } };
+        DatabaseEvents::Add::Location e { Location { textBuf } };
         pushEvent(&e);
 
         resetText(textBuf, size);
@@ -816,9 +826,8 @@ void EventWindow::review(
             ImGui::Dummy( ImVec2 { 20, 10} );
             ImGui::SameLine();
             if(ImGui::Button("Reset All", data.buttonSize)){
-               // todo command reset all event window 
                 UIEvents::ResetAddEventWindow resetBuffers { };
-               pushEvent(&resetBuffers);
+                pushEvent(&resetBuffers);
             }
             ImGui::EndGroup();
         }    
