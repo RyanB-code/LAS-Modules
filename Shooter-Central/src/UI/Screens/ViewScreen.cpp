@@ -146,9 +146,17 @@ void ArmoryWindow::main(
                     data.bottomTableSize
                 );
 
-            // TODO - Button to view selected ammo here
             if(viewEvent != EMPTY_EVENT_METADATA){
-                std::cout << "Command to view event\n"; // Make command to enter change to view event with this Event
+                ScreenData::View buffer { };
+                buffer.eventsWindow.selectedEvent = viewEvent;
+                buffer.mainWindow.category = Category::EVENTS;
+
+                UIEvents::SetScreenData::View setView { buffer};
+                UIEvents::SetScreen setScreen { Screen::VIEW };
+                
+                pushEvent(&setView);
+                pushEvent(&setScreen);
+
                 viewEvent = EMPTY_EVENT_METADATA;
             }
         }
@@ -175,9 +183,18 @@ void ArmoryWindow::main(
                     viewAmmo, 
                     data.bottomTableSize);
 
-            // TODO - Button to view selected ammo here
             if(viewAmmo != EMPTY_AMMO_METADATA){
-                std::cout << "Command to view ammo\n"; // Make command to enter change to view event with this Event
+                ScreenData::View buffer { };
+                buffer.stockpileWindow.selectedCartridge = viewAmmo.cartridge;
+                buffer.stockpileWindow.selectedAmmo = viewAmmo;
+                buffer.mainWindow.category = Category::STOCKPILE;
+
+                UIEvents::SetScreenData::View setView { buffer};
+                UIEvents::SetScreen setScreen { Screen::VIEW };
+                
+                pushEvent(&setView);
+                pushEvent(&setScreen);
+
                 viewAmmo = EMPTY_AMMO_METADATA;
             }
         }
@@ -491,7 +508,16 @@ void StockpileWindow::main(
                 );
 
             if(viewInfo != EMPTY_GUN_METADATA){
-                std::cout << "command to view gun\n";
+                ScreenData::View buffer { };
+                buffer.armoryWindow.selectedGun = viewInfo;
+                buffer.mainWindow.category = Category::GUNS;
+
+                UIEvents::SetScreenData::View setView { buffer};
+                UIEvents::SetScreen setScreen { Screen::VIEW };
+                
+                pushEvent(&setView);
+                pushEvent(&setScreen);
+
                 viewInfo = EMPTY_GUN_METADATA;
             }
         }
