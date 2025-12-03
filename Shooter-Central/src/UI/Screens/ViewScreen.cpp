@@ -138,6 +138,10 @@ void ArmoryWindow::main(
             centerTextDisabled("Select a Gun to View Events");
         }
         else{
+            centerTextDisabled("Select Event to View Details");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             static ShootingEventMetadata viewEvent { };
             centerNextItemX(data.bottomTableSize.x);
             Tables::Selectable::eventMetadata(
@@ -176,6 +180,10 @@ void ArmoryWindow::main(
             centerTextDisabled("Select a Gun to View Ammo Used");
         }
         else{
+            centerTextDisabled("Select Ammo to View Details");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             static AmmoMetadata viewAmmo { };
             centerNextItemX(data.bottomTableSize.x);
             Tables::Selectable::amountOfAmmo(
@@ -320,6 +328,10 @@ void EventsWindow::main(
             if(data.bottomTableSize.x > data.maxTableWidth)
                 data.bottomTableSize.x = data.maxTableWidth;
 
+            centerTextDisabled("Select a Gun to View Ammo Used");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             centerNextItemX(data.bottomTableSize.x);
             Tables::Selectable::gunMetadataWithRoundCount(
                     events.at(data.selectedEvent).getGunsUsed(), 
@@ -357,16 +369,25 @@ void EventsWindow::selectedEventInformation(const ShootingEvent& event){
 
     centerNextItemX(400);
     ImGui::BeginGroup();
-    ImGui::Text("Date:              %s", event.printDate().c_str());
-    ImGui::Text("Location:          %s", info.location.getName());
-    ImGui::Text("Event Type:        %s", info.eventType.getName()); 
+    ImGui::TextDisabled("Date:              ");
+    ImGui::SameLine();
+    ImGui::Text("%s", event.printDate().c_str());
+
+    ImGui::TextDisabled("Location:          ");
+    ImGui::SameLine();
+    ImGui::Text("%s", info.location.getName());
+
+    ImGui::TextDisabled("EventType:         ");
+    ImGui::SameLine();
+    ImGui::Text("%s", info.eventType.getName());
     ImGui::EndGroup();
 
     ImGui::Spacing();
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::SeparatorText("Notes");
+    centerTextDisabled("Notes");
+    ImGui::Separator();
     ImGui::Spacing();
     ImGui::TextWrapped("%s", info.notes.c_str());
 }
@@ -499,6 +520,10 @@ void StockpileWindow::main(
             centerTextDisabled("Select an Event to View Detailed Information");
         }
         else{
+            centerTextDisabled("Select a Gun to View Details");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             static GunMetadata viewInfo { };
             centerNextItemX(data.tableSize.x);
             Tables::Selectable::gunMetadata(
@@ -529,17 +554,35 @@ void StockpileWindow::selectedAmmoInformation (const StockpileAmmo& data){
 
     centerNextItemX(200);
     ImGui::BeginGroup();
-    ImGui::Text("Name:              %s", ammoInfo.name.c_str());
-    ImGui::Text("Cartridge:         %s", ammoInfo.cartridge.getName());
-    ImGui::Text("Manufacturer:      %s", ammoInfo.manufacturer.getName()); 
-    ImGui::Text("GrainWeight:       %d", ammoInfo.grainWeight);
+
+    ImGui::TextDisabled("Name:              ");
+    ImGui::SameLine();
+    ImGui::Text("%s", ammoInfo.name.c_str());
+
+    ImGui::TextDisabled("Cartridge:         ");
+    ImGui::SameLine();
+    ImGui::Text("%s", ammoInfo.cartridge.getName());
+
+    ImGui::TextDisabled("Manufacturer:      ");
+    ImGui::SameLine();
+    ImGui::Text("%s", ammoInfo.manufacturer.getName());
+
+    ImGui::TextDisabled("Grain Weight:      ");
+    ImGui::SameLine();
+    ImGui::Text("%d", ammoInfo.grainWeight);
 
     ImGui::Spacing();
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Text("Amount On Hand:    %d", data.getAmountOnHand()); 
-    ImGui::Text("Guns Used In:      %ld", data.getGunsUsed().size()); 
+    ImGui::TextDisabled("Amount On Hand:    ");
+    ImGui::SameLine();
+    ImGui::Text("%d", data.getAmountOnHand());
+
+    ImGui::TextDisabled("Guns Used In:     ");
+    ImGui::SameLine();
+    ImGui::Text("%ld", data.getGunsUsed().size());
+
     ImGui::EndGroup();
 }
 
