@@ -3,130 +3,16 @@
 #include "Backend/DatabaseEvents.h"
 #include "Backend/Database.h"
 
+#include "UI/UIData.h"
+#include "UI/UIEvents.h" 
 #include "UI/UIHelperElements.h"
+
 
 #include <LAS/Logging.h>
 #include <imgui/imgui.h>
 
 #include <iostream> // For testing
 
-
-namespace ShooterCentral::UI::ScreenData {
-
-struct Add {
-    static constexpr int MAX_CHAR_INPUT { 64 };
-
-    struct SubItemBuffers {
-        char weaponType[MAX_CHAR_INPUT]     = "";
-        char manufacturer[MAX_CHAR_INPUT]   = "";
-        char cartridge[MAX_CHAR_INPUT]      = "";
-        char location[MAX_CHAR_INPUT]       = "";
-        char eventType[MAX_CHAR_INPUT]      = "";
-    }; 
-
-    struct EventWindow {
-        struct MetadataWindow {
-            ShootingEventType   selectedET          { };
-            Location            selectedLocation    { };
-
-            char notes[ShootingEventMetadata::MAX_CHAR_NOTES] = "";
-            int day     { 0 };
-            int month   { 0 };
-            int year    { 0 };
-
-            bool triedToVerifyEventInfo     { false };
-
-            static constexpr ImVec2 buttonSize { 100, 40 };
-            static constexpr ImVec2 minWinSize { 200, 100 };
-
-            ImVec2 mainWinSize  { minWinSize };
-            ImVec2 infoWinSize  { minWinSize };
-
-        };
-        struct GunsAndAmmoWindow {
-            struct AddGunWindow {
-                GunMetadata     selectedGun     { };
-
-                bool selectedGunValid   { false };
-
-                static constexpr ImVec2 buttonSize { 100, 40 };
-            };
-            struct AddAmmoWindow {
-                AmmoMetadata selectedAmmo { };
-                int amountBuffer { 0 };
-
-                bool isAmountOfAmmoValid { false };
-                static constexpr ImVec2 buttonSize { 100, 40 };
-            };
-
-            static constexpr ImVec2 buttonSize          { 100, 40 };
-            static constexpr ImVec2 minWinSize          { 400, 400 };
-            static constexpr ImVec2 minTableSize        { 300, 400 };
-            static constexpr float  maxTableWidth       { 800 };     
-
-            AddAmmoWindow   addAmmoWindow   { };
-            AddGunWindow    addGunWindow    { };
-
-            GunMetadata    selectedGun     { };
-            AmmoMetadata   selectedAmmo    { };
-
-            bool verticalLayout     { false };
-            bool selectedGunValid   { false };
-            bool selectedAmmoValid  { false };
-           
-            ImVec2 mainWindowSize   { minWinSize };
-            ImVec2 viewWindowSize   { minWinSize };
-            ImVec2 mainTableSize    { minTableSize };
-            ImVec2 viewTableSize    { minTableSize };
-        };
-        struct ReviewWindow {
-            static constexpr ImVec2 buttonSize          { 100, 40 };
-            static constexpr ImVec2 minWinSize          { 400, 400 };
-            static constexpr ImVec2 minTableSize        { 300, 400 };
-            static constexpr float  maxTableWidth       { 800 };     
-
-            GunMetadata selectedGun { };
-
-            bool selectedGunValid   { };
-            bool eventMetadataValid { };
-
-            bool verticalLayout { false };
-
-            bool applyToArmory      { true };
-            bool applyToStockpile   { true };
-
-            ImVec2 optionsWinSize   { minWinSize.x, 100 };
-            ImVec2 reviewWinSize    { minWinSize };
-            ImVec2 tableSize        { minTableSize };
-        };
-
-        MetadataWindow      metadataWindow      { };
-        GunsAndAmmoWindow   gunsAndAmmoWindow   { };
-        ReviewWindow        reviewWindow        { };
-
-
-        ShootingEvent event { };
-    };
-
-    static constexpr ImVec2 deselectButtonSize  { 100, 40 };
-    static constexpr ImVec2 minWinSize          { 400, 600 };
-    static constexpr ImVec2 minTableSize        { 300, 400 };
-    static constexpr float  maxTableWidth       { 800 };     
-
-    EventWindow     eventWindow     { };
-
-    Category        category        { Category::NONE }; 
-    SubItem         subItem         { SubItem::NONE };
-    SubItemBuffers  subItemBuffers  { };
-
-    bool verticalLayout { false };
-
-    ImVec2 mainWindowSize   { minWinSize };
-    ImVec2 infoWindowSize   { minWinSize };
-    ImVec2 infoTableSize    { minTableSize };
-};
-
-}   // End Sc::UI::ScreenData
 
 namespace ShooterCentral::UI::Add {
     
