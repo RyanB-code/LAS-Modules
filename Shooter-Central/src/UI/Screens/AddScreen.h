@@ -70,7 +70,6 @@ namespace EventWindow {
             ScreenData::Add::EventWindow::ReviewWindow& data,
             ShootingEvent& event
         );
-    bool verifyEvent(const ShootingEvent& event);
 }   // End EventWindow
 
 }   // End SC::UI::Add

@@ -964,42 +964,5 @@ void EventWindow::review(
     }
     ImGui::EndChild();
 }
-bool EventWindow::verifyEvent(const ShootingEvent& event){
-    const auto& eventInfo { event.getInfo() };
-    if(!verifyMetadata(eventInfo.location, eventInfo.eventType, eventInfo.date)){
-        std::cout << "failed event metadata\n";
-        return false;
-    }
-
-    if(event.getGunsUsed().size() <= 0){
-        std::cout << "no guns\n";
-        return false;
-    }
-
-    for(const auto& gun : event.getGunsUsed()){
-        const auto& gunInfo { gun.getGunInfo() };
-
-        if(gunInfo == EMPTY_GUN_METADATA){
-            std::cout << "failed gun metadata\n";
-            return false;
-        }
-
-        if(gun.getAmmoUsed().size() <= 0){
-            std::cout << "no ammo for a gun\n";
-            return false;
-        }
-
-        for(const auto& amountOfAmmo : gun.getAmmoUsed() ){
-            const auto& ammoInfo { amountOfAmmo.getAmmoInfo() };
-
-            if(ammoInfo == EMPTY_AMMO_METADATA || amountOfAmmo.getAmount() <= 0){
-                std::cout << "failed ammo check\n";
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 
 }   // End SC::UI::Add
