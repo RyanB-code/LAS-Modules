@@ -844,15 +844,8 @@ void EventWindow::review(
             ImGui::BeginGroup();
 
             if(ImGui::Button("Add Event", data.buttonSize)){
-                if(verifyEvent(event)){
-                    // todo - command reset event window
-                    // todo - popup success
-                    std::cout << "event verified and add to list command\n";
-                }
-                else{
-                    // todo - popup it failed
-                    std::cout << "verify event failed\n";
-                }
+                DatabaseEvents::Add::Event add { event };
+                pushEvent(&add);
             }
             ImGui::SameLine();
             ImGui::Dummy( ImVec2 { 20, 10} );
