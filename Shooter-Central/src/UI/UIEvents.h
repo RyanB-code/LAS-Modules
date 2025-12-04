@@ -12,6 +12,7 @@ namespace ShooterCentral::UI::UIEvents{
 
 
 
+
 class SetScreen : public UIEvent {
 public:
     SetScreen(const Screen& setScreen);
@@ -71,23 +72,16 @@ namespace SetScreenData {
 }   // SetScreenData namespace
 
 
-class ShowPopup : public UIEvent {
+class PushPopup : public UIEvent {
 public: 
-    ShowPopup(std::shared_ptr<Popup>);
-    ~ShowPopup() = default;
+    PushPopup(Popup* popup);
+    ~PushPopup() = default;
 
-    UI_EVENT_FUNCTIONS(ShowPopup)
+    virtual Status execute (UIController& ) override;
+    virtual std::unique_ptr<UIEvent> clone() const override;
+
 private:
-    std::shared_ptr<Popup> popup; 
-};
-
-class ClosePopup : public UIEvent {
-public:
-    ClosePopup() = default;
-    ~ClosePopup() = default;
-
-
-    UI_EVENT_FUNCTIONS(ClosePopup)
+    std::unique_ptr<Popup> popupPtr { }; 
 };
 
 

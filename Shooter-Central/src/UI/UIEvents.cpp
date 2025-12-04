@@ -44,20 +44,20 @@ namespace SetScreenData {
     }
 }   // SetScreenData namespace
 
-ShowPopup::ShowPopup(std::shared_ptr<Popup> set) : popup { set } {
-
+PushPopup::PushPopup(Popup* set) {
+    popupPtr = set->clone();
 }
-Status ShowPopup::execute(UIController& controller) {
-    if(controller.setPopup(popup))
+Status PushPopup::execute(UIController& controller) {
+    if(controller.pushPopup(popupPtr.get()))
         return Status { true };
 
-    return Status { false, "UIController::setPopup() failed" };
+    return Status { false, "UIController::pushPopup(UI::Popup*) failed" };
+}
+std::unique_ptr<UIEvent> PushPopup::clone() const{ 
+    auto buffer { std::make_unique<PushPopup>( popupPtr.get()  ) };
+    return buffer;
 }
 
-Status ClosePopup::execute(UIController& controller) {
-    controller.closePopup();
-    return Status { true };
-}
 
 ResetAddEventWindow::ResetAddEventWindow(const ScreenData::Add::EventWindow& data) : screenData { data }
 {
