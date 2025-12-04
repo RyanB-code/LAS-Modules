@@ -751,21 +751,21 @@ void Tables::amountOfAmmo(
 void ListBoxes::cartridges(const std::set<Cartridge>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Cartridge List Box", size)){
         for(const auto& cartridge : list) 
-            ImGui::Text(cartridge.getName());
+            ImGui::Text("%s", cartridge.getName());
         ImGui::EndListBox();
     }
 }
 void ListBoxes::manufacturers(const std::set<Manufacturer>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Manufacturer List Box", size)){
         for(const auto& manufacturer : list)
-            ImGui::Text(manufacturer.getName());
+            ImGui::Text("%s", manufacturer.getName());
         ImGui::EndListBox();
     }
 }
 void ListBoxes::eventLocations (const std::set<Location>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Event Location List Box", size)){
         for(const auto& location : list)
-            ImGui::Text(location.getName());
+            ImGui::Text("%s", location.getName());
         ImGui::EndListBox();
     }
 }
