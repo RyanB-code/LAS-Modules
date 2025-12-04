@@ -155,4 +155,20 @@ private:
    std::function<void()> body { nullptr };
 };
 
+class YesOrNoPopup : public Popup {
+public: 
+   YesOrNoPopup(const char* title, std::function<void()> setBody, std::function<void()> setYesFunction);
+   ~YesOrNoPopup() = default;
+
+    virtual std::unique_ptr<Popup> clone() const override { return std::make_unique<YesOrNoPopup>(*this);};
+
+   void show() override;
+private:
+    std::function<void()> body          { nullptr };
+    std::function<void()> yesFunction   { nullptr };
+
+};
+
+
+
 }   // End UI namespace

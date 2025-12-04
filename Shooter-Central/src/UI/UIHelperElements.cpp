@@ -908,5 +908,23 @@ void CustomClosePopup::show() {
     buttons_Close();
 }
 
+YesOrNoPopup::YesOrNoPopup(const char* setTitle, std::function<void()> setBody, std::function<void()> setYes) : 
+    Popup(setTitle),
+    body { setBody },
+    yesFunction { setYes }
+{
+
+}
+void YesOrNoPopup::show() {
+    ImGui::Dummy( ImVec2 {0, 50});
+    body(); 
+    ImGui::Dummy( ImVec2 {0, 50});
+
+    if(buttons_YesOrNo()){
+        yesFunction();
+        close();
+    }
+}
+
 
 }   // End UI namespace
