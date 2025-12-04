@@ -9,12 +9,12 @@ void main(const Database& database, ScreenData::View& data){
     ImGui::Spacing();
 
     centerNextComboBoxX("Select A Category", 200);
-    ComboBoxes::category(data.mainWindow.category); 
+    ComboBoxes::category(data.category); 
 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    switch(data.mainWindow.category){
+    switch(data.category){
         case Category::GUNS:
             ArmoryWindow::main(database.getArmory(), data.armoryWindow);
             break;
@@ -153,7 +153,7 @@ void ArmoryWindow::main(
             if(viewEvent != EMPTY_EVENT_METADATA){
                 ScreenData::View buffer { };
                 buffer.eventsWindow.selectedEvent = viewEvent;
-                buffer.mainWindow.category = Category::EVENTS;
+                buffer.category = Category::EVENTS;
 
                 UIEvents::SetScreenData::View setView { buffer};
                 UIEvents::SetScreen setScreen { Screen::VIEW };
@@ -195,7 +195,7 @@ void ArmoryWindow::main(
                 ScreenData::View buffer { };
                 buffer.stockpileWindow.selectedCartridge = viewAmmo.cartridge;
                 buffer.stockpileWindow.selectedAmmo = viewAmmo;
-                buffer.mainWindow.category = Category::STOCKPILE;
+                buffer.category = Category::STOCKPILE;
 
                 UIEvents::SetScreenData::View setView { buffer};
                 UIEvents::SetScreen setScreen { Screen::VIEW };
@@ -535,7 +535,7 @@ void StockpileWindow::main(
             if(viewInfo != EMPTY_GUN_METADATA){
                 ScreenData::View buffer { };
                 buffer.armoryWindow.selectedGun = viewInfo;
-                buffer.mainWindow.category = Category::GUNS;
+                buffer.category = Category::GUNS;
 
                 UIEvents::SetScreenData::View setView { buffer};
                 UIEvents::SetScreen setScreen { Screen::VIEW };

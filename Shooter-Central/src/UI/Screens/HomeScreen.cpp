@@ -74,7 +74,7 @@ void gunWindow(
 
     if(centerButton("View Details", screenData.buttonSize)){
         ScreenData::View newBuffer { };
-        newBuffer.mainWindow.category = Category::GUNS;
+        newBuffer.category = Category::GUNS;
         newBuffer.armoryWindow.selectedGun = screenData.selectedGun;
 
         UIEvents::SetScreenData::View setScreenData { newBuffer };
@@ -145,7 +145,7 @@ void eventsWindow(
 
     if(centerButton("View Details", screenData.buttonSize)){
         ScreenData::View newBuffer { };
-        newBuffer.mainWindow.category = Category::EVENTS;
+        newBuffer.category = Category::EVENTS;
         newBuffer.eventsWindow.selectedEvent = screenData.selectedEvent;
 
         UIEvents::SetScreenData::View setScreenData { newBuffer };
@@ -226,7 +226,7 @@ void stockpileWindow(
 
     if(centerButton("View Details", screenData.buttonSize)){
         ScreenData::View newBuffer { };
-        newBuffer.mainWindow.category = Category::STOCKPILE;
+        newBuffer.category = Category::STOCKPILE;
         newBuffer.stockpileWindow.selectedCartridge = screenData.selectedCartridge;
 
         UIEvents::SetScreenData::View setScreenData { newBuffer };

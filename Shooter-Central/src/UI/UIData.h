@@ -113,10 +113,6 @@ struct Home{
 };
 
 struct View {
-    struct MainWindow{
-        Category        category                { Category::NONE }; 
-        std::string     categoryComboBoxText    { };
-    };
     struct ArmoryWindow{
         GunMetadata             selectedGun;
 
@@ -169,7 +165,9 @@ struct View {
         ImVec2 tableSize    { minTableSize.x, 400 };
     };
 
-    MainWindow      mainWindow      { };
+    Category        category                { Category::NONE }; 
+    std::string     categoryComboBoxText    { };
+
     EventsWindow    eventsWindow    { };
     ArmoryWindow    armoryWindow    { };
     StockpileWindow stockpileWindow { };
