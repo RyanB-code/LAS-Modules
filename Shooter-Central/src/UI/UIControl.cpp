@@ -7,6 +7,24 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
     // If not equal, it means an Event changed the screen, so force ImGui to show which tab we want
     // from the Event
 
+    if(!popupQueue.empty() && !displayedPopup ){
+        displayedPopup = std::move(popupQueue.front());
+        popupQueue.pop();
+    }
+
+    if(displayedPopup){
+        if(!displayedPopup->wasCloseCalled()){
+            ImGui::OpenPopup(displayedPopup->getTitle());
+
+            if(ImGui::BeginPopupModal(displayedPopup->getTitle(), NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+                displayedPopup->show();
+                ImGui::EndPopup();
+            }
+        } 
+        else
+            displayedPopup = nullptr;
+    }
+
     static Screen lastScreen;
     ImGuiTabItemFlags homeFlags { 0 }, viewFlags { 0 }, addFlags { 0 }, editFlags { 0 };
     bool applyForce { false };
@@ -56,14 +74,6 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
 
     lastScreen = currentScreen; 
 
-    if(popup){
-        ImGui::OpenPopup(popup->getTitle());
-
-        if(ImGui::BeginPopupModal(popup->getTitle(), NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-            popup->show();
-            ImGui::EndPopup();
-        }
-    }
 
     switch(currentScreen){
         case Screen::HOME:
@@ -87,15 +97,14 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
 void UIController::setScreen(const Screen& screen){
     currentScreen = screen;
 }
-bool UIController::setPopup(std::shared_ptr<Popup> set){
-    if(!set)
+bool UIController::pushPopup(Popup* popup){
+    if(!popup)
         return false;
 
-    popup = set;
+    std::unique_ptr<Popup> ptr {popup->clone()};
+
+    popupQueue.push(std::move(ptr));
     return true;
-}
-void UIController::closePopup() {
-    popup = nullptr;
 }
 
 ScreenData::Home UIController::getScreenData_Home() const{

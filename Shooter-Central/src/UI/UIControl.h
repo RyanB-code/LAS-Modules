@@ -28,8 +28,8 @@ public:
     void draw(const Database& database, const UnsavedChanges& unsavedChanges);
 
     void setScreen(const Screen& screen);
-    bool setPopup(std::shared_ptr<Popup> popup);
-    void closePopup();
+
+    bool pushPopup(Popup* popup);
 
     ScreenData::Home    getScreenData_Home()    const;
     ScreenData::View    getScreenData_View()    const;
@@ -44,7 +44,8 @@ public:
 private:
     Screen currentScreen { Screen::HOME };
 
-    std::shared_ptr<Popup>  popup;
+    std::queue<std::unique_ptr<Popup>>  popupQueue { };
+    std::unique_ptr<Popup> displayedPopup { };
 
     ScreenData::Home homeData   { };
     ScreenData::View viewData   { };
