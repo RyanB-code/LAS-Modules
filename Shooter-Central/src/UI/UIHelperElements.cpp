@@ -750,46 +750,36 @@ void Tables::amountOfAmmo(
 
 void ListBoxes::cartridges(const std::set<Cartridge>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Cartridge List Box", size)){
-        for(const auto& cartridge : list) {
-            bool isSelected { false };
-            ImGui::Selectable(cartridge.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-        }
+        for(const auto& cartridge : list) 
+            ImGui::Text(cartridge.getName());
         ImGui::EndListBox();
     }
 }
 void ListBoxes::manufacturers(const std::set<Manufacturer>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Manufacturer List Box", size)){
-        for(const auto& manufacturer : list) {
-            bool isSelected { false };
-            ImGui::Selectable(manufacturer.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-        }
+        for(const auto& manufacturer : list)
+            ImGui::Text(manufacturer.getName());
         ImGui::EndListBox();
     }
 }
-void ListBoxes::eventLocations (const std::set<Location>& list,         ImVec2 size){
+void ListBoxes::eventLocations (const std::set<Location>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Event Location List Box", size)){
-        for(const auto& location : list) {
-            bool isSelected { false };
-            ImGui::Selectable(location.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-        }
+        for(const auto& location : list)
+            ImGui::Text(location.getName());
         ImGui::EndListBox();
     }
 }
-void ListBoxes::eventTypes(const std::set<ShootingEventType>& list,       ImVec2 size){
+void ListBoxes::eventTypes(const std::set<ShootingEventType>& list, ImVec2 size){
     if(ImGui::BeginListBox("##Event Type List Box", size)){
-        for(const auto& et : list) {
-            bool isSelected { false };
-            ImGui::Selectable(et.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-        }
+        for(const auto& et : list) 
+            ImGui::Text("%s", et.getName());
         ImGui::EndListBox();
     }
 }
-void ListBoxes::weaponTypes(const std::set<WeaponType>& list,     ImVec2 size){
+void ListBoxes::weaponTypes(const std::set<WeaponType>& list,ImVec2 size){
     if(ImGui::BeginListBox("##Weapon Type List Box", size)){
-        for(const auto& wt : list) {
-            bool isSelected { false };
-            ImGui::Selectable(wt.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns);
-        }
+        for(const auto& wt : list) 
+            ImGui::Text("%s", wt.getName());
         ImGui::EndListBox();
     }
 }
