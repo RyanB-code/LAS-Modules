@@ -7,23 +7,24 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
     // If not equal, it means an Event changed the screen, so force ImGui to show which tab we want
     // from the Event
 
+    if(displayedPopup){
+        if(displayedPopup->wasCloseCalled())
+            displayedPopup = nullptr;
+    }
+
     if(!popupQueue.empty() && !displayedPopup ){
         displayedPopup = std::move(popupQueue.front());
         popupQueue.pop();
     }
 
     if(displayedPopup){
-        if(!displayedPopup->wasCloseCalled()){
-            ImGui::OpenPopup(displayedPopup->getTitle());
+        ImGui::OpenPopup(displayedPopup->getTitle());
 
-            if(ImGui::BeginPopupModal(displayedPopup->getTitle(), NULL, ImGuiWindowFlags_AlwaysAutoResize)){
-                displayedPopup->show();
-                ImGui::EndPopup();
-            }
-        } 
-        else
-            displayedPopup = nullptr;
-    }
+        if(ImGui::BeginPopupModal(displayedPopup->getTitle(), NULL, ImGuiWindowFlags_AlwaysAutoResize)){
+            displayedPopup->show();
+            ImGui::EndPopup();
+        }
+   }
 
     static Screen lastScreen;
     ImGuiTabItemFlags homeFlags { 0 }, viewFlags { 0 }, addFlags { 0 }, editFlags { 0 };
