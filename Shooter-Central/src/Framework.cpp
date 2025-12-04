@@ -167,11 +167,8 @@ void Framework::update() {
     if(databaseEvent){
         Status s {databaseEvent->execute(database)};
 
-        if (!s.didSucceed){
-            UI::SimpleClosePopup p {"Event Failed", s.msg};
-            UI::UIEvents::PushPopup e {&p};
-            pushEvent(&e);
-        }
+        if (!s.didSucceed)
+            log_error(std::format("Database Event failed. What: {}", s.msg));
     }
     if(uiEvent){
         Status s {uiEvent->execute(view)};
