@@ -168,8 +168,8 @@ void Framework::update() {
         Status s {databaseEvent->execute(database)};
 
         if (!s.didSucceed){
-            UI::SimplePopup_Close p {"Event Failed", s.msg};
-            UI::UIEvents::ShowPopup e {std::make_shared<UI::SimplePopup_Close>(p)};
+            UI::SimpleClosePopup p {"Event Failed", s.msg};
+            UI::UIEvents::PushPopup e {&p};
             pushEvent(&e);
         }
     }
