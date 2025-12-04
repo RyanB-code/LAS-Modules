@@ -2,16 +2,76 @@
 
 namespace ShooterCentral {
 
+bool AddEventFlags::shouldAdd() const {
+    if(alreadyExists)
+        return false;
+    if(locationEmpty)
+        return false;
+    if(eventTypeEmpty)
+        return false;
+    if(dateInvalid)
+        return false;
+    if(gunsEmpty)
+        return false;
+    if(gunWasEmpty)
+        return false;
+    if(ammoWasInvalid)
+        return false;
+
+    return true;
+}
+
 Database::Database() {
 
 }
-bool Database::addEvent(const ShootingEvent& event){
+AddEventFlags Database::addEvent(const ShootingEvent& event){
+    static constexpr AddEventFlags EMPTY_FLAGS { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    AddEventFlags flags{ EMPTY_FLAGS };
     const ShootingEventMetadata& info { event.getInfo() };
 
     if(events.contains(info))
-       return true; 
+        flags.alreadyExists = true;
 
-    return events.try_emplace(info, event).second;
+    if(info.location == EMPTY_LOCATION)
+       flags.locationEmpty = true; 
+    if(info.eventType == EMPTY_EVENT_TYPE)
+        flags.eventTypeEmpty;
+    if(!info.date.ok())
+        flags.dateInvalid = true;
+
+
+    if(event.getGunsUsed().size() <= 0)
+        flags.gunsEmpty = true;
+    else{
+        for(const auto& gun : event.getGunsUsed()){
+            const auto& gunInfo { gun.getGunInfo() };
+
+            if(gunInfo == EMPTY_GUN_METADATA){
+                flags.gunWasEmpty = true;
+                break;
+            }
+
+            if(gun.getAmmoUsed().size() <= 0){
+                flags.ammoWasInvalid = true; 
+                break;
+            }
+
+            for(const auto& amountOfAmmo : gun.getAmmoUsed() ){
+                const auto& ammoInfo { amountOfAmmo.getAmmoInfo() };
+
+                if(ammoInfo == EMPTY_AMMO_METADATA || amountOfAmmo.getAmount() <= 0){
+                    flags.ammoWasInvalid = true; 
+                    break; 
+                }
+            }
+        }
+    }
+    
+    if(flags.shouldAdd())
+        flags.wasAdded = events.try_emplace(info, event).second;
+
+    return flags;
 }
 bool Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
     const AmmoMetadata& info { amountOfAmmo.getAmmoInfo() };

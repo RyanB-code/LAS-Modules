@@ -10,6 +10,21 @@
 
 namespace ShooterCentral {
 
+struct AddEventFlags {
+    bool wasAdded           : 1;
+    bool alreadyExists      : 1;
+
+    bool locationEmpty      : 1;
+    bool eventTypeEmpty     : 1;
+    bool dateInvalid        : 1;
+
+    bool gunsEmpty          : 1;    
+    bool gunWasEmpty        : 1;   
+    bool ammoWasInvalid     : 1;  // Ammo empty or no amount   
+
+    bool shouldAdd() const;
+};
+
 class Database {
 public:
     Database();
@@ -39,7 +54,7 @@ public:
     }    
 
    
-    bool addEvent           (const ShootingEvent& );  // True if event alread exists or created. False if could not emplace 
+    AddEventFlags addEvent  (const ShootingEvent& );  // True if event alread exists or created. False if could not emplace 
     bool addToStockpile     (const AmountOfAmmo& );
     bool addToStockpile     (const AmmoMetadata& );
     bool addToStockpile     (const StockpileAmmo& );
