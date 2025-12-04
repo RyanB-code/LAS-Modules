@@ -34,6 +34,29 @@ Status CreateEvent::execute (Containers& container) {
 
 // Metadata items
 namespace Add {
+Event::Event(const ShootingEvent& set) : event { set }{
+
+}
+Status Event::execute(Database& db) {
+    const AddEventFlags flags { db.addEvent(event) }; 
+
+    if(flags.wasAdded){
+        // add reset buffers here
+        return Status{true};
+    }
+
+    auto bodyFunction = []() {
+        ImGui::BulletText("reasons here");
+    };
+
+    UI::CustomClosePopup popup { "Add Event Failed", bodyFunction };
+
+    UI::UIEvents::PushPopup pushPopup { &popup };
+    pushEvent(&pushPopup);
+
+    return Status { false, "Failed to Add Event" };
+}
+
 Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer { m } {
 
 }

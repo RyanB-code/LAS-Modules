@@ -2,6 +2,7 @@
 
 #include "Events.h"
 #include "Database.h"
+#include "UI/UIEvents.h"
 
 namespace ShooterCentral::DatabaseEvents {
 
