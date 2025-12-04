@@ -129,10 +129,12 @@ private:
     bool closeCalled { false };
 };
 
-class SimplePopup_Close : public Popup {
+class SimpleClosePopup : public Popup {
 public: 
-   SimplePopup_Close(const char* title, const char* text);
-   ~SimplePopup_Close() = default;
+   SimpleClosePopup(const char* title, const char* text);
+   ~SimpleClosePopup() = default;
+
+    virtual std::unique_ptr<Popup> clone() const override { return std::make_unique<SimpleClosePopup>(*this);};
 
    void show() override;
 private:

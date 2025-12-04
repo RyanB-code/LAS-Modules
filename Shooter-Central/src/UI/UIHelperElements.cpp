@@ -892,12 +892,14 @@ bool Popup::buttons_YesOrNo() {
     return false;
 }
 
-SimplePopup_Close::SimplePopup_Close(const char* setTitle, const char* setText) : Popup(setTitle) {
+SimpleClosePopup::SimpleClosePopup(const char* setTitle, const char* setText) : Popup(setTitle) {
     strncpy(text, setText, sizeof(text) - 1);
     text[sizeof(text) - 1] = '\0';            // Manually null-terminate
 }
-void SimplePopup_Close::show() {
+void SimpleClosePopup::show() {
+    ImGui::Dummy( ImVec2 {0, 50});
     UI::centerText(text);
+    ImGui::Dummy( ImVec2 {0, 50});
 
     buttons_Close();
 }
