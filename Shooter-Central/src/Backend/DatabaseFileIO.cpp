@@ -287,7 +287,7 @@ bool readEvents(Database& db, const std::filesystem::path& workingDirectory) {
             continue;
         }
 
-        if(!db.addEvent(event))
+        if(!db.addEvent(event).wasAdded)
             LAS::log_error(std::format("Failed to add Event on {}", event.printDate()));
 	}
     
