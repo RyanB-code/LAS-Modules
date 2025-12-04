@@ -6,6 +6,8 @@
 #include <imgui/imgui.h>
 #include <LAS/Logging.h>
 
+#include <functional>
+
 namespace ShooterCentral::UI {
 
 void centerNextItemX        (float x);
@@ -141,5 +143,16 @@ private:
    char text[256] = "";
 };
 
+class CustomClosePopup : public Popup {
+public: 
+   CustomClosePopup(const char* title, std::function<void()> setBody);
+   ~CustomClosePopup() = default;
+
+    virtual std::unique_ptr<Popup> clone() const override { return std::make_unique<CustomClosePopup>(*this);};
+
+   void show() override;
+private:
+   std::function<void()> body { nullptr };
+};
 
 }   // End UI namespace

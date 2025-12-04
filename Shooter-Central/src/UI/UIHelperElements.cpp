@@ -894,5 +894,19 @@ void SimpleClosePopup::show() {
     buttons_Close();
 }
 
+CustomClosePopup::CustomClosePopup(const char* setTitle, std::function<void()> setBody) : 
+    Popup(setTitle),
+    body { setBody }
+{
+
+}
+void CustomClosePopup::show() {
+    ImGui::Dummy( ImVec2 {0, 50});
+    body(); 
+    ImGui::Dummy( ImVec2 {0, 50});
+
+    buttons_Close();
+}
+
 
 }   // End UI namespace
