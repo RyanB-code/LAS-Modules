@@ -863,20 +863,19 @@ Popup::Popup(const char* set) {
 Popup::~Popup()  {
 
 }
-void Popup::close() const {
+void Popup::close() {
     ImGui::CloseCurrentPopup();
 
-    //UIEvents::ClosePopup close{ };
-    //pushEvent(&close);
+    closeCalled = true;
 }
 const char* Popup::getTitle() const {
     return title;
 }
-void Popup::buttons_Close() const {
+void Popup::buttons_Close() {
     if (centerButton("Close", ImVec2{120, 0}))
         close();
 }
-bool Popup::buttons_YesOrNo() const{ 
+bool Popup::buttons_YesOrNo() { 
     float windowWidth { ImGui::GetWindowSize().x };
     float buttonWidth { 100 };
 

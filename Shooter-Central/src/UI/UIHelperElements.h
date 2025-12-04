@@ -114,15 +114,19 @@ public:
     virtual ~Popup();
 
     virtual void show() = 0;
-    void close() const;
+    void close();
 
     const char* getTitle() const;
 
-    void buttons_Close()   const;
-    bool buttons_YesOrNo() const; // Returns true if YES is chosen, false if not chosen yet
+    void buttons_Close();
+    bool buttons_YesOrNo(); // Returns true if YES is chosen, false if not chosen yet
+                                
+    virtual std::unique_ptr<Popup> clone() const = 0;
 
+    bool wasCloseCalled() const { return closeCalled; };
 private:
     char title[32] = "";
+    bool closeCalled { false };
 };
 
 class SimplePopup_Close : public Popup {
