@@ -79,15 +79,25 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
     switch(selected){
         case SubItem::EVENT:
             centerTextDisabled("All Events");
+            centerTextDisabled("Select an Event to View Detailed Information");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), selectedEvent, size);
 
             if(selectedEvent != EMPTY_EVENT_METADATA){
-                std::cout << "Command change to view event\n";
+                ScreenData::View viewWindow { };
+                viewWindow.eventsWindow.selectedEvent = selectedEvent;
+                viewWindow.category = Category::EVENTS;
+
+                UIEvents::SetScreenData::View setData { viewWindow };
+                UIEvents::SetScreen setScreen { Screen::VIEW };
+
+                pushEvent(&setData);
+                pushEvent(&setScreen);
+
                 selectedEvent = EMPTY_EVENT_METADATA;
             }
-
-            // TODO - button here to view the event 
-
             break;
         case SubItem::EVENT_TYPE:
             centerTextDisabled("All Event Types");
@@ -99,15 +109,25 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
             break;
         case SubItem::AMMO:
             centerTextDisabled("All Ammo");
+            centerTextDisabled("Select Ammo to View Detailed Information");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             Tables::Selectable::ammoMetadata(database.getStockpile(), selectedAmmo, size);
 
             if(selectedAmmo != EMPTY_AMMO_METADATA){
-                std::cout << "Change to view ammo command\n";
+                ScreenData::View viewWindow { };
+                viewWindow.stockpileWindow.selectedAmmo = selectedAmmo;
+                viewWindow.stockpileWindow.selectedCartridge = selectedAmmo.cartridge;
+                viewWindow.category = Category::STOCKPILE;
+
+                UIEvents::SetScreenData::View setData { viewWindow };
+                UIEvents::SetScreen setScreen { Screen::VIEW };
+
+                pushEvent(&setData);
+                pushEvent(&setScreen);
                 selectedAmmo = EMPTY_AMMO_METADATA;
             }
-
-            // TODO - butti here to view the ammo
-
             break;
         case SubItem::MANUFACTURER:
             centerTextDisabled("All Manufacturers");
@@ -119,10 +139,22 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
             break;
         case SubItem::GUN:
             centerTextDisabled("All Guns");
+            centerTextDisabled("Select a Gun to View Detailed Information");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
             Tables::Selectable::gunMetadataWithRoundCount(database.getArmory(), selectedGun, size);
 
             if(selectedGun != EMPTY_GUN_METADATA){
-                std::cout << "Command change to view gun\n";
+                ScreenData::View viewWindow { };
+                viewWindow.armoryWindow.selectedGun = selectedGun;
+                viewWindow.category = Category::GUNS;
+
+                UIEvents::SetScreenData::View setData { viewWindow };
+                UIEvents::SetScreen setScreen { Screen::VIEW };
+
+                pushEvent(&setData);
+                pushEvent(&setScreen);
                 selectedGun = EMPTY_GUN_METADATA;
             }
 
