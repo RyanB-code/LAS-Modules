@@ -45,7 +45,7 @@ namespace SetScreenData {
 
         SetScreenData::Add amend {addWindow};
         pushEvent(&amend);
-        return Status{true;
+        return Status{true};
     }
 
     Edit::Edit(ScreenData::Edit set) : editData { set } {
