@@ -35,6 +35,19 @@ namespace SetScreenData {
         return Status{true};
     }
 
+    Add_EventWindow::Add_EventWindow(const ScreenData::Add::EventWindow& data) : screenData { data }
+    {
+
+    }
+    Status Add_EventWindow::execute(UIController& controller) {
+        auto addWindow { controller.getScreenData_Add() };
+        addWindow.eventWindow = screenData;
+
+        SetScreenData::Add amend {addWindow};
+        pushEvent(&amend);
+        return Status{true;
+    }
+
     Edit::Edit(ScreenData::Edit set) : editData { set } {
             
     }
@@ -59,17 +72,6 @@ std::unique_ptr<UIEvent> PushPopup::clone() const{
 }
 
 
-ResetAddEventWindow::ResetAddEventWindow(const ScreenData::Add::EventWindow& data) : screenData { data }
-{
 
-}
-Status ResetAddEventWindow::execute(UIController& controller) {
-    auto addWindow { controller.getScreenData_Add() };
-    addWindow.eventWindow = screenData;
-
-    SetScreenData::Add amend {addWindow};
-    pushEvent(&amend);
-    return Status{true, "test status resetAddEventWindow"};
-}
 
 }   // SC namespace

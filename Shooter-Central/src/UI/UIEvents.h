@@ -58,6 +58,17 @@ namespace SetScreenData {
 
     };
 
+    class Add_EventWindow : public UIEvent {
+        public: 
+            Add_EventWindow(const ScreenData::Add::EventWindow& data=UI::ScreenData::Add::EventWindow { } );
+            ~Add_EventWindow() = default;
+
+            UI_EVENT_FUNCTIONS(Add_EventWindow)
+
+        private:
+            UI::ScreenData::Add::EventWindow screenData;
+    };
+
     class Edit : public UIEvent {
     public:
         Edit(ScreenData::Edit set);
@@ -86,15 +97,5 @@ private:
 
 
 
-class ResetAddEventWindow : public UIEvent {
-public: 
-    ResetAddEventWindow(const ScreenData::Add::EventWindow& data=UI::ScreenData::Add::EventWindow { } );
-    ~ResetAddEventWindow() = default;
-
-    UI_EVENT_FUNCTIONS(ResetAddEventWindow)
-
-private:
-    UI::ScreenData::Add::EventWindow screenData;
-};
 
 }

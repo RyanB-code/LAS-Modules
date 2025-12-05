@@ -901,9 +901,9 @@ CustomClosePopup::CustomClosePopup(const char* setTitle, std::function<void()> s
 
 }
 void CustomClosePopup::show() {
-    ImGui::Dummy( ImVec2 {0, 50});
+    ImGui::Dummy( ImVec2 {0, 20});
     body(); 
-    ImGui::Dummy( ImVec2 {0, 50});
+    ImGui::Dummy( ImVec2 {0, 20});
 
     buttons_Close();
 }
@@ -916,9 +916,9 @@ YesOrNoPopup::YesOrNoPopup(const char* setTitle, std::function<void()> setBody, 
 
 }
 void YesOrNoPopup::show() {
-    ImGui::Dummy( ImVec2 {0, 50});
+    ImGui::Dummy( ImVec2 {0, 20});
     body(); 
-    ImGui::Dummy( ImVec2 {0, 50});
+    ImGui::Dummy( ImVec2 {0, 20});
 
     if(buttons_YesOrNo()){
         yesFunction();

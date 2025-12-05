@@ -851,7 +851,7 @@ void EventWindow::review(
             ImGui::Dummy( ImVec2 { 20, 10} );
             ImGui::SameLine();
             if(ImGui::Button("Reset All", data.buttonSize)){
-                UIEvents::ResetAddEventWindow resetBuffers { };
+                UIEvents::SetScreenData::Add_Window resetBuffers { };
                 pushEvent(&resetBuffers);
             }
             ImGui::EndGroup();

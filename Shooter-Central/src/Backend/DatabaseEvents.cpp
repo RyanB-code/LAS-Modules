@@ -41,7 +41,8 @@ Status Event::execute(Database& db) {
     const AddEventFlags flags { db.addEvent(event) }; 
 
     if(flags.wasAdded){
-        // add reset buffers here
+        UI::UIEvents::SetScreenData::Add_Window resetBuffers { };
+        pushEvent(&resetBuffers);
         return Status{true};
     }
 
