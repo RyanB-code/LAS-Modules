@@ -38,21 +38,42 @@ Event::Event(const ShootingEvent& set) : event { set }{
 
 }
 Status Event::execute(Database& db) {
+    using namespace ShooterCentral::UI;
+
     const AddEventFlags flags { db.addEvent(event) }; 
 
     if(flags.wasAdded){
-        UI::UIEvents::SetScreenData::Add_Window resetBuffers { };
+        UIEvents::SetScreenData::Add_EventWindow resetBuffers { };
         pushEvent(&resetBuffers);
         return Status{true};
     }
 
-    auto bodyFunction = []() {
-        ImGui::BulletText("reasons here");
+    auto bodyFunction = [flags]() {
+        centerTextDisabled("Failed to Add Event");
+        ImGui::Separator();
+        ImGui::Dummy( ImVec2{400, 0} );
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        if(flags.alreadyExists)
+           ImGui::BulletText("Event with entered information already exists"); 
+        if(flags.locationEmpty)
+           ImGui::BulletText("Invalid Location");
+        if(flags.eventTypeEmpty)
+            ImGui::BulletText("Invalid Event Type");
+        if(flags.dateInvalid)
+            ImGui::BulletText("Invalid date");
+        if(flags.gunsEmpty)
+            ImGui::BulletText("No Guns were used");
+        if(flags.gunWasEmpty)
+            ImGui::BulletText("A Gun used was invalid");
+        if(flags.ammoWasInvalid)
+            ImGui::BulletText("An Ammo type used was invalid");
     };
 
-    UI::CustomClosePopup popup { "Add Event Failed", bodyFunction };
+    CustomClosePopup popup { "Add Event Failed", bodyFunction };
 
-    UI::UIEvents::PushPopup pushPopup { &popup };
+    UIEvents::PushPopup pushPopup { &popup };
     pushEvent(&pushPopup);
 
     return Status { false, "Failed to Add Event" };
