@@ -844,7 +844,7 @@ void EventWindow::review(
             ImGui::BeginGroup();
 
             if(ImGui::Button("Add Event", data.buttonSize)){
-                DatabaseEvents::Add::Event add { event };
+                DatabaseEvents::Add::Event add { event, data.applyToArmory, data.applyToStockpile };
                 pushEvent(&add);
             }
             ImGui::SameLine();
@@ -890,7 +890,7 @@ void EventWindow::review(
 
             ImGui::SeparatorText("Notes");
             ImGui::Spacing();
-            ImGui::Indent(20);
+            ImGui::Indent(20); 
             ImGui::TextWrapped("%s", info.notes.c_str());
             ImGui::Unindent();
         }
