@@ -342,7 +342,7 @@ bool readAmmo(Database& db, const std::filesystem::path& workingDirectory) {
         if(db.stockpileContains(ammoInfo))
             db.getAmmo(ammoInfo) = data;
         else{
-            if(!db.addToStockpile(data))
+            if(!db.addToStockpile(data).wasAdded)
                 LAS::log_error(std::format("Failed to add StockpileAmmo named [{}]", ammoInfo.name));
         }
 	}
