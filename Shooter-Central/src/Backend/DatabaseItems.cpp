@@ -316,7 +316,7 @@ void StockpileAmmo::addAmount      (int amount){
    amountOnHand += amount; 
 }
 void StockpileAmmo::removeAmount   (int amount){
-    amountOnHand += amount;
+    amountOnHand -= amount;
 }
 bool StockpileAmmo::addGun(const GunMetadata& gun) {
     if(gunsUsed.contains(gun))

@@ -104,6 +104,7 @@ private:
 
 struct ShootingEventMetadata {
     static constexpr int MAX_CHAR_NOTES { 256 };
+    static constexpr int MIN_YEAR       { 2020 };
 
     std::string         notes       { };
     Location            location    { };
@@ -282,6 +283,7 @@ static const AmountOfAmmo           EMPTY_AMOUNT_OF_AMMO    { };
 static const Cartridge              EMPTY_CARTRIDGE         { };    
 static const Location               EMPTY_LOCATION          { };
 static const ShootingEventType      EMPTY_EVENT_TYPE        { };
+static const Manufacturer           EMPTY_MANUFACTURER      { };    
 
 
 
