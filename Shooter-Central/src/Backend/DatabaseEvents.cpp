@@ -34,49 +34,98 @@ Status CreateEvent::execute (Containers& container) {
 
 // Metadata items
 namespace Add {
-Event::Event(const ShootingEvent& set) : event { set }{
+Event::Event(const ShootingEvent& set, bool setApplyToArmory, bool setApplyToStockpile) : 
+    event { set },
+    applyToArmory       { setApplyToArmory },
+    applyToStockpile    { setApplyToStockpile }
+{
 
 }
 Status Event::execute(Database& db) {
     using namespace ShooterCentral::UI;
 
-    const AddEventFlags flags { db.addEvent(event) }; 
+    int returnCode { 0 };
+    try {
+        returnCode = applyEvent(db, event, applyToArmory, applyToStockpile);
+    }
+    catch(const AddEventFlags& flags){
+        auto bodyFunction = [flags]() {
+            const VerifyEventFlags& verifyFlags { flags.verifyFlags };
 
-    if(flags.wasAdded){
-        UIEvents::SetScreenData::Add_EventWindow resetBuffers { };
-        pushEvent(&resetBuffers);
-        return Status{true};
+            centerText("Failed to Add Event");
+            centerTextDisabled("(No changes were made)");
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            if(flags.alreadyExists)
+                ImGui::BulletText("Event Already Exists");
+            if(verifyFlags.locationInvalid)
+                ImGui::BulletText("Invalid Location");
+            if(verifyFlags.eventTypeInvalid)
+                ImGui::BulletText("Invalid Event Type");
+            if(verifyFlags.dateInvalid)
+                ImGui::BulletText("Invalid date");
+            if(verifyFlags.noGuns)
+                ImGui::BulletText("No Guns were used");
+            if(verifyFlags.gunWasInvalid)
+                ImGui::BulletText("A Gun used was invalid");
+            if(verifyFlags.ammoWasInvalid)
+                ImGui::BulletText("An Ammo type used was invalid");
+        };
+
+        CustomClosePopup popup { "Add Event Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Add event failed" };
     }
 
-    auto bodyFunction = [flags]() {
-        centerTextDisabled("Failed to Add Event");
-        ImGui::Separator();
-        ImGui::Dummy( ImVec2{400, 0} );
-        ImGui::Spacing();
-        ImGui::Spacing();
-        
-        if(flags.alreadyExists)
-           ImGui::BulletText("Event with entered information already exists"); 
-        if(flags.locationEmpty)
-           ImGui::BulletText("Invalid Location");
-        if(flags.eventTypeEmpty)
-            ImGui::BulletText("Invalid Event Type");
-        if(flags.dateInvalid)
-            ImGui::BulletText("Invalid date");
-        if(flags.gunsEmpty)
-            ImGui::BulletText("No Guns were used");
-        if(flags.gunWasEmpty)
-            ImGui::BulletText("A Gun used was invalid");
-        if(flags.ammoWasInvalid)
-            ImGui::BulletText("An Ammo type used was invalid");
-    };
 
-    CustomClosePopup popup { "Add Event Failed", bodyFunction };
+    if(returnCode != 0){
+        auto bodyFunction = [returnCode]() {
+            centerText("Failed to Add Event");
+            centerTextDisabled("(No changes were made)");
+
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            if(returnCode == 1){
+                ImGui::BulletText("Failure applying Ammo used to Stockpile");
+                ImGui::Indent(20);
+                ImGui::BeginDisabled();
+                ImGui::BulletText("Amount used may be more than in Stockpile");
+                ImGui::BulletText("Ammo type may not exist in Stockpiile");
+                ImGui::EndDisabled();
+                ImGui::Unindent();
+            }
+            else if(returnCode == 2)
+                ImGui::BulletText("Failure applying Ammo used to a Gun");
+            else
+                ImGui::BulletText("Unkown error occurred");
+        };
+
+        CustomClosePopup popup { "Add Event Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Add event failed" };
+    }
+
+
+    // All was successful
+    SimpleClosePopup popup {"Event Created", "Event was successfully created"};
 
     UIEvents::PushPopup pushPopup { &popup };
-    pushEvent(&pushPopup);
+    UIEvents::SetScreenData::Add_EventWindow resetBuffers { };
 
-    return Status { false, "Failed to Add Event" };
+    pushEvent(&pushPopup);
+    pushEvent(&resetBuffers);
+
+    return Status { true };
 }
 
 Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer { m } {

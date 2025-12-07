@@ -33,13 +33,15 @@ namespace Add {
 
     class Event : public DatabaseEvent {
         public:
-            Event(const ShootingEvent& set);
+            Event(const ShootingEvent& set, bool applyToArmory, bool applyToStockpile);
             ~Event() = default;
 
             DATABASE_EVENT_FUNCTIONS(Event)
 
         private:
             ShootingEvent event;
+            bool applyToArmory      { false };
+            bool applyToStockpile   { false };
     };
 
 
