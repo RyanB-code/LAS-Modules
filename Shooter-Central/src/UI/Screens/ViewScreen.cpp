@@ -215,17 +215,35 @@ void ArmoryWindow::selectedGunInformation(const ArmoryGun& gun){
 
     centerNextItemX(200);
     ImGui::BeginGroup();
-    ImGui::Text("Name:              %s", gunInfo.name.c_str());
-    ImGui::Text("Weapon Type:       %s", gunInfo.weaponType.getName()); 
-    ImGui::Text("Cartridge:         %s", gunInfo.cartridge.getName());
-    ImGui::Text("Round Count:       %d", gun.getRoundCount());
+    ImGui::TextDisabled("Name:            ");
+    ImGui::SameLine();
+    ImGui::Text("%s", gunInfo.name.c_str());
+
+
+    ImGui::TextDisabled("Weapon Type:     ");
+    ImGui::SameLine();
+    ImGui::Text("%s", gunInfo.weaponType.getName()); 
+
+    ImGui::TextDisabled("Cartridge:       ");
+    ImGui::SameLine();
+    ImGui::Text("%s", gunInfo.cartridge.getName());
+
+    ImGui::TextDisabled("Round Count:     ");
+    ImGui::SameLine();
+    ImGui::Text("%d", gun.getRoundCount());
 
     ImGui::Spacing();
     ImGui::Spacing();
     ImGui::Spacing();
 
-    ImGui::Text("Events Used In:    %d", gun.totalEventsUsed()); 
-    ImGui::Text("Ammo Types Used:   %d", gun.totalAmmoTypesUsed()); 
+    ImGui::TextDisabled("Events Used In:  ");
+    ImGui::SameLine();
+    ImGui::Text("%d", gun.totalEventsUsed()); 
+
+    ImGui::TextDisabled("Ammo Types Used: ");
+    ImGui::SameLine();
+    ImGui::Text("%d", gun.totalAmmoTypesUsed()); 
+
     ImGui::EndGroup();
 }
 
@@ -579,7 +597,7 @@ void StockpileWindow::selectedAmmoInformation (const StockpileAmmo& data){
     ImGui::SameLine();
     ImGui::Text("%d", data.getAmountOnHand());
 
-    ImGui::TextDisabled("Guns Used In:     ");
+    ImGui::TextDisabled("Guns Used In:      ");
     ImGui::SameLine();
     ImGui::Text("%ld", data.getGunsUsed().size());
 
