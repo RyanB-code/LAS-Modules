@@ -10,20 +10,57 @@
 
 namespace ShooterCentral {
 
-struct AddEventFlags {
-    bool wasAdded           : 1;
-    bool alreadyExists      : 1;
+struct VerifyEventFlags {
+    VerifyEventFlags();
 
-    bool locationEmpty      : 1;
-    bool eventTypeEmpty     : 1;
+    bool locationInvalid    : 1;
+    bool eventTypeInvalid   : 1;
     bool dateInvalid        : 1;
 
-    bool gunsEmpty          : 1;    
-    bool gunWasEmpty        : 1;   
+    bool noGuns             : 1;    
+    bool gunWasInvalid      : 1;   
     bool ammoWasInvalid     : 1;  // Ammo empty or no amount   
+    
+    bool shouldAdd() const;
+};
+
+struct VerifyAmountOfAmmoFlags {
+    VerifyAmountOfAmmoFlags();
+
+    bool cartridgeInvalid       : 1;
+    bool manufacturerInvalid    : 1;
+    bool grainWeightInvalid     : 1;
+    bool amountInvalid          : 1;
 
     bool shouldAdd() const;
 };
+
+struct VerifyGunMetadataFlags {
+    VerifyGunMetadataFlags();
+
+    bool cartridgeInvalid   : 1;
+    bool weaponTypeInvalid  : 1;
+
+    bool shouldAdd() const;
+};
+
+struct AddEventFlags {
+    AddEventFlags();
+
+    bool wasAdded           : 1;
+    bool alreadyExists      : 1;
+
+    VerifyEventFlags verifyFlags { };
+};
+struct AddAmmoFlags {
+    AddAmmoFlags ();
+
+    bool wasAdded       : 1;
+    bool alreadyExists  : 1;
+
+    VerifyAmountOfAmmoFlags verifyFlags { };
+};
+
 
 class Database {
 public:
@@ -52,18 +89,23 @@ public:
             return stockpile.at(cartridge);
         throw std::out_of_range { std::format("Database::getStockpile(), no ammo present with Cartridge '{}'", cartridge.getName() ) };
     }    
-
    
-    AddEventFlags addEvent  (const ShootingEvent& );  // True if event alread exists or created. False if could not emplace 
-    bool addToStockpile     (const AmountOfAmmo& );
-    bool addToStockpile     (const AmmoMetadata& );
-    bool addToStockpile     (const StockpileAmmo& );
+    AddEventFlags   addEvent        (const ShootingEvent& );  // True if event alread exists or created. False if could not emplace 
+    AddAmmoFlags    addToStockpile  (const AmountOfAmmo& );
+    AddAmmoFlags    addToStockpile  (const AmmoMetadata& );
+    AddAmmoFlags    addToStockpile  (const StockpileAmmo& );
+
     bool addToArmory        (const ArmoryGun& );
     bool addToArmory        (const GunMetadata& ); 
 
-    ShootingEvent& getEvent  (const ShootingEventMetadata& );    // Throws out_of_range if not present
-    StockpileAmmo& getAmmo   (const AmmoMetadata& );             // Throws out_of_range if not present
-    ArmoryGun&     getGun    (const GunMetadata& );              // Throws out_of_range if not present
+    bool useAmmo            (const AmountOfAmmo& );
+
+    ShootingEvent& getEvent (const ShootingEventMetadata& );    // Throws out_of_range if not present
+    StockpileAmmo& getAmmo  (const AmmoMetadata& );             // Throws out_of_range if not present
+    ArmoryGun&     getGun   (const GunMetadata& );              // Throws out_of_range if not present
+
+    int amountInStockpile   (const Cartridge& ) const;
+    int amountInStockpile   (const AmmoMetadata& ) const;
 
     bool addManufacturer    (const Manufacturer& );
     bool addCartridge       (const Cartridge& );
@@ -79,9 +121,6 @@ public:
     bool metadataContains   (const WeaponType& ) const;
     bool metadataContains   (const Location& ) const;
     bool metadataContains   (const ShootingEventType& ) const;
-
-    int amountInStockpile   (const Cartridge& ) const;
-    int amountInStockpile   (const AmmoMetadata& ) const;
 
 
 private:
@@ -100,15 +139,27 @@ private:
     bool addAmountPerCartridge  (const Cartridge& cartridge, int amount);
 };
 
+VerifyEventFlags        verify  (const ShootingEvent& info);
+VerifyAmountOfAmmoFlags verify  (const AmmoMetadata& info);
+VerifyAmountOfAmmoFlags verify  (const AmountOfAmmo& info);
 
-// Here add item by association for event, gun, ammo
-void associateEvents    (Database& );
+VerifyGunMetadataFlags  verify  (const GunMetadata& info);
 
-void addAllMetadataInfo (Database& );
 
 // Adds all items into Database along with appropriate logging
+void associateEvents    (Database& );
+void addAllMetadataInfo (Database& );
+
 void addMetadataInfo (Database&, const GunMetadata& );
 void addMetadataInfo (Database&, const AmmoMetadata& );
 void addMetadataInfo (Database&, const ShootingEventMetadata& );
+
+
+// 0 - success, 
+// 1 - error applying to stockpile 
+// 2 - error applying to armory
+// 3 - error add event
+int applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile); 
+
 
 }   // End SC namespace

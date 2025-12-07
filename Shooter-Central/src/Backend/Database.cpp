@@ -2,18 +2,26 @@
 
 namespace ShooterCentral {
 
-bool AddEventFlags::shouldAdd() const {
-    if(alreadyExists)
+VerifyEventFlags::VerifyEventFlags() : 
+    locationInvalid     { false },
+    eventTypeInvalid    { false },
+    dateInvalid         { false },
+    noGuns              { false },
+    gunWasInvalid       { false },
+    ammoWasInvalid      { false }
+{
+
+}
+bool VerifyEventFlags::shouldAdd() const {
+    if(locationInvalid)
         return false;
-    if(locationEmpty)
-        return false;
-    if(eventTypeEmpty)
+    if(eventTypeInvalid)
         return false;
     if(dateInvalid)
         return false;
-    if(gunsEmpty)
+    if(noGuns)
         return false;
-    if(gunWasEmpty)
+    if(gunWasInvalid)
         return false;
     if(ammoWasInvalid)
         return false;
@@ -21,98 +29,134 @@ bool AddEventFlags::shouldAdd() const {
     return true;
 }
 
+VerifyAmountOfAmmoFlags::VerifyAmountOfAmmoFlags() :
+    cartridgeInvalid    { false },
+    manufacturerInvalid { false },
+    grainWeightInvalid  { false },
+    amountInvalid       { false }
+{
+
+}
+bool VerifyAmountOfAmmoFlags::shouldAdd() const {
+    if(cartridgeInvalid)
+        return false;
+    if(manufacturerInvalid)
+        return false;
+    if(grainWeightInvalid)
+        return false;
+    if(amountInvalid)
+        return false;
+    
+    return true;
+}
+VerifyGunMetadataFlags::VerifyGunMetadataFlags() :
+    cartridgeInvalid    { false },
+    weaponTypeInvalid   { false }
+{
+
+}
+bool VerifyGunMetadataFlags::shouldAdd() const {
+    if(cartridgeInvalid)
+        return false;
+    if(weaponTypeInvalid)
+        return false;
+    
+    return true;
+}
+
+AddEventFlags::AddEventFlags() :
+    wasAdded        { false },
+    alreadyExists   { false }
+{
+
+}
+AddAmmoFlags::AddAmmoFlags () :
+    wasAdded        { false },
+    alreadyExists   { false }
+{
+
+}
+
+
 Database::Database() {
 
 }
 AddEventFlags Database::addEvent(const ShootingEvent& event){
-    static constexpr AddEventFlags EMPTY_FLAGS { 0, 0, 0, 0, 0, 0, 0, 0 };
+    const ShootingEventMetadata& info { event.getInfo() }; 
+    AddEventFlags flags{ };
 
-    AddEventFlags flags{ EMPTY_FLAGS };
-    const ShootingEventMetadata& info { event.getInfo() };
-
-    if(events.contains(info))
+    if(events.contains(info)){
         flags.alreadyExists = true;
-
-    if(info.location == EMPTY_LOCATION)
-       flags.locationEmpty = true; 
-    if(info.eventType == EMPTY_EVENT_TYPE)
-        flags.eventTypeEmpty;
-    if(!info.date.ok())
-        flags.dateInvalid = true;
-
-
-    if(event.getGunsUsed().size() <= 0)
-        flags.gunsEmpty = true;
-    else{
-        for(const auto& gun : event.getGunsUsed()){
-            const auto& gunInfo { gun.getGunInfo() };
-
-            if(gunInfo == EMPTY_GUN_METADATA){
-                flags.gunWasEmpty = true;
-                break;
-            }
-
-            if(gun.getAmmoUsed().size() <= 0){
-                flags.ammoWasInvalid = true; 
-                break;
-            }
-
-            for(const auto& amountOfAmmo : gun.getAmmoUsed() ){
-                const auto& ammoInfo { amountOfAmmo.getAmmoInfo() };
-
-                if(ammoInfo == EMPTY_AMMO_METADATA || amountOfAmmo.getAmount() <= 0){
-                    flags.ammoWasInvalid = true; 
-                    break; 
-                }
-            }
-        }
+        return flags;
     }
     
-    if(flags.shouldAdd())
+    flags.verifyFlags = verify(event);
+
+    if(flags.verifyFlags.shouldAdd())
         flags.wasAdded = events.try_emplace(info, event).second;
 
     return flags;
 }
-bool Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
+AddAmmoFlags Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
     const AmmoMetadata& info { amountOfAmmo.getAmmoInfo() };
 
+    AddAmmoFlags flags { };
+
     if(!stockpile.contains(info.cartridge)){
-        if(!stockpile.try_emplace(info.cartridge).second)
-            return false;
+        if(!stockpile.try_emplace(info.cartridge).second){
+            flags.alreadyExists = true;
+            return flags;
+        }
     }
+
+    flags.verifyFlags = verify(amountOfAmmo);
     
-    if(!stockpile.at(info.cartridge).try_emplace(info, StockpileAmmo{amountOfAmmo}).second)
-        return false;
+    if(!flags.verifyFlags.shouldAdd())
+        return flags;
+    
+    flags.wasAdded = stockpile.at(info.cartridge).try_emplace(info, StockpileAmmo{amountOfAmmo}).second;
 
-    // Add to amount per cartridge list
-    if(!addAmountPerCartridge(info.cartridge, amountOfAmmo.getAmount() )){
-        stockpile.at(info.cartridge).erase(info);
-        return false;
+    if(flags.wasAdded){
+        // Add to amount per cartridge list
+        if(!addAmountPerCartridge(info.cartridge, amountOfAmmo.getAmount() )){
+            stockpile.at(info.cartridge).erase(info);
+            flags.wasAdded = false;
+        }
     }
 
-    return true;
+    return flags;
 }
-bool Database::addToStockpile(const AmmoMetadata& info) {
+AddAmmoFlags Database::addToStockpile(const AmmoMetadata& info) {
     return addToStockpile( AmountOfAmmo { info } );
 }
-bool Database::addToStockpile(const StockpileAmmo& data){
+AddAmmoFlags Database::addToStockpile(const StockpileAmmo& data){
     const AmmoMetadata& info { data.getAmmoInfo() };
 
+    AddAmmoFlags flags { };
+
     if(!stockpile.contains(info.cartridge)){
-        if(!stockpile.try_emplace(info.cartridge).second)
-            return false;
+        if(!stockpile.try_emplace(info.cartridge).second){
+            flags.alreadyExists = true;
+            return flags;
+        }
     }
+
+    flags.verifyFlags = verify(data.getAmountOfAmmo());
     
-    if(!stockpile.at(info.cartridge).try_emplace(info, data).second)
-        return false;
+    if(!flags.verifyFlags.shouldAdd())
+        return flags;
+    
+    flags.wasAdded = stockpile.at(info.cartridge).try_emplace(info, data).second;
 
-    // Add to amount per cartridge list
-    if(!addAmountPerCartridge(info.cartridge, data.getAmountOnHand() )){
-        stockpile.at(info.cartridge).erase(info);
-        return false;
+    if(flags.wasAdded){
+        // Add to amount per cartridge list
+        if(!addAmountPerCartridge(info.cartridge, data.getAmountOnHand() )){
+            stockpile.at(info.cartridge).erase(info);
+            flags.wasAdded = false;
+        }
     }
 
-    return true;
+    return flags;
 }
 
 bool Database::addToArmory(const ArmoryGun& gun) {
@@ -128,6 +172,21 @@ bool Database::addToArmory(const ArmoryGun& gun) {
 bool Database::addToArmory(const GunMetadata& info) {
     return addToArmory( ArmoryGun { info } );
 }
+bool Database::useAmmo (const AmountOfAmmo& amountOfAmmo){
+    if(!stockpileContains(amountOfAmmo.getAmmoInfo()))
+        return false;
+
+    StockpileAmmo& target { getAmmo(amountOfAmmo.getAmmoInfo()) };
+
+    if(target.getAmountOnHand() < amountOfAmmo.getAmount())
+        return false;
+
+    target.removeAmount(amountOfAmmo.getAmount());
+    amountPerCartridge.at(amountOfAmmo.getAmmoInfo().cartridge) -= amountOfAmmo.getAmount();
+    
+    return true;
+}
+
 ShootingEvent& Database::getEvent(const ShootingEventMetadata& info) {
     return events.at(info);
 }
@@ -157,6 +216,25 @@ bool Database::addLocation  (const Location& add){
 }
 bool Database::addEventType  (const ShootingEventType& add){
     return eventTypes.emplace(add).second;
+}
+int Database::amountInStockpile   (const AmmoMetadata& info) const{
+    const Cartridge& cartridge { info.cartridge };
+
+    if(!stockpile.contains(cartridge))
+        return 0;
+
+    const auto& cartridgeMap { stockpile.at(cartridge) };
+
+    return cartridgeMap.at(info).getAmountOnHand();
+}
+bool Database::addAmountPerCartridge(const Cartridge& cartridge, int addAmount) {
+    if(!amountPerCartridge.contains(cartridge)){
+        return amountPerCartridge.try_emplace(cartridge, addAmount).second;
+    }
+
+    amountPerCartridge.at(cartridge) += addAmount;
+
+    return true;
 }
 bool Database::armoryContains(const GunMetadata& info) const {
     if(!armory.contains(info.cartridge))
@@ -193,24 +271,70 @@ bool Database::metadataContains   (const ShootingEventType& et) const{
 }
 
 
-int Database::amountInStockpile   (const AmmoMetadata& info) const{
-    const Cartridge& cartridge { info.cartridge };
 
-    if(!stockpile.contains(cartridge))
-        return 0;
 
-    const auto& cartridgeMap { stockpile.at(cartridge) };
+VerifyEventFlags verify (const ShootingEvent& event){
+    VerifyEventFlags flags{ };
+    const ShootingEventMetadata& info { event.getInfo() }; 
 
-    return cartridgeMap.at(info).getAmountOnHand();
-}
-bool Database::addAmountPerCartridge(const Cartridge& cartridge, int addAmount) {
-    if(!amountPerCartridge.contains(cartridge)){
-        return amountPerCartridge.try_emplace(cartridge, addAmount).second;
+    if(info.location == EMPTY_LOCATION)
+       flags.locationInvalid = true; 
+    if(info.eventType == EMPTY_EVENT_TYPE)
+        flags.eventTypeInvalid = true;
+    if(!info.date.ok() || info.date.year() < std::chrono::year{ShootingEventMetadata::MIN_YEAR})
+        flags.dateInvalid = true;
+
+
+    if(event.getGunsUsed().size() <= 0)
+        flags.noGuns = true;
+    else{
+        for(const auto& gun : event.getGunsUsed()){
+            const auto& gunInfo { gun.getGunInfo() };
+
+            if(gunInfo == EMPTY_GUN_METADATA){
+                flags.gunWasInvalid = true;
+                break;
+            }
+
+            if(gun.getAmmoUsed().size() <= 0){
+                flags.ammoWasInvalid = true; 
+                break;
+            }
+
+            for(const auto& amountOfAmmo : gun.getAmmoUsed() ){
+                const auto& ammoInfo { amountOfAmmo.getAmmoInfo() };
+
+                if(ammoInfo == EMPTY_AMMO_METADATA || amountOfAmmo.getAmount() <= 0){
+                    flags.ammoWasInvalid = true; 
+                    break; 
+                }
+            }
+        }
     }
 
-    amountPerCartridge.at(cartridge) += addAmount;
+    return flags;
+}
+VerifyAmountOfAmmoFlags verify  (const AmmoMetadata& info){
+    VerifyAmountOfAmmoFlags flags { };
+    if(info.cartridge == EMPTY_CARTRIDGE)
+       flags.cartridgeInvalid = true; 
+    if(info.manufacturer == EMPTY_MANUFACTURER)
+        flags.manufacturerInvalid = true;
+    if(info.grainWeight <= 0)
+        flags.grainWeightInvalid = true;
 
-    return true;
+    return flags;
+}
+VerifyAmountOfAmmoFlags verify  (const AmountOfAmmo& data){
+    const AmmoMetadata& info { data.getAmmoInfo() };
+
+    VerifyAmountOfAmmoFlags flags { };
+    flags = verify(info);
+
+    if(data.getAmount() < 0)
+        flags.amountInvalid = true;
+
+    return flags;
 }
 
 
@@ -250,7 +374,7 @@ void associateEvents(Database& db){
 
                     // Add ammoInfo to stockpile
                     if(!db.stockpileContains(ammoInfo)){
-                        if(!db.addToStockpile(ammoInfo))
+                        if(!db.addToStockpile(ammoInfo).wasAdded)
                             LAS::log_error(std::format("associateEvents(), attempt to add Ammo '{}' to stockpile failed", ammoInfo.name)); 
                             continue;
                     } 
@@ -325,5 +449,75 @@ void addMetadataInfo(Database& db, const ShootingEventMetadata& info){
             LAS::log_warn(std::format("addMetadataInfo() could not add EventType {}", info.eventType.getName()) );
     }
 }
+
+
+// 0 - success, 
+// 1 - error applying to stockpile 
+// 2 - error applying to armory
+// 3 - error add event
+int applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile){
+    const Database snapshot { db }; // If any errors are encounted, DB revert back to here
+
+    if(applyToStockpile){
+       for(const auto& gunTrackingAmmoUsed : event.getGunsUsed()){
+            for(const auto& amountOfAmmo : gunTrackingAmmoUsed.getAmmoUsed()){
+
+                // Apply to stockpile
+                if(!db.useAmmo(amountOfAmmo)){
+                    db = snapshot;
+                    return 1;
+                }
+            }
+        }
+    }
+
+    if(applyToArmory){
+       for(const auto& gunTrackingAmmoUsed : event.getGunsUsed()){
+            const GunMetadata& gunInfo { gunTrackingAmmoUsed.getGunInfo() };
+
+            if(!db.armoryContains(gunInfo)){
+               db = snapshot;
+               return 2;
+            }
+            else{
+                ArmoryGun& gun { db.getGun(gunInfo) };
+                
+                // Add all ammo used
+                for(const auto& amountOfAmmo : gunTrackingAmmoUsed.getAmmoUsed()){
+
+                    // Apply to the guns history
+                    if(!gun.addAmmoUsed(amountOfAmmo)){
+                        db = snapshot;
+                        return 2;
+                    }
+
+                    // Apply to the ammo's history
+                    const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo() };
+                    if(!db.stockpileContains(ammoInfo)){
+                        db = snapshot;
+                        return 2;
+                    }
+                    if(!db.getAmmo(ammoInfo).addGun(gunInfo)){
+                        db = snapshot;
+                        return 2;
+                    }
+                }
+            }
+        }
+    }   // End apply to armory
+    
+    const AddEventFlags addFlags { db.addEvent(event) };
+        
+    if(!addFlags.wasAdded){
+        db = snapshot;
+        throw addFlags;
+        return 3; // Will never be called IK
+    }
+
+    addAllMetadataInfo(db);
+    return 0;
+}
+
+
 
 }   // End SC namespace
