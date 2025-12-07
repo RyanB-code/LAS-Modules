@@ -888,7 +888,11 @@ SimpleClosePopup::SimpleClosePopup(const char* setTitle, const char* setText) : 
 }
 void SimpleClosePopup::show() {
     ImGui::Dummy( ImVec2 {0, 50});
+    ImGui::Dummy( ImVec2 {20, 0 } );
+    ImGui::SameLine();
     UI::centerText(text);
+    ImGui::SameLine();
+    ImGui::Dummy( ImVec2 {20, 0 } );
     ImGui::Dummy( ImVec2 {0, 50});
 
     buttons_Close();
