@@ -314,6 +314,12 @@ void EventsWindow::main(
     }
     ImGui::EndChild();
 
+    static ShootingEventMetadata lastEvent { };
+    if(data.selectedEvent != lastEvent){
+        data.selectedGun = EMPTY_GUN_METADATA;
+    }
+    lastEvent = data.selectedEvent;
+
     if(ImGui::BeginChild("Selected Event Details", data.bottomWindowSize)){
         ImGui::SeparatorText( "Details" );
         ImGui::Spacing(); 
@@ -472,6 +478,13 @@ void StockpileWindow::main(
         data.selectedCartridgeValid = data.selectedCartridge != EMPTY_CARTRIDGE;
     }
     ImGui::EndChild();
+
+    static Cartridge lastCartridge { };
+    if(data.selectedCartridge != lastCartridge){
+        data.selectedAmmo       = EMPTY_AMMO_METADATA;
+        data.selectedAmmoValid      = false;
+    }
+    lastCartridge = data.selectedCartridge;
 
     if(!data.verticalLayout)
         ImGui::SameLine();
