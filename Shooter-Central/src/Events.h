@@ -23,7 +23,7 @@ namespace UI {
 
 struct Status {
     bool didSucceed { false };
-    char msg[256] = { };
+    const char msg[256] = { };
 };
 
 
