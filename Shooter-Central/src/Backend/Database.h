@@ -155,11 +155,7 @@ void addMetadataInfo (Database&, const AmmoMetadata& );
 void addMetadataInfo (Database&, const ShootingEventMetadata& );
 
 
-// 0 - success, 
-// 1 - error applying to stockpile 
-// 2 - error applying to armory
-// 3 - error add event
-int applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile); 
+bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile); 
 
 
 }   // End SC namespace

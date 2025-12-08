@@ -44,11 +44,30 @@ Event::Event(const ShootingEvent& set, bool setApplyToArmory, bool setApplyToSto
 Status Event::execute(Database& db) {
     using namespace ShooterCentral::UI;
 
-    int returnCode { 0 };
+    bool success { false };
     try {
-        returnCode = applyEvent(db, event, applyToArmory, applyToStockpile);
+        success = applyEvent(db, event, applyToArmory, applyToStockpile);
     }
-    catch(const AddEventFlags& flags){
+    catch(std::invalid_argument& e){
+        auto bodyFunction = [e]() {
+            centerText("Failed to Add Event");
+            centerTextDisabled("(No changes were made)");
+
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::BulletText("%s", e.what());
+        };
+
+        CustomClosePopup popup { "Add Event Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Add event failed" };
+    }
+    catch(AddEventFlags flags){
         auto bodyFunction = [flags]() {
             const VerifyEventFlags& verifyFlags { flags.verifyFlags };
 
@@ -83,49 +102,20 @@ Status Event::execute(Database& db) {
     }
 
 
-    if(returnCode != 0){
-        auto bodyFunction = [returnCode]() {
-            centerText("Failed to Add Event");
-            centerTextDisabled("(No changes were made)");
-
-            ImGui::Separator();
-            ImGui::Dummy( ImVec2{400, 0} );
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            if(returnCode == 1){
-                ImGui::BulletText("Failure applying Ammo used to Stockpile");
-                ImGui::Indent(20);
-                ImGui::BeginDisabled();
-                ImGui::BulletText("Amount used may be more than in Stockpile");
-                ImGui::BulletText("Ammo type may not exist in Stockpiile");
-                ImGui::EndDisabled();
-                ImGui::Unindent();
-            }
-            else if(returnCode == 2)
-                ImGui::BulletText("Failure applying Ammo used to a Gun");
-            else
-                ImGui::BulletText("Unkown error occurred");
-        };
-
-        CustomClosePopup popup { "Add Event Failed", bodyFunction };
+    // All was successful
+    if(success){
+        SimpleClosePopup popup {"Event Created", "Event was successfully created"};
 
         UIEvents::PushPopup pushPopup { &popup };
+        UIEvents::SetScreenData::Add_EventWindow resetBuffers { };
+
         pushEvent(&pushPopup);
-        return Status { false, "Add event failed" };
+        pushEvent(&resetBuffers);
+
+        return Status { true };
     }
 
-
-    // All was successful
-    SimpleClosePopup popup {"Event Created", "Event was successfully created"};
-
-    UIEvents::PushPopup pushPopup { &popup };
-    UIEvents::SetScreenData::Add_EventWindow resetBuffers { };
-
-    pushEvent(&pushPopup);
-    pushEvent(&resetBuffers);
-
-    return Status { true };
+    return Status { false, "Add event failed" };
 }
 
 Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer { m } {

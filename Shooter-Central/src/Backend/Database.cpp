@@ -451,25 +451,39 @@ void addMetadataInfo(Database& db, const ShootingEventMetadata& info){
 }
 
 
-// 0 - success, 
-// 1 - error applying to stockpile 
-// 2 - error applying to armory
-// 3 - error add event
-int applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile){
+
+bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile){
     const Database snapshot { db }; // If any errors are encounted, DB revert back to here
 
     if(applyToStockpile){
        for(const auto& gunTrackingAmmoUsed : event.getGunsUsed()){
             for(const auto& amountOfAmmo : gunTrackingAmmoUsed.getAmmoUsed()){
+                const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo() };
 
                 // Apply to stockpile
+                if(!db.stockpileContains(ammoInfo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Ammo '{}' was not found in Stockpile", ammoInfo.name)
+                    };
+                    return false;
+                }
+
                 if(!db.useAmmo(amountOfAmmo)){
                     db = snapshot;
-                    return 1;
+                    throw std::invalid_argument{
+                        std::format("Requested {} rounds of '{}', however only {} rounds in Stockpile", 
+                                amountOfAmmo.getAmount(),
+                                ammoInfo.name,
+                                db.amountInStockpile(ammoInfo)
+                            )
+                    };
+                    return false;
                 }
             }
         }
     }
+
 
     if(applyToArmory){
        for(const auto& gunTrackingAmmoUsed : event.getGunsUsed()){
@@ -477,29 +491,45 @@ int applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, boo
 
             if(!db.armoryContains(gunInfo)){
                db = snapshot;
-               return 2;
+               throw std::invalid_argument{
+                    std::format("Gun '{}' was not found in the Armory", gunInfo.name)
+                };
+               return false;
             }
-            else{
-                ArmoryGun& gun { db.getGun(gunInfo) };
+        
+            ArmoryGun& gun { db.getGun(gunInfo) };
+            
+            // Add all ammo used
+            for(const auto& amountOfAmmo : gunTrackingAmmoUsed.getAmmoUsed()){
+                const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo() };
+
+                // Apply to the guns history
+                if(!gun.addAmmoUsed(amountOfAmmo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Failed to add used Ammo '{}' to Gun '{}'", ammoInfo.name, gunInfo.name)
+                    };
+                    return false;
+                }
+
+                // Check ammo is in stockpile
+                if(!db.stockpileContains(ammoInfo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Ammo '{}' was not found in Stockpile", ammoInfo.name)
+                    };                        
+                    return false;
+                }
                 
-                // Add all ammo used
-                for(const auto& amountOfAmmo : gunTrackingAmmoUsed.getAmmoUsed()){
-
-                    // Apply to the guns history
-                    if(!gun.addAmmoUsed(amountOfAmmo)){
+                // Apply to the ammo's history
+                StockpileAmmo& ammo { db.getAmmo(ammoInfo) };
+                if(!ammo.hasGun(gunInfo)){
+                    if(!ammo.addGun(gunInfo)){
                         db = snapshot;
-                        return 2;
-                    }
-
-                    // Apply to the ammo's history
-                    const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo() };
-                    if(!db.stockpileContains(ammoInfo)){
-                        db = snapshot;
-                        return 2;
-                    }
-                    if(!db.getAmmo(ammoInfo).addGun(gunInfo)){
-                        db = snapshot;
-                        return 2;
+                        throw std::invalid_argument{
+                            std::format("Failed to add Gun '{}' to history for Ammo '{}'", gunInfo.name, ammoInfo.name)
+                        };                        
+                        return false;
                     }
                 }
             }
@@ -511,11 +541,11 @@ int applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, boo
     if(!addFlags.wasAdded){
         db = snapshot;
         throw addFlags;
-        return 3; // Will never be called IK
+        return false; // Will never be called IK
     }
 
     addAllMetadataInfo(db);
-    return 0;
+    return true;
 }
 
 
