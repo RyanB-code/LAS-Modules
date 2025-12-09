@@ -229,7 +229,8 @@ void Tables::Selectable::ammoMetadata(
 void Tables::Selectable::ammoAmountOnHand(
         const std::map<AmmoMetadata, StockpileAmmo>& list, 
         AmmoMetadata& selected,
-        ImVec2 size 
+        ImVec2 size,
+        bool showInactive
     )
 {
     int row { 0 };
@@ -242,6 +243,10 @@ void Tables::Selectable::ammoAmountOnHand(
         ImGui::TableHeadersRow();
 
         for(const auto& [key, stockpileAmmo] : list){
+
+            if(!showInactive && !stockpileAmmo.isActive())
+                continue;
+
             const AmmoMetadata& ammoInfo { stockpileAmmo.getAmmoInfo() };
             bool isSelected { selected == ammoInfo };
 
@@ -505,7 +510,8 @@ void Tables::Selectable::gunMetadata(
 void Tables::Selectable::gunMetadataWithRoundCount(
         const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& list, 
         GunMetadata& selected, 
-        ImVec2 size
+        ImVec2 size,
+        bool showInactive
     )
 {
     int row { 0 };
@@ -520,6 +526,10 @@ void Tables::Selectable::gunMetadataWithRoundCount(
         for(const auto& [cartridge, map] : list){
             // Do not sort by Cartridge so just ignore it
             for(const auto& [gunMetadata, armoryGun] : map){
+            
+                if(!showInactive && !armoryGun.isActive())
+                    continue;
+
                 const GunMetadata& gun {armoryGun.getGunInfo()};
                 bool isGunSelected { selected == gun };
             

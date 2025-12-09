@@ -116,6 +116,7 @@ struct View {
     struct ArmoryWindow{
         GunMetadata             selectedGun;
 
+        bool showInactive   { false };
         bool verticalLayout { false };
 
         static constexpr ImVec2 deselectButtonSize  { 100, 40 };
@@ -149,7 +150,8 @@ struct View {
     struct StockpileWindow{
         Cartridge       selectedCartridge   { };
         AmmoMetadata    selectedAmmo        { };
-        
+
+        bool showInactive           { false };
         bool selectedCartridgeValid { false };
         bool selectedAmmoValid      { false };
 

@@ -76,14 +76,26 @@ void ArmoryWindow::main(
         ImGui::Spacing();
         ImGui::Spacing();
 
+        centerNextItemX(350);
+        ImGui::BeginGroup();
+        ImGui::Text("Show Inactive Ammo");
+        ImGui::SameLine();
+        ImGui::Checkbox("##Show Inactive", &data.showInactive);
+
+        ImGui::SameLine();
+        ImGui::Dummy( ImVec2 { 50, 0 } );
+        ImGui::SameLine();
+
         if(!selectedGunValid)
             ImGui::BeginDisabled();
 
-        if(centerButton("Deselect", data.deselectButtonSize))
+        if(ImGui::Button("Deselect", data.deselectButtonSize))
             data.selectedGun = EMPTY_GUN_METADATA;
 
         if(!selectedGunValid)
             ImGui::EndDisabled();
+
+        ImGui::EndGroup();
         
         ImGui::Spacing();
         ImGui::Spacing();
@@ -95,7 +107,7 @@ void ArmoryWindow::main(
             data.topTableSize.x = data.maxTableWidth;
 
         centerNextItemX(data.topTableSize.x);
-        Tables::Selectable::gunMetadataWithRoundCount(armory, data.selectedGun, data.topTableSize);
+        Tables::Selectable::gunMetadataWithRoundCount(armory, data.selectedGun, data.topTableSize, data.showInactive);
 
         selectedGunValid = data.selectedGun != EMPTY_GUN_METADATA;
     }
@@ -495,14 +507,26 @@ void StockpileWindow::main(
         ImGui::Spacing();
         ImGui::Spacing();
 
+        centerNextItemX(350);
+        ImGui::BeginGroup();
+        ImGui::Text("Show Inactive Ammo");
+        ImGui::SameLine();
+        ImGui::Checkbox("##Show Inactive", &data.showInactive);
+
+        ImGui::SameLine();
+        ImGui::Dummy( ImVec2 { 50, 0 } );
+        ImGui::SameLine();
+
         if(!data.selectedAmmoValid)
             ImGui::BeginDisabled();
 
-        if(centerButton("Deselect", data.deselectButtonSize))
+        if(ImGui::Button("Deselect", data.deselectButtonSize))
             data.selectedAmmo = EMPTY_AMMO_METADATA;
 
         if(!data.selectedAmmoValid)
             ImGui::EndDisabled();
+
+        ImGui::EndGroup();
 
         ImGui::Spacing();
         ImGui::Spacing();
@@ -516,7 +540,8 @@ void StockpileWindow::main(
             Tables::Selectable::ammoAmountOnHand(
                     ammoList.at(data.selectedCartridge), 
                     data.selectedAmmo, 
-                    data.tableSize
+                    data.tableSize,
+                    data.showInactive
                 );
         }
         data.selectedAmmoValid = data.selectedAmmo != EMPTY_AMMO_METADATA;

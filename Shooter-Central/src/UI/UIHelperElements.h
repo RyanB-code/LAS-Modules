@@ -38,7 +38,8 @@ namespace Tables{
         void ammoAmountOnHand(
                 const std::map<AmmoMetadata, StockpileAmmo>& list, 
                 AmmoMetadata& selected,
-                ImVec2 size 
+                ImVec2 size,
+                bool showInactive=true
             );
         void amountOfAmmo(
                 const std::map<AmmoMetadata, AmountOfAmmo>& ammoUsed,
@@ -68,7 +69,8 @@ namespace Tables{
         void gunMetadataWithRoundCount(
                 const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, 
                 GunMetadata&,
-                ImVec2  
+                ImVec2,
+                bool showInactive=true
             );
         void gunMetadataWithRoundCount(
                 const std::vector<GunTrackingAmmoUsed>& list, 

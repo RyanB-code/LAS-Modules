@@ -63,7 +63,7 @@ void gunWindow(
     ImGui::Spacing();
 
     centerNextItemX(screenData.tableSize.x); 
-    Tables::Selectable::gunMetadataWithRoundCount(guns, screenData.selectedGun, screenData.tableSize);
+    Tables::Selectable::gunMetadataWithRoundCount(guns, screenData.selectedGun, screenData.tableSize, false);
     screenData.selectedGunValid = screenData.selectedGun != EMPTY_GUN_METADATA;
 
     ImGui::Spacing();
