@@ -554,6 +554,9 @@ void EventsWindow::selectedEventGunsUsedWindow(
 
 
 
+
+
+
 void StockpileWindow::main(
         const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList, 
         const std::map<Cartridge, int>& cartridgeList, 
@@ -576,43 +579,20 @@ void StockpileWindow::main(
     if(data.windowSize.y < data.minWinSize.y)
         data.windowSize.y = data.minWinSize.y;
 
-    if(ImGui::BeginChild("Select Cartridge Window", data.windowSize)){ 
-        ImGui::SeparatorText("Select Cartridge");
-        ImGui::Spacing();
-        ImGui::Spacing();
+    selectCartridgeWindow(
+            cartridgeList,
+            data.selectedCartridge,
+            data.selectedAmmo,
+            data.tableSize,
+            data.selectedCartridgeValid,
+            data.selectedAmmoValid,
+            data.minTableWidth,
+            data.maxTableWidth,
+            data.windowSize,
+            data.deselectButtonSize
+        );
 
-        if(!data.selectedCartridgeValid)
-            ImGui::BeginDisabled();
-
-        if(centerButton("Deselect", data.deselectButtonSize)){
-            data.selectedCartridge  = EMPTY_CARTRIDGE;
-            data.selectedAmmo       = EMPTY_AMMO_METADATA;
-
-            data.selectedAmmoValid      = false;
-        }
-
-        if(!data.selectedCartridgeValid)
-            ImGui::EndDisabled();
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        data.tableSize.x = ImGui::GetContentRegionAvail().x-2;
-        if(data.tableSize.x < data.minTableSize.x)
-            data.tableSize.x = data.minTableSize.x;
-        if(data.tableSize.x > data.maxTableWidth)
-            data.tableSize.x = data.maxTableWidth;
-
-        centerNextItemX(data.tableSize.x);
-        Tables::Selectable::cartridgeAmountOnHand(
-                cartridgeList, 
-                data.selectedCartridge, 
-                data.tableSize
-            ); 
-        data.selectedCartridgeValid = data.selectedCartridge != EMPTY_CARTRIDGE;
-    }
-    ImGui::EndChild();
-
+    
     static Cartridge lastCartridge { };
     if(data.selectedCartridge != lastCartridge){
         data.selectedAmmo       = EMPTY_AMMO_METADATA;
@@ -623,8 +603,105 @@ void StockpileWindow::main(
     if(!data.verticalLayout)
         ImGui::SameLine();
 
+    selectAmmoWindow(
+            ammoList,
+            data.selectedAmmo,
+            data.selectedCartridge,
+            data.tableSize,
+            data.selectedAmmoValid,
+            data.showInactive,
+            data.selectedCartridgeValid,
+            data.windowSize,
+            data.deselectButtonSize
+        );
 
-    if(ImGui::BeginChild("Select Ammo Window", data.windowSize)){ 
+
+    // Next line of windows here \\
+   
+    
+    selectedAmmoInfoWindow(
+            ammoList,
+            data.selectedAmmo,
+            data.selectedAmmoValid,
+            data.windowSize
+        );
+
+    if(!data.verticalLayout)
+        ImGui::SameLine();
+
+    selectedAmmoGunsUsed(
+            ammoList,
+            data.selectedAmmo,
+            data.tableSize,
+            data.selectedAmmoValid,
+            data.windowSize
+        );
+
+    }
+void StockpileWindow::selectCartridgeWindow(
+        const std::map<Cartridge, int>& cartridgeList,
+        Cartridge&      selectedCartridge,
+        AmmoMetadata&   selectedAmmo,
+        ImVec2&         tableSize,
+        bool&           isCartridgeValid,
+        bool&           isAmmoValid,
+        float           minTableWidth,
+        float           maxTableWidth,
+        const ImVec2&   windowSize,
+        const ImVec2&   buttonSize
+    )
+{
+    if(ImGui::BeginChild("Select Cartridge Window", windowSize)){ 
+        ImGui::SeparatorText("Select Cartridge");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(!isCartridgeValid)
+            ImGui::BeginDisabled();
+
+        if(centerButton("Deselect", buttonSize)){
+            selectedCartridge  = EMPTY_CARTRIDGE;
+            selectedAmmo       = EMPTY_AMMO_METADATA;
+
+            isAmmoValid      = false;
+        }
+
+        if(!isCartridgeValid)
+            ImGui::EndDisabled();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        tableSize.x = ImGui::GetContentRegionAvail().x-2;
+        if(tableSize.x < minTableWidth)
+            tableSize.x = minTableWidth;
+        if(tableSize.x > maxTableWidth)
+            tableSize.x = maxTableWidth;
+
+        centerNextItemX(tableSize.x);
+        Tables::Selectable::cartridgeAmountOnHand(
+                cartridgeList, 
+                selectedCartridge, 
+                tableSize
+            ); 
+        isCartridgeValid = selectedCartridge != EMPTY_CARTRIDGE;
+    }
+    ImGui::EndChild();
+
+}
+void StockpileWindow::selectAmmoWindow(
+        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+        AmmoMetadata&       selectedAmmo,
+        const Cartridge&    selectedCartridge,
+        const ImVec2&       tableSize,
+        bool&               isAmmoValid,
+        bool&               showInactive,
+        const bool          isCartridgeValid,
+        const ImVec2&       windowSize,
+        const ImVec2&       buttonSize
+    )
+{
+    if(ImGui::BeginChild("Select Ammo Window", windowSize)){ 
         ImGui::SeparatorText( "Select Ammo" );
         ImGui::Spacing();
         ImGui::Spacing();
@@ -633,19 +710,19 @@ void StockpileWindow::main(
         ImGui::BeginGroup();
         ImGui::Text("Show Inactive Ammo");
         ImGui::SameLine();
-        ImGui::Checkbox("##Show Inactive", &data.showInactive);
+        ImGui::Checkbox("##Show Inactive", &showInactive);
 
         ImGui::SameLine();
         ImGui::Dummy( ImVec2 { 50, 0 } );
         ImGui::SameLine();
 
-        if(!data.selectedAmmoValid)
+        if(!isAmmoValid)
             ImGui::BeginDisabled();
 
-        if(ImGui::Button("Deselect", data.deselectButtonSize))
-            data.selectedAmmo = EMPTY_AMMO_METADATA;
+        if(ImGui::Button("Deselect", buttonSize))
+            selectedAmmo = EMPTY_AMMO_METADATA;
 
-        if(!data.selectedAmmoValid)
+        if(!isAmmoValid)
             ImGui::EndDisabled();
 
         ImGui::EndGroup();
@@ -653,47 +730,94 @@ void StockpileWindow::main(
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if(!data.selectedCartridgeValid) {
+        if(!isCartridgeValid) {
             centerNextItemY(5);
             centerTextDisabled("Select a Cartridge to See Ammo On Hand");
         }
         else{
-            centerNextItemX(data.tableSize.x);
+            centerNextItemX(tableSize.x);
             Tables::Selectable::ammoAmountOnHand(
-                    ammoList.at(data.selectedCartridge), 
-                    data.selectedAmmo, 
-                    data.tableSize,
-                    data.showInactive
+                    ammoList.at(selectedCartridge), 
+                    selectedAmmo, 
+                    tableSize,
+                    showInactive
                 );
         }
-        data.selectedAmmoValid = data.selectedAmmo != EMPTY_AMMO_METADATA;
+        isAmmoValid = selectedAmmo != EMPTY_AMMO_METADATA;
     }
     ImGui::EndChild();
 
-    if(ImGui::BeginChild("Selected Ammo Details", data.windowSize)){
+}
+void StockpileWindow::selectedAmmoInfoWindow(
+        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+        const AmmoMetadata& selectedAmmo,
+        const bool& isAmmoValid,
+        const ImVec2& windowSize
+    )
+{
+    if(ImGui::BeginChild("Selected Ammo Details", windowSize)){
         ImGui::SeparatorText( "Selected Ammo Details" );
         ImGui::Spacing(); 
         ImGui::Spacing();
 
-        if(!data.selectedAmmoValid){
+        if(!isAmmoValid){
             centerNextItemY(5);
             centerTextDisabled("Select Ammo to View Detailed Information");
         }
-        else
-            selectedAmmoInformation(ammoList.at(data.selectedAmmo.cartridge).at(data.selectedAmmo));
+        else{
+            const StockpileAmmo& data { ammoList.at(selectedAmmo.cartridge).at(selectedAmmo) };
+
+            centerNextItemX(200);
+            ImGui::BeginGroup();
+
+            ImGui::TextDisabled("Name:              ");
+            ImGui::SameLine();
+            ImGui::Text("%s", selectedAmmo.name.c_str());
+
+            ImGui::TextDisabled("Cartridge:         ");
+            ImGui::SameLine();
+            ImGui::Text("%s", selectedAmmo.cartridge.getName());
+
+            ImGui::TextDisabled("Manufacturer:      ");
+            ImGui::SameLine();
+            ImGui::Text("%s", selectedAmmo.manufacturer.getName());
+
+            ImGui::TextDisabled("Grain Weight:      ");
+            ImGui::SameLine();
+            ImGui::Text("%d", selectedAmmo.grainWeight);
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::TextDisabled("Amount On Hand:    ");
+            ImGui::SameLine();
+            ImGui::Text("%d", data.getAmountOnHand());
+
+            ImGui::TextDisabled("Guns Used In:      ");
+            ImGui::SameLine();
+            ImGui::Text("%ld", data.getGunsUsed().size());
+
+            ImGui::EndGroup();
+        }
     }
     ImGui::EndChild();
 
-
-    if(!data.verticalLayout)
-        ImGui::SameLine();
-
-    if(ImGui::BeginChild("Selected Ammo Guns Used", data.windowSize)){
+}
+void StockpileWindow::selectedAmmoGunsUsed(
+        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+        const AmmoMetadata& selectedAmmo,
+        const ImVec2&       tableSize,
+        const bool&         isAmmoValid,
+        const ImVec2&       windowSize
+    )
+{
+    if(ImGui::BeginChild("Selected Ammo Guns Used", windowSize)){
         ImGui::SeparatorText( "Guns Used" );
         ImGui::Spacing(); 
         ImGui::Spacing();
 
-        if(!data.selectedAmmoValid) {
+        if(!isAmmoValid) {
             centerNextItemY(5);
             centerTextDisabled("Select an Event to View Detailed Information");
         }
@@ -703,11 +827,11 @@ void StockpileWindow::main(
             ImGui::Spacing();
 
             static GunMetadata viewInfo { };
-            centerNextItemX(data.tableSize.x);
+            centerNextItemX(tableSize.x);
             Tables::Selectable::gunMetadata(
-                    ammoList.at(data.selectedAmmo.cartridge).at(data.selectedAmmo).getGunsUsed(),
+                    ammoList.at(selectedAmmo.cartridge).at(selectedAmmo).getGunsUsed(),
                     viewInfo, 
-                    data.tableSize
+                    tableSize
                 );
 
             if(viewInfo != EMPTY_GUN_METADATA){
@@ -726,42 +850,7 @@ void StockpileWindow::main(
         }
     }
     ImGui::EndChild();
-}
-void StockpileWindow::selectedAmmoInformation (const StockpileAmmo& data){
-    const AmmoMetadata& ammoInfo  { data.getAmmoInfo() };
 
-    centerNextItemX(200);
-    ImGui::BeginGroup();
-
-    ImGui::TextDisabled("Name:              ");
-    ImGui::SameLine();
-    ImGui::Text("%s", ammoInfo.name.c_str());
-
-    ImGui::TextDisabled("Cartridge:         ");
-    ImGui::SameLine();
-    ImGui::Text("%s", ammoInfo.cartridge.getName());
-
-    ImGui::TextDisabled("Manufacturer:      ");
-    ImGui::SameLine();
-    ImGui::Text("%s", ammoInfo.manufacturer.getName());
-
-    ImGui::TextDisabled("Grain Weight:      ");
-    ImGui::SameLine();
-    ImGui::Text("%d", ammoInfo.grainWeight);
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    ImGui::TextDisabled("Amount On Hand:    ");
-    ImGui::SameLine();
-    ImGui::Text("%d", data.getAmountOnHand());
-
-    ImGui::TextDisabled("Guns Used In:      ");
-    ImGui::SameLine();
-    ImGui::Text("%ld", data.getGunsUsed().size());
-
-    ImGui::EndGroup();
 }
 
 }   // End SC::UI

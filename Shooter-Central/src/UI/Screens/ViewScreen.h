@@ -90,7 +90,6 @@ namespace EventsWindow {
             float maxTableWidth,
             const ImVec2& windowSize
         );
-
 }
 
 namespace StockpileWindow {
@@ -99,7 +98,42 @@ namespace StockpileWindow {
             const std::map<Cartridge, int>& cartridgeList,
             ScreenData::View::StockpileWindow& tabData
         );
-    void selectedAmmoInformation   (const StockpileAmmo& );
+    void selectCartridgeWindow(
+            const std::map<Cartridge, int>& cartridgeList,
+            Cartridge&      selectedCartridge,
+            AmmoMetadata&   selectedAmmo,
+            ImVec2&         tableSize,
+            bool&           isCartridgeValid,
+            bool&           isAmmoValid,
+            float           minTableWidth,
+            float           maxTableWidth,
+            const ImVec2&   windowSize,
+            const ImVec2&   buttonSize
+        );
+    void selectAmmoWindow(
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+            AmmoMetadata&       selectedAmmo,
+            const Cartridge&    selectedCartridge,
+            const ImVec2&       tableSize,
+            bool&               isAmmoValid,
+            bool&               showInactive,
+            const bool          isCartridgeValid,
+            const ImVec2&       windowSize,
+            const ImVec2&       buttonSize
+        );
+    void selectedAmmoInfoWindow(
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+            const AmmoMetadata& selectedAmmo,
+            const bool& isAmmoValid,
+            const ImVec2& windowSize
+        );
+    void selectedAmmoGunsUsed(
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& ammoList,
+            const AmmoMetadata& selectedAmmo,
+            const ImVec2&       tableSize,
+            const bool&         isAmmoValid,
+            const ImVec2&       windowSize
+        );
 }
 
 

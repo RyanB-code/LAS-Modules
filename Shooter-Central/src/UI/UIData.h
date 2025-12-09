@@ -161,12 +161,12 @@ struct View {
 
         static constexpr ImVec2 deselectButtonSize  { 100, 40 };
         static constexpr ImVec2 minWinSize          { 400, 600 };
-        static constexpr ImVec2 minTableSize        { 400, 300 };
+        static constexpr float minTableWidth       { 400 };
         static constexpr float  maxTableWidth       { 600 };     
 
 
         ImVec2 windowSize   { minWinSize };
-        ImVec2 tableSize    { minTableSize.x, 400 };
+        ImVec2 tableSize    { minTableWidth, 400 };
     };
 
     Category        category                { Category::NONE }; 
