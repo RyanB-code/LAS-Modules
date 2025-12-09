@@ -68,31 +68,89 @@ void ArmoryWindow::main(
         data.bottomWindowSize.y = data.minWinSize.y;
 
 
-    // AFTER the select table is run, use this for further checking if selected is valid
-    bool selectedGunValid { data.selectedGun != EMPTY_GUN_METADATA };
+    selectGunWindow(
+            armory,
+            data.selectedGun,
+            data.topTableSize,
+            data.selectedGunValid,
+            data.showInactive,
+            data.minTableWidth,
+            data.maxTableWidth,
+            data.topWindowSize,
+            data.deselectButtonSize
+        );
 
-    if(ImGui::BeginChild("Select A Gun", data.topWindowSize)){ 
+    // Now starts bottom Windows \\
+
+    selectedGunInfoWindow(
+            armory,
+            data.selectedGun,
+            data.selectedGunValid,
+            data.bottomWindowSize
+        ); 
+ 
+    if(!data.verticalLayout)
+        ImGui::SameLine();
+
+    selectedGunEventsWindow(
+            armory,
+            data.selectedGun,
+            data.bottomTableSize,
+            data.selectedGunValid,
+            data.minTableWidth,
+            data.maxTableWidth,
+            data.bottomWindowSize
+        );
+    
+    if(!data.verticalLayout)
+        ImGui::SameLine();
+
+    selectedGunAmmoWindow(
+            armory,
+            data.selectedGun,
+            data.bottomTableSize,
+            data.selectedGunValid,
+            data.minTableWidth,
+            data.maxTableWidth,
+            data.bottomWindowSize
+        ); 
+}
+void ArmoryWindow::selectGunWindow(
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+        GunMetadata& selectedGun,
+        ImVec2& tableSize,
+        bool& isGunValid,
+        bool& showInactive,
+        float minTableWidth,
+        float maxTableWidth,
+        const ImVec2& windowSize,
+        const ImVec2& buttonSize
+    )
+{
+    isGunValid = selectedGun != EMPTY_GUN_METADATA;
+
+    if(ImGui::BeginChild("Select A Gun", windowSize)){ 
         ImGui::SeparatorText( "Select A Gun" );
         ImGui::Spacing();
         ImGui::Spacing();
 
         centerNextItemX(350);
         ImGui::BeginGroup();
-        ImGui::Text("Show Inactive Ammo");
+        ImGui::Text("Show Inactive Guns");
         ImGui::SameLine();
-        ImGui::Checkbox("##Show Inactive", &data.showInactive);
+        ImGui::Checkbox("##Show Inactive", &showInactive);
 
         ImGui::SameLine();
         ImGui::Dummy( ImVec2 { 50, 0 } );
         ImGui::SameLine();
 
-        if(!selectedGunValid)
+        if(!isGunValid)
             ImGui::BeginDisabled();
 
-        if(ImGui::Button("Deselect", data.deselectButtonSize))
-            data.selectedGun = EMPTY_GUN_METADATA;
+        if(ImGui::Button("Deselect", buttonSize))
+            selectedGun = EMPTY_GUN_METADATA;
 
-        if(!selectedGunValid)
+        if(!isGunValid)
             ImGui::EndDisabled();
 
         ImGui::EndGroup();
@@ -100,52 +158,92 @@ void ArmoryWindow::main(
         ImGui::Spacing();
         ImGui::Spacing();
 
-        data.topTableSize.x = ImGui::GetContentRegionAvail().x;
-        if(data.topTableSize.x < data.minTableSize.x)
-            data.topTableSize.x = data.minTableSize.x;
-        if(data.topTableSize.x > data.maxTableWidth)
-            data.topTableSize.x = data.maxTableWidth;
+        tableSize.x = ImGui::GetContentRegionAvail().x;
+        if(tableSize.x < minTableWidth)
+            tableSize.x = minTableWidth;
+        if(tableSize.x > maxTableWidth)
+            tableSize.x = maxTableWidth;
 
-        centerNextItemX(data.topTableSize.x);
-        Tables::Selectable::gunMetadataWithRoundCount(armory, data.selectedGun, data.topTableSize, data.showInactive);
-
-        selectedGunValid = data.selectedGun != EMPTY_GUN_METADATA;
+        centerNextItemX(tableSize.x);
+        Tables::Selectable::gunMetadataWithRoundCount(armory, selectedGun, tableSize, showInactive);
+        isGunValid = selectedGun != EMPTY_GUN_METADATA;
     }
     ImGui::EndChild();
+}
 
-
-    // Now starts bottom Window \\
-
-    if(ImGui::BeginChild("Selected Gun Details", data.bottomWindowSize)){
+void ArmoryWindow::selectedGunInfoWindow(
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+        const GunMetadata& gunInfo,
+        const bool& isGunValid,
+        const ImVec2& windowSize
+    )
+{
+    
+    if(ImGui::BeginChild("Selected Gun Details", windowSize)){
         ImGui::SeparatorText( "Details" );
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if(!selectedGunValid){
+        if(!isGunValid){
             centerNextItemY(5);
             centerTextDisabled("Select a Gun to View Detailed Information");
         }
-        else{
-            data.bottomTableSize.x = ImGui::GetContentRegionAvail().x -2;
-            if(data.bottomTableSize.x < data.minTableSize.x)
-                data.bottomTableSize.x = data.minTableSize.x;
-            if(data.bottomTableSize.x > data.maxTableWidth)
-                data.bottomTableSize.x = data.maxTableWidth;
+        else{ 
+            const ArmoryGun& gun { armory.at(gunInfo.cartridge).at(gunInfo) };
 
-            ArmoryWindow::selectedGunInformation(armory.at(data.selectedGun.cartridge).at(data.selectedGun));
+            centerNextItemX(200);
+            ImGui::BeginGroup();
+            ImGui::TextDisabled("Name:            ");
+            ImGui::SameLine();
+            ImGui::Text("%s", gunInfo.name.c_str());
+
+
+            ImGui::TextDisabled("Weapon Type:     ");
+            ImGui::SameLine();
+            ImGui::Text("%s", gunInfo.weaponType.getName()); 
+
+            ImGui::TextDisabled("Cartridge:       ");
+            ImGui::SameLine();
+            ImGui::Text("%s", gunInfo.cartridge.getName());
+
+            ImGui::TextDisabled("Round Count:     ");
+            ImGui::SameLine();
+            ImGui::Text("%d", gun.getRoundCount());
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::TextDisabled("Events Used In:  ");
+            ImGui::SameLine();
+            ImGui::Text("%d", gun.totalEventsUsed()); 
+
+            ImGui::TextDisabled("Ammo Types Used: ");
+            ImGui::SameLine();
+            ImGui::Text("%d", gun.totalAmmoTypesUsed()); 
+
+            ImGui::EndGroup();
+
         }
     }
     ImGui::EndChild();
-
-    if(!data.verticalLayout)
-        ImGui::SameLine();
-
-    if(ImGui::BeginChild("Selected Gun Events", data.bottomWindowSize)){
+}
+void ArmoryWindow::selectedGunEventsWindow(
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+        const GunMetadata& selectedGun,
+        ImVec2& tableSize,
+        const bool isGunValid,
+        float minTableWidth,
+        float maxTableWidth,
+        const ImVec2& windowSize
+    )
+{
+    if(ImGui::BeginChild("Selected Gun Events", windowSize)){
         ImGui::SeparatorText( "Events Used" );
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if(!selectedGunValid){
+        if(!isGunValid){
             centerNextItemY(5);
             centerTextDisabled("Select a Gun to View Events");
         }
@@ -154,12 +252,18 @@ void ArmoryWindow::main(
             ImGui::Spacing();
             ImGui::Spacing();
 
+            tableSize.x = ImGui::GetContentRegionAvail().x -2;
+            if(tableSize.x < minTableWidth)
+                tableSize.x = minTableWidth;
+            if(tableSize.x > maxTableWidth)
+                tableSize.x = maxTableWidth;
+
             static ShootingEventMetadata viewEvent { };
-            centerNextItemX(data.bottomTableSize.x);
+            centerNextItemX(tableSize.x);
             Tables::Selectable::eventMetadata(
-                    armory.at(data.selectedGun.cartridge).at(data.selectedGun).getEventsUsed(),
+                    armory.at(selectedGun.cartridge).at(selectedGun).getEventsUsed(),
                     viewEvent,
-                    data.bottomTableSize
+                    tableSize
                 );
 
             if(viewEvent != EMPTY_EVENT_METADATA){
@@ -178,16 +282,23 @@ void ArmoryWindow::main(
         }
     }
     ImGui::EndChild();
-
-    if(!data.verticalLayout)
-        ImGui::SameLine();
-
-    if(ImGui::BeginChild("Selected Gun Ammo Used", data.bottomWindowSize)){
+}
+void ArmoryWindow::selectedGunAmmoWindow(
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+        const GunMetadata& selectedGun,
+        ImVec2& tableSize,
+        const bool isGunValid,
+        float minTableWidth,
+        float maxTableWidth,
+        const ImVec2& windowSize
+    )
+{
+    if(ImGui::BeginChild("Selected Gun Ammo Used", windowSize)){
         ImGui::SeparatorText( "Ammo Used" );
         ImGui::Spacing();
         ImGui::Spacing();
 
-        if(!selectedGunValid){
+        if(!isGunValid){
             centerNextItemY(5);
             centerTextDisabled("Select a Gun to View Ammo Used");
         }
@@ -197,11 +308,11 @@ void ArmoryWindow::main(
             ImGui::Spacing();
 
             static AmmoMetadata viewAmmo { };
-            centerNextItemX(data.bottomTableSize.x);
+            centerNextItemX(tableSize.x);
             Tables::Selectable::amountOfAmmo(
-                    armory.at(data.selectedGun.cartridge).at(data.selectedGun).getAmmoUsed(),
+                    armory.at(selectedGun.cartridge).at(selectedGun).getAmmoUsed(),
                     viewAmmo, 
-                    data.bottomTableSize);
+                    tableSize);
 
             if(viewAmmo != EMPTY_AMMO_METADATA){
                 ScreenData::View buffer { };
@@ -220,46 +331,7 @@ void ArmoryWindow::main(
         }
     }
     ImGui::EndChild();
-
 }
-void ArmoryWindow::selectedGunInformation(const ArmoryGun& gun){
-    const GunMetadata& gunInfo  { gun.getGunInfo() };
-
-    centerNextItemX(200);
-    ImGui::BeginGroup();
-    ImGui::TextDisabled("Name:            ");
-    ImGui::SameLine();
-    ImGui::Text("%s", gunInfo.name.c_str());
-
-
-    ImGui::TextDisabled("Weapon Type:     ");
-    ImGui::SameLine();
-    ImGui::Text("%s", gunInfo.weaponType.getName()); 
-
-    ImGui::TextDisabled("Cartridge:       ");
-    ImGui::SameLine();
-    ImGui::Text("%s", gunInfo.cartridge.getName());
-
-    ImGui::TextDisabled("Round Count:     ");
-    ImGui::SameLine();
-    ImGui::Text("%d", gun.getRoundCount());
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    ImGui::TextDisabled("Events Used In:  ");
-    ImGui::SameLine();
-    ImGui::Text("%d", gun.totalEventsUsed()); 
-
-    ImGui::TextDisabled("Ammo Types Used: ");
-    ImGui::SameLine();
-    ImGui::Text("%d", gun.totalAmmoTypesUsed()); 
-
-    ImGui::EndGroup();
-}
-
-
 
 
 

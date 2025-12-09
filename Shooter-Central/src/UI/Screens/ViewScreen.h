@@ -22,7 +22,41 @@ namespace ArmoryWindow {
             const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
             ScreenData::View::ArmoryWindow& screenData 
         );
-    void selectedGunInformation (const ArmoryGun& );
+    void selectGunWindow(
+            const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+            GunMetadata& selectedGun,
+            ImVec2& tableSize,
+            bool& isGunValid,
+            bool& showInactive,
+            float minTableWidth,
+            float maxTableWidth,
+            const ImVec2& windowSize,
+            const ImVec2& buttonSize
+        );
+    void selectedGunInfoWindow(
+            const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+            const GunMetadata& gunInfo,
+            const bool& isGunValid,
+            const ImVec2& windowSize
+        );
+    void selectedGunEventsWindow(
+            const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+            const GunMetadata& selectedGun,
+            ImVec2& tableSize,
+            const bool isGunValid,
+            float minTableWidth,
+            float maxTableWidth,
+            const ImVec2& windowSize
+        );
+    void selectedGunAmmoWindow(
+            const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+            const GunMetadata& selectedGun,
+            ImVec2& tableSize,
+            const bool isGunValid,
+            float minTableWidth,
+            float maxTableWidth,
+            const ImVec2& windowSize
+        );
 }
 
 namespace EventsWindow {

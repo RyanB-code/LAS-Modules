@@ -116,18 +116,19 @@ struct View {
     struct ArmoryWindow{
         GunMetadata             selectedGun;
 
-        bool showInactive   { false };
-        bool verticalLayout { false };
+        bool selectedGunValid   { false };
+        bool showInactive       { false };
+        bool verticalLayout     { false };
 
         static constexpr ImVec2 deselectButtonSize  { 100, 40 };
         static constexpr ImVec2 minWinSize          { 400, 600 };
-        static constexpr ImVec2 minTableSize        { 400, 300 };
+        static constexpr float  minTableWidth       { 400 };
         static constexpr float  maxTableWidth       { 800 };     
 
         ImVec2 topWindowSize        { minWinSize };
         ImVec2 bottomWindowSize     { minWinSize };
-        ImVec2 topTableSize         { minTableSize.x, 400 };
-        ImVec2 bottomTableSize      { minTableSize.x, 400 };
+        ImVec2 topTableSize         { minTableWidth, 400 };
+        ImVec2 bottomTableSize      { minTableWidth, 400 };
     };
 
     struct EventsWindow {
