@@ -365,94 +365,46 @@ void EventsWindow::main(
     if(data.bottomWindowSize.y < data.minWinSize.y)
         data.bottomWindowSize.y = data.minWinSize.y;
 
-    bool selectedEventValid { data.selectedEvent != EMPTY_EVENT_METADATA };
+    selectEventWindow(
+            events,
+            data.selectedEvent,
+            data.selectedGun,
+            data.topTableSize,
+            data.selectedEventValid,
+            data.minTableWidth,
+            data.maxTableWidth,
+            data.topWindowSize,
+            data.deselectButtonSize
+        );
 
-    if(ImGui::BeginChild("View Event Table", data.topWindowSize)){ 
-        ImGui::SeparatorText( "Select An Event" );
-        ImGui::Spacing();
-
-        if(!selectedEventValid)
-            ImGui::BeginDisabled();
-
-        centerNextItemX(data.deselectButtonSize.x);
-        if(ImGui::Button("Deselect", data.deselectButtonSize)){
-            data.selectedEvent  = EMPTY_EVENT_METADATA;
-            data.selectedGun    = EMPTY_GUN_METADATA;
-        }
-
-        if(!selectedEventValid)
-            ImGui::EndDisabled();
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        data.topTableSize.x = ImGui::GetContentRegionAvail().x;
-        if(data.topTableSize.x < data.minTableSize.x)
-            data.topTableSize.x = data.minTableSize.x;
-        if(data.topTableSize.x > data.maxTableWidth)
-            data.topTableSize.x = data.maxTableWidth;
-
-        centerNextItemX(data.topTableSize.x);
-        Tables::Selectable::eventsWithNumGunsUsed(events, data.selectedEvent, data.topTableSize);
-        selectedEventValid = data.selectedEvent != EMPTY_EVENT_METADATA;
-    }
-    ImGui::EndChild();
-
+    
     static ShootingEventMetadata lastEvent { };
     if(data.selectedEvent != lastEvent){
         data.selectedGun = EMPTY_GUN_METADATA;
     }
     lastEvent = data.selectedEvent;
 
-    if(ImGui::BeginChild("Selected Event Details", data.bottomWindowSize)){
-        ImGui::SeparatorText( "Details" );
-        ImGui::Spacing(); 
-
-        if(!selectedEventValid){
-            centerNextItemY(5);
-            centerTextDisabled("Select an Event to View Detailed Information");
-        }
-        else
-            selectedEventInformation(events.at(data.selectedEvent));
-    }
-    ImGui::EndChild();
-
+    selectedEventInfoWindow(data.selectedEvent, data.selectedEventValid, data.bottomWindowSize);
+ 
     if(!data.verticalLayout)
         ImGui::SameLine();
 
-    if(ImGui::BeginChild("Selected Event Guns Used", data.bottomWindowSize)){
-        ImGui::SeparatorText( "Guns Used" );
-        ImGui::Spacing(); 
-        ImGui::Spacing(); 
+    selectedEventGunsUsedWindow(
+            events,
+            data.selectedEvent,
+            data.selectedGun,
+            data.bottomTableSize,
+            data.selectedEventValid,
+            data.minTableWidth,
+            data.maxTableWidth,
+            data.bottomWindowSize
+        );
 
-        if(!selectedEventValid) {
-            centerNextItemY(5);
-            centerTextDisabled("Select an Event to View Detailed Information");
-        }
-        else{
-            data.bottomTableSize.x = ImGui::GetContentRegionAvail().x-2;
-            if(data.bottomTableSize.x < data.minTableSize.x)
-                data.bottomTableSize.x = data.minTableSize.x;
-            if(data.bottomTableSize.x > data.maxTableWidth)
-                data.bottomTableSize.x = data.maxTableWidth;
-
-            centerTextDisabled("Select a Gun to View Ammo Used");
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            centerNextItemX(data.bottomTableSize.x);
-            Tables::Selectable::gunMetadataWithRoundCount(
-                    events.at(data.selectedEvent).getGunsUsed(), 
-                    data.selectedGun, 
-                    data.bottomTableSize
-                );
-        }
-    }
-    ImGui::EndChild();
-
+    
     if(!data.verticalLayout)
         ImGui::SameLine();
 
+    // Kept function here because it is so short
     if(ImGui::BeginChild("Selected Gun Ammo Used", data.bottomWindowSize)){
         ImGui::SeparatorText( "Ammo Used" );
         ImGui::Spacing(); 
@@ -472,35 +424,133 @@ void EventsWindow::main(
     }
     ImGui::EndChild();
 }
-void EventsWindow::selectedEventInformation(const ShootingEvent& event){
-    const ShootingEventMetadata& info  { event.getInfo() };
+void EventsWindow::selectEventWindow(
+        const std::map<ShootingEventMetadata, ShootingEvent>& events,
+        ShootingEventMetadata& selectedEvent,
+        GunMetadata& selectedGun,
+        ImVec2& tableSize,
+        bool& isEventValid,
+        float minTableWidth,
+        float maxTableWidth,
+        const ImVec2& windowSize,
+        const ImVec2& buttonSize
+    )
+{
+    isEventValid = selectedEvent != EMPTY_EVENT_METADATA;
 
-    centerNextItemX(400);
-    ImGui::BeginGroup();
-    ImGui::TextDisabled("Date:              ");
-    ImGui::SameLine();
-    ImGui::Text("%s", event.printDate().c_str());
+    if(ImGui::BeginChild("View Event Table", windowSize)){ 
+        ImGui::SeparatorText( "Select An Event" );
+        ImGui::Spacing();
 
-    ImGui::TextDisabled("Location:          ");
-    ImGui::SameLine();
-    ImGui::Text("%s", info.location.getName());
+        if(!isEventValid)
+            ImGui::BeginDisabled();
 
-    ImGui::TextDisabled("EventType:         ");
-    ImGui::SameLine();
-    ImGui::Text("%s", info.eventType.getName());
-    ImGui::EndGroup();
+        if(centerButton("Deselect", buttonSize)){
+            selectedEvent  = EMPTY_EVENT_METADATA;
+            selectedGun    = EMPTY_GUN_METADATA;
+        }
 
-    ImGui::Spacing();
-    ImGui::Spacing();
-    ImGui::Spacing();
+        if(!isEventValid)
+            ImGui::EndDisabled();
 
-    centerTextDisabled("Notes");
-    ImGui::Separator();
-    ImGui::Spacing();
-    ImGui::TextWrapped("%s", info.notes.c_str());
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        tableSize.x = ImGui::GetContentRegionAvail().x;
+        if(tableSize.x < minTableWidth)
+            tableSize.x = minTableWidth;
+        if(tableSize.x > maxTableWidth)
+            tableSize.x = maxTableWidth;
+
+        centerNextItemX(tableSize.x);
+        Tables::Selectable::eventsWithNumGunsUsed(events, selectedEvent, tableSize);
+        isEventValid = selectedEvent != EMPTY_EVENT_METADATA;
+    }
+    ImGui::EndChild();
 }
+void EventsWindow::selectedEventInfoWindow(
+        const ShootingEventMetadata& selectedEvent,
+        const bool& isEventValid,
+        const ImVec2& windowSize
+    )
+{
+    if(ImGui::BeginChild("Selected Event Details", windowSize)){
+        ImGui::SeparatorText( "Details" );
+        ImGui::Spacing(); 
 
+        if(!isEventValid){
+            centerNextItemY(5);
+            centerTextDisabled("Select an Event to View Detailed Information");
+        }
+        else{
+            centerNextItemX(400);
+            ImGui::BeginGroup();
+            ImGui::TextDisabled("Date:              ");
+            ImGui::SameLine();
+            ImGui::Text("%s", printDate(selectedEvent.date).c_str());
 
+            ImGui::TextDisabled("Location:          ");
+            ImGui::SameLine();
+            ImGui::Text("%s", selectedEvent.location.getName());
+
+            ImGui::TextDisabled("EventType:         ");
+            ImGui::SameLine();
+            ImGui::Text("%s", selectedEvent.eventType.getName());
+            ImGui::EndGroup();
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            centerTextDisabled("Notes");
+            ImGui::Separator();
+            ImGui::Spacing();
+            ImGui::TextWrapped("%s", selectedEvent.notes.c_str());
+        }
+    }
+    ImGui::EndChild();
+}
+void EventsWindow::selectedEventGunsUsedWindow(
+        const std::map<ShootingEventMetadata, ShootingEvent>& events,
+        const ShootingEventMetadata& selectedEvent,
+        GunMetadata& selectedGun,
+        ImVec2& tableSize,
+        const bool isEventValid,
+        float minTableWidth,
+        float maxTableWidth,
+        const ImVec2& windowSize
+    )
+{
+    if(ImGui::BeginChild("Selected Event Guns Used", windowSize)){
+        ImGui::SeparatorText( "Guns Used" );
+        ImGui::Spacing(); 
+        ImGui::Spacing(); 
+
+        if(!isEventValid) {
+            centerNextItemY(5);
+            centerTextDisabled("Select an Event to View Detailed Information");
+        }
+        else{
+            tableSize.x = ImGui::GetContentRegionAvail().x;
+            if(tableSize.x < minTableWidth)
+                tableSize.x = minTableWidth;
+            if(tableSize.x > maxTableWidth)
+                tableSize.x = maxTableWidth;
+
+            centerTextDisabled("Select a Gun to View Ammo Used");
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            centerNextItemX(tableSize.x);
+            Tables::Selectable::gunMetadataWithRoundCount(
+                    events.at(selectedEvent).getGunsUsed(), 
+                    selectedGun, 
+                    tableSize
+                );
+        }
+    }
+    ImGui::EndChild();
+}
 
 
 

@@ -64,7 +64,33 @@ namespace EventsWindow {
             const std::map<ShootingEventMetadata, ShootingEvent>&, 
             ScreenData::View::EventsWindow& data
         );
-    void selectedEventInformation (const ShootingEvent& event);
+    void selectEventWindow(
+            const std::map<ShootingEventMetadata, ShootingEvent>& events,
+            ShootingEventMetadata& selectedEvent,
+            GunMetadata& selectedGun,
+            ImVec2& tableSize,
+            bool& isEventValid,
+            float minTableWidth,
+            float maxTableWidth,
+            const ImVec2& windowSize,
+            const ImVec2& buttonSize
+        );
+    void selectedEventInfoWindow(
+            const ShootingEventMetadata& selectedEvent,
+            const bool& isEventValid,
+            const ImVec2& windowSize
+        );
+    void selectedEventGunsUsedWindow(
+            const std::map<ShootingEventMetadata, ShootingEvent>& events,
+            const ShootingEventMetadata& selectedEvent,
+            GunMetadata& selectedGun,
+            ImVec2& tableSize,
+            const bool isEventValid,
+            float minTableWidth,
+            float maxTableWidth,
+            const ImVec2& windowSize
+        );
+
 }
 
 namespace StockpileWindow {
