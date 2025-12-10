@@ -226,7 +226,7 @@ struct Add {
 
             static constexpr ImVec2 buttonSize          { 100, 40 };
             static constexpr ImVec2 minWinSize          { 400, 400 };
-            static constexpr ImVec2 minTableSize        { 300, 400 };
+            static constexpr float  minTableWidth       { 300 };
             static constexpr float  maxTableWidth       { 800 };     
 
             AddAmmoWindow   addAmmoWindow   { };
@@ -241,13 +241,13 @@ struct Add {
            
             ImVec2 mainWindowSize   { minWinSize };
             ImVec2 viewWindowSize   { minWinSize };
-            ImVec2 mainTableSize    { minTableSize };
-            ImVec2 viewTableSize    { minTableSize };
+            ImVec2 mainTableSize    { minTableWidth, 400 };
+            ImVec2 viewTableSize    { minTableWidth, 400 };
         };
         struct ReviewWindow {
             static constexpr ImVec2 buttonSize          { 100, 40 };
             static constexpr ImVec2 minWinSize          { 400, 400 };
-            static constexpr ImVec2 minTableSize        { 300, 400 };
+            static constexpr float  minTableWidth       { 300 };
             static constexpr float  maxTableWidth       { 800 };     
 
             GunMetadata selectedGun { };
@@ -262,7 +262,7 @@ struct Add {
 
             ImVec2 optionsWinSize   { minWinSize.x, 100 };
             ImVec2 reviewWinSize    { minWinSize };
-            ImVec2 tableSize        { minTableSize };
+            ImVec2 tableSize        { minTableWidth, 400 };
         };
 
         MetadataWindow      metadataWindow      { };
@@ -275,7 +275,7 @@ struct Add {
 
     static constexpr ImVec2 deselectButtonSize  { 100, 40 };
     static constexpr ImVec2 minWinSize          { 400, 600 };
-    static constexpr ImVec2 minTableSize        { 300, 400 };
+    static constexpr float  minTableWidth       { 300 };
     static constexpr float  maxTableWidth       { 800 };     
 
     EventWindow     eventWindow     { };
@@ -288,7 +288,7 @@ struct Add {
 
     ImVec2 mainWindowSize   { minWinSize };
     ImVec2 infoWindowSize   { minWinSize };
-    ImVec2 infoTableSize    { minTableSize };
+    ImVec2 infoTableSize    { minTableWidth, 400 };
 };
 
 struct Edit{

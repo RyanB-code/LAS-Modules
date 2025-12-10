@@ -58,8 +58,8 @@ void main(const Database& database, ScreenData::Add& data){
         ImGui::Spacing();
 
         data.infoTableSize.x = ImGui::GetContentRegionAvail().x-2;
-        if(data.infoTableSize.x < data.minTableSize.x)
-            data.infoTableSize.x = data.minTableSize.x;
+        if(data.infoTableSize.x < data.minTableWidth)
+            data.infoTableSize.x = data.minTableWidth;
         if(data.infoTableSize.x > data.maxTableWidth)
             data.infoTableSize.x = data.maxTableWidth;
 
@@ -157,8 +157,6 @@ void showExistingItemsWindow (const Database& database, const SubItem& selected,
                 pushEvent(&setScreen);
                 selectedGun = EMPTY_GUN_METADATA;
             }
-
-            // - TODO - button here to view the gun
             break;
         case SubItem::WEAPON_TYPE:
             centerTextDisabled("All Weapon Types");
@@ -364,91 +362,42 @@ void EventWindow::eventMetadataWindow(
     if(data.mainWinSize.y < data.minWinSize.y)
         data.mainWinSize.y = data.minWinSize.y;
 
+    bool submit { false };
+    infoWindow(
+            event.getInfo(),
+            submit,
+            data.infoWinSize,
+            data.triedToVerifyEventInfo,
+            data.minWinSize,
+            data.mainWinSize,
+            data.buttonSize
+        );
 
-    if(ImGui::BeginChild("Info Window", data.mainWinSize)){
-        data.infoWinSize = ImVec2{ (ImGui::GetContentRegionAvail().x / 2 ) - 5, data.minWinSize.y };
+    // Button inside infoWindow was pressed
+    if(submit){
+        data.triedToVerifyEventInfo = true;
 
-        if(data.infoWinSize.x < data.minWinSize.x)
-            data.infoWinSize.x = data.minWinSize.x;
-        if(data.infoWinSize.y < data.minWinSize.y)
-            data.infoWinSize.y = data.minWinSize.y;
+        ymd date { year{data.year}, month{data.month}, day{data.day} };
 
-        if(ImGui::BeginChild("Directions Window", data.infoWinSize)){
-            ImGui::Indent(20);
-            ImGui::Text("Directions");
-            ImGui::BulletText("Navigate through the tabs to proceed to create the Event");
-            ImGui::BulletText("Once filled out, verify the information to continue");
-            ImGui::Unindent();
-        }
-        ImGui::EndChild();
+        if(verifyMetadata(data.selectedLocation, data.selectedET, date) ){
+            data.triedToVerifyEventInfo = false;
 
-        ImGui::SameLine();
-
-        if(ImGui::BeginChild("Event Metadata Buffer", data.infoWinSize)){
-            const ShootingEventMetadata& info { event.getInfo() };
-
-            if(info != EMPTY_EVENT_METADATA){
-                if(ImGui::BeginChild("Info", ImVec2 { ImGui::GetContentRegionAvail().x / 2, ImGui::GetContentRegionAvail().y })) {
-                    centerTextDisabled("Event Information");
-                    ImGui::Separator();
-
-                    ImGui::TextDisabled("Date: ");
-                    ImGui::SameLine(100);
-                    ImGui::Text("%s", printDate(info.date).c_str());
-
-                    ImGui::TextDisabled("Location: ");
-                    ImGui::SameLine(100);
-                    ImGui::Text("%s", info.location.getName());
-
-                    ImGui::TextDisabled("Event Type: ");
-                    ImGui::SameLine(100);
-                    ImGui::Text("%s", info.eventType.getName());
+            event.setInfo ( ShootingEventMetadata { 
+                    std::string{data.notes},
+                    data.selectedLocation,
+                    data.selectedET,
+                    date
                 }
-                ImGui::EndChild();
-
-                ImGui::SameLine();
-
-                if(ImGui::BeginChild("Notes", ImGui::GetContentRegionAvail() )){
-                    centerTextDisabled("Notes");
-                    ImGui::Separator();
-                    ImGui::Text("%s", info.notes.c_str());
-                }
-                ImGui::EndChild();
-            }
+            );
+            data.selectedET = EMPTY_EVENT_TYPE;
+            data.selectedLocation = EMPTY_LOCATION;
+            data.day = 0;
+            data.month = 0;
+            data.year = 0;
+            resetText(data.notes, ShootingEventMetadata::MAX_CHAR_NOTES);
         }
-        ImGui::EndChild();
-        
-        if(centerButton("Submit", data.buttonSize)){
-            data.triedToVerifyEventInfo = true;
-
-            ymd date { year{data.year}, month{data.month}, day{data.day} };
-
-            if(verifyMetadata(data.selectedLocation, data.selectedET, date) ){
-                data.triedToVerifyEventInfo = false;
-
-                event.setInfo ( ShootingEventMetadata { 
-                        std::string{data.notes},
-                        data.selectedLocation,
-                        data.selectedET,
-                        date
-                    }
-                );
-                data.selectedET = EMPTY_EVENT_TYPE;
-                data.selectedLocation = EMPTY_LOCATION;
-                data.day = 0;
-                data.month = 0;
-                data.year = 0;
-                resetText(data.notes, ShootingEventMetadata::MAX_CHAR_NOTES);
-            }
-        }
-
-        if(data.triedToVerifyEventInfo)
-            centerTextDisabled("(Make Sure Data is Correct)");
-        else
-            ImGui::Dummy( ImVec2 { 0, ImGui::CalcTextSize("PLACEHOLDER").y } );
     }
-    ImGui::EndChild();
-
+    
  
     ImGui::Spacing();
     ImGui::Spacing();
@@ -503,6 +452,80 @@ void EventWindow::eventMetadataWindow(
     ImGui::SameLine(0, 70);
     ImGui::TextDisabled("(Year)");
     ImGui::Unindent();
+}
+void EventWindow::infoWindow(
+        const ShootingEventMetadata& event,
+        bool&           submitted,
+        ImVec2&         subWindowSize,
+        const bool      attemptedVerify,
+        const ImVec2&   minWinSize,
+        const ImVec2&   windowSize,
+        const ImVec2&   buttonSize
+    )
+{
+    if(ImGui::BeginChild("Info Window", windowSize)){
+        subWindowSize = ImVec2{ (ImGui::GetContentRegionAvail().x / 2 ) - 5, minWinSize.y };
+
+        if(subWindowSize.x < minWinSize.x)
+            subWindowSize.x = minWinSize.x;
+        if(subWindowSize.y < minWinSize.y)
+            subWindowSize.y = minWinSize.y;
+
+        if(ImGui::BeginChild("Directions Window", subWindowSize)){
+            ImGui::Indent(20);
+            ImGui::Text("Directions");
+            ImGui::BulletText("Navigate through the tabs to proceed to create the Event");
+            ImGui::BulletText("Once filled out, verify the information to continue");
+            ImGui::Unindent();
+        }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+
+        if(ImGui::BeginChild("Event Metadata Buffer", subWindowSize)){
+
+            if(event != EMPTY_EVENT_METADATA){
+                if(ImGui::BeginChild("Info", ImVec2 { ImGui::GetContentRegionAvail().x / 2, ImGui::GetContentRegionAvail().y })) {
+                    centerTextDisabled("Event Information");
+                    ImGui::Separator();
+
+                    ImGui::TextDisabled("Date: ");
+                    ImGui::SameLine(100);
+                    ImGui::Text("%s", printDate(event.date).c_str());
+
+                    ImGui::TextDisabled("Location: ");
+                    ImGui::SameLine(100);
+                    ImGui::Text("%s", event.location.getName());
+
+                    ImGui::TextDisabled("Event Type: ");
+                    ImGui::SameLine(100);
+                    ImGui::Text("%s", event.eventType.getName());
+                }
+                ImGui::EndChild();
+
+                ImGui::SameLine();
+
+                if(ImGui::BeginChild("Notes", ImGui::GetContentRegionAvail() )){
+                    centerTextDisabled("Notes");
+                    ImGui::Separator();
+                    ImGui::Text("%s", event.notes.c_str());
+                }
+                ImGui::EndChild();
+            }
+        }
+        ImGui::EndChild();
+        
+        if(centerButton("Submit", buttonSize)){
+            submitted = true;
+        }
+ 
+        if(attemptedVerify)
+            centerTextDisabled("(Make Sure Data is Correct)");
+        else
+            ImGui::Dummy( ImVec2 { 0, ImGui::CalcTextSize("PLACEHOLDER").y } );
+    }
+    ImGui::EndChild();
+
 }
 bool EventWindow::verifyMetadata(
        const Location& location,
@@ -565,95 +588,59 @@ void EventWindow::gunsAndAmmoWindow(
         data.viewWindowSize.x = data.minWinSize.x;
     if(data.viewWindowSize.y < data.minWinSize.y)
         data.viewWindowSize.y = data.minWinSize.y;
-    
 
-    if(ImGui::BeginChild("Guns Used", data.viewWindowSize)){
-        ImGui::SeparatorText("Guns Used");
-        ImGui::Spacing();
-        ImGui::Spacing();
+    bool removeGunButton { false };
+    viewGunsUsedWindow(
+            event,
+            data.selectedGun,
+            data.selectedGunValid,
+            removeGunButton,
+            data.viewTableSize,
+            data.minTableWidth,
+            data.maxTableWidth,
+            data.viewWindowSize,
+            data.buttonSize
+        );
 
-        if(!data.selectedGunValid)
-            ImGui::BeginDisabled();
-
-        if(centerButton("Remove Gun", data.buttonSize)){
-            event.removeGun(data.selectedGun);
-            data.selectedGun    = EMPTY_GUN_METADATA;
-            data.selectedAmmo   = EMPTY_AMMO_METADATA;
-
-            data.selectedGunValid = false;
-            ImGui::BeginDisabled();
-        }
-
-        if(!data.selectedGunValid)
-            ImGui::EndDisabled();
-
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        data.viewTableSize.x = ImGui::GetContentRegionAvail().x-2;
-        if(data.viewTableSize.x < data.minTableSize.x)
-            data.viewTableSize.x = data.minTableSize.x;
-        if(data.viewTableSize.x > data.maxTableWidth)
-            data.viewTableSize.x = data.maxTableWidth;
-
-        centerNextItemX(data.viewTableSize.x);
-        Tables::Selectable::gunMetadataWithRoundCount(event.getGunsUsed(), data.selectedGun, data.viewTableSize);
-        data.selectedGunValid = data.selectedGun != EMPTY_GUN_METADATA;
+    if(removeGunButton){
+        event.removeGun(data.selectedGun);
+        data.selectedGun    = EMPTY_GUN_METADATA;
+        data.selectedAmmo   = EMPTY_AMMO_METADATA; 
     }
-    ImGui::EndChild();
-
+    
     if(!data.verticalLayout)
         ImGui::SameLine();
 
-    if(ImGui::BeginChild("Ammo Used", data.viewWindowSize)){
-        ImGui::SeparatorText("Ammo Used"); 
-        ImGui::Spacing();
-        ImGui::Spacing();
+    bool removeAmmo { false };
+    viewAmmoUsedWindow(
+            event,
+            data.selectedGun,
+            data.selectedAmmo,
+            data.selectedAmmoValid,
+            removeAmmo,
+            data.selectedGunValid,
+            data.viewTableSize,
+            data.viewWindowSize,
+            data.buttonSize
+        );
+    if(removeAmmo){
+        event.getGun(data.selectedGun).removeAmmoUsed(data.selectedAmmo);
 
-        if(!data.selectedGunValid){
-            centerNextItemY(5);
-            centerTextDisabled("Select a Gun to View Ammo Used");
-        }
-        else{
+        data.selectedAmmo = EMPTY_AMMO_METADATA;
+        data.selectedAmmoValid = false;
 
-            if(!data.selectedAmmoValid)
-                ImGui::BeginDisabled();
-
-            if(centerButton("Remove Ammo", data.buttonSize)){
-                event.getGun(data.selectedGun).removeAmmoUsed(data.selectedAmmo);
-
-                data.selectedAmmo = EMPTY_AMMO_METADATA;
-                data.selectedAmmoValid = false;
-
-                ImGui::BeginDisabled();
-            }
-            
-            if(!data.selectedAmmoValid)
-                ImGui::EndDisabled();
-
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            centerNextItemX(data.viewTableSize.x);
-            Tables::Selectable::amountOfAmmo(
-                    event.getGun(data.selectedGun).getAmmoUsed(), 
-                    data.selectedAmmo,
-                    data.viewTableSize
-                );
-            data.selectedAmmoValid = data.selectedAmmo != EMPTY_AMMO_METADATA;
-        }
+        ImGui::BeginDisabled();
     }
-    ImGui::EndChild();
 
+
+    
     if(!data.verticalLayout)
         ImGui::SameLine();
 
     if(ImGui::BeginChild("Add Area", data.mainWindowSize)){
         data.mainTableSize.x = ImGui::GetContentRegionAvail().x-2;
-        if(data.mainTableSize.x < data.minTableSize.x)
-            data.mainTableSize.x = data.minTableSize.x;
+        if(data.mainTableSize.x < data.minTableWidth)
+            data.mainTableSize.x = data.minTableWidth;
         if(data.mainTableSize.x > data.maxTableWidth)
             data.mainTableSize.x = data.maxTableWidth;
 
@@ -685,7 +672,94 @@ void EventWindow::gunsAndAmmoWindow(
     }
     ImGui::EndChild();
 }
+void EventWindow::viewGunsUsedWindow(
+        const ShootingEvent& event,
+        GunMetadata&    selectedGun,
+        bool&           isGunValid,
+        bool&           removeGunPressed,
+        ImVec2&         tableSize,
+        const float     minTableWidth,
+        const float     maxTableWidth,
+        const ImVec2&   windowSize,
+        const ImVec2&   buttonSize
+    )
+{
+    if(ImGui::BeginChild("Guns Used", windowSize)){
+        ImGui::SeparatorText("Guns Used");
+        ImGui::Spacing();
+        ImGui::Spacing();
 
+        if(!isGunValid)
+            ImGui::BeginDisabled();
+
+        if(centerButton("Remove Gun", buttonSize))
+           removeGunPressed = true; 
+
+        if(!isGunValid)
+            ImGui::EndDisabled();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        tableSize.x = ImGui::GetContentRegionAvail().x-2;
+        if(tableSize.x < minTableWidth)
+            tableSize.x = minTableWidth;
+        if(tableSize.x > maxTableWidth)
+            tableSize.x = maxTableWidth;
+
+        centerNextItemX(tableSize.x);
+        Tables::Selectable::gunMetadataWithRoundCount(event.getGunsUsed(), selectedGun, tableSize);
+        isGunValid = selectedGun != EMPTY_GUN_METADATA;
+    }
+    ImGui::EndChild();
+
+}
+void EventWindow::viewAmmoUsedWindow(
+        const ShootingEvent&    event,
+        const GunMetadata&      selectedGun,
+        AmmoMetadata&           selectedAmmo,
+        bool&                   isAmmoValid,
+        bool&                   removeAmmo,
+        const bool              isGunValid,
+        const ImVec2&           tableSize,
+        const ImVec2&           windowSize,
+        const ImVec2&           buttonSize
+
+    )
+{
+    if(ImGui::BeginChild("Ammo Used", windowSize)){
+        ImGui::SeparatorText("Ammo Used"); 
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(!isGunValid){
+            centerNextItemY(5);
+            centerTextDisabled("Select a Gun to View Ammo Used");
+        }
+        else{
+            if(!isAmmoValid)
+                ImGui::BeginDisabled();
+
+            removeAmmo = centerButton("Remove Ammo", buttonSize);
+
+            if(!isAmmoValid)
+                ImGui::EndDisabled();
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            centerNextItemX(tableSize.x);
+            Tables::Selectable::amountOfAmmo(
+                    event.getGun(selectedGun).getAmmoUsed(), 
+                    selectedAmmo,
+                    tableSize
+                );
+            isAmmoValid = selectedAmmo != EMPTY_AMMO_METADATA;
+        }
+    }
+    ImGui::EndChild();
+
+}
 void EventWindow::addGun (
         ScreenData::Add::EventWindow::GunsAndAmmoWindow::AddGunWindow& data, 
         ShootingEvent& event, 
@@ -819,84 +893,34 @@ void EventWindow::review(
     if(!data.verticalLayout)
         ImGui::SameLine();
 
-    if(ImGui::BeginChild("Options", data.optionsWinSize)){
-        const ImVec2 childSizes { ImGui::GetContentRegionAvail().x / 2 - 5, ImGui::GetContentRegionAvail().y - 30 };
-
-        centerTextDisabled("Options And Confirm");
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        if(ImGui::BeginChild("Apply", childSizes)){ 
-            ImGui::Text("Apply to Stockpile");
-            ImGui::SameLine(150);
-            ImGui::Checkbox("##Apply To Stockpile", &data.applyToStockpile);
-
-            ImGui::Text("Apply to Armory");
-            ImGui::SameLine(150);
-            ImGui::Checkbox("##Apply To Guns", &data.applyToArmory);
-        }
-        ImGui::EndChild();
-
-        ImGui::SameLine();
-        if(ImGui::BeginChild("Submit", childSizes )){ 
-            centerNextItemX(data.buttonSize.x * 2 + 20); // 20 is dummy size
-            ImGui::BeginGroup();
-
-            if(ImGui::Button("Add Event", data.buttonSize)){
-                DatabaseEvents::Add::Event add { event, data.applyToArmory, data.applyToStockpile };
-                pushEvent(&add);
-            }
-            ImGui::SameLine();
-            ImGui::Dummy( ImVec2 { 20, 10} );
-            ImGui::SameLine();
-            if(ImGui::Button("Reset All", data.buttonSize)){
-                UIEvents::SetScreenData::Add_EventWindow resetBuffers { };
-                pushEvent(&resetBuffers);
-            }
-            ImGui::EndGroup();
-        }    
-        ImGui::EndChild();
+    bool submitEvent { false };
+    bool resetInputs { false };
+    reviewOptionsWindow(
+            submitEvent,
+            resetInputs,
+            data.applyToArmory,
+            data.applyToStockpile,
+            data.optionsWinSize,
+            data.buttonSize
+        );
+    if(submitEvent){
+        DatabaseEvents::Add::Event add { event, data.applyToArmory, data.applyToStockpile };
+        pushEvent(&add);
     }
-    ImGui::EndChild();
 
-
-    if(ImGui::BeginChild("Event Information", data.reviewWinSize)){
-        ImGui::SeparatorText("Event Information");
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        const ShootingEventMetadata& info  { event.getInfo() };
-        if(info == EMPTY_EVENT_METADATA)
-            data.eventMetadataValid = false;
-        else
-            data.eventMetadataValid = true;
-
-        if(!data.eventMetadataValid) {
-            centerNextItemY(5);
-            centerTextDisabled("Enter Event Information");
-        }
-        else{
-            centerNextItemX(400);
-            ImGui::BeginGroup();
-            ImGui::Text("Date:              %s", event.printDate().c_str());
-            ImGui::Text("Location:          %s", info.location.getName());
-            ImGui::Text("Event Type:        %s", info.eventType.getName()); 
-            ImGui::EndGroup();
-
-            ImGui::Spacing();
-            ImGui::Spacing();
-            ImGui::Spacing();
-
-            ImGui::SeparatorText("Notes");
-            ImGui::Spacing();
-            ImGui::Indent(20); 
-            ImGui::TextWrapped("%s", info.notes.c_str());
-            ImGui::Unindent();
-        }
+    if(resetInputs){
+        UIEvents::SetScreenData::Add_EventWindow resetBuffers { };
+        pushEvent(&resetBuffers);
     }
-    ImGui::EndChild();
 
+    data.eventMetadataValid = event.getInfo() != EMPTY_EVENT_METADATA;
+    
+    reviewEventInfoWindow(
+            event.getInfo(),
+            data.eventMetadataValid,
+            data.reviewWinSize
+        );
+    
     if(!data.verticalLayout)
         ImGui::SameLine();
 
@@ -906,8 +930,8 @@ void EventWindow::review(
         ImGui::Spacing();
 
         data.tableSize.x = ImGui::GetContentRegionAvail().x-2;
-        if(data.tableSize.x < data.minTableSize.x)
-            data.tableSize.x = data.minTableSize.x;
+        if(data.tableSize.x < data.minTableWidth)
+            data.tableSize.x = data.minTableWidth;
         if(data.tableSize.x > data.maxTableWidth)
             data.tableSize.x = data.maxTableWidth;
 
@@ -953,6 +977,90 @@ void EventWindow::review(
                     event.getGun(data.selectedGun).getAmmoUsed(), 
                     data.tableSize
                 );
+        }
+    }
+    ImGui::EndChild();
+}
+void EventWindow::reviewOptionsWindow(
+        bool& submitEvent,
+        bool& resetInputs,
+        bool& applyToArmory,
+        bool& applyToStockpile,
+        const ImVec2& windowSize,
+        const ImVec2& buttonSize
+    )
+{ 
+    if(ImGui::BeginChild("Options", windowSize)){
+        const ImVec2 childSizes { ImGui::GetContentRegionAvail().x / 2 - 5, ImGui::GetContentRegionAvail().y - 30 };
+
+        centerTextDisabled("Options And Confirm");
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(ImGui::BeginChild("Apply", childSizes)){ 
+            ImGui::Text("Apply to Stockpile");
+            ImGui::SameLine(150);
+            ImGui::Checkbox("##Apply To Stockpile", &applyToStockpile);
+
+            ImGui::Text("Apply to Armory");
+            ImGui::SameLine(150);
+            ImGui::Checkbox("##Apply To Guns", &applyToArmory);
+        }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+        if(ImGui::BeginChild("Submit", childSizes )){ 
+            centerNextItemX(buttonSize.x * 2 + 20); // 20 is dummy size
+            ImGui::BeginGroup();
+
+            submitEvent = ImGui::Button("Add Event", buttonSize);
+
+            ImGui::SameLine();
+            ImGui::Dummy( ImVec2 { 20, 10} );
+            ImGui::SameLine();
+
+            resetInputs = ImGui::Button("Reset All", buttonSize);
+
+            ImGui::EndGroup();
+        }    
+        ImGui::EndChild();
+    }
+    ImGui::EndChild();
+
+}
+void EventWindow::reviewEventInfoWindow(
+        const ShootingEventMetadata& info,
+        const bool isEventValid,
+        const ImVec2& windowSize
+    )
+{
+    if(ImGui::BeginChild("Event Information", windowSize)){
+        ImGui::SeparatorText("Event Information");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(!isEventValid) {
+            centerNextItemY(5);
+            centerTextDisabled("Enter Event Information");
+        }
+        else{
+            centerNextItemX(400);
+            ImGui::BeginGroup();
+            ImGui::Text("Date:              %s", printDate(info.date).c_str());
+            ImGui::Text("Location:          %s", info.location.getName());
+            ImGui::Text("Event Type:        %s", info.eventType.getName()); 
+            ImGui::EndGroup();
+
+            ImGui::Spacing();
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::SeparatorText("Notes");
+            ImGui::Spacing();
+            ImGui::Indent(20); 
+            ImGui::TextWrapped("%s", info.notes.c_str());
+            ImGui::Unindent();
         }
     }
     ImGui::EndChild();

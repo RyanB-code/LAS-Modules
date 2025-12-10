@@ -43,6 +43,15 @@ namespace EventWindow {
             const std::set<Location>&,
             const std::set<ShootingEventType>&
         );
+    void infoWindow(
+            const ShootingEventMetadata& event,
+            bool&           submitted,
+            ImVec2&         subWindowSize,
+            const bool      attemptedVerify,
+            const ImVec2&   minWinSize,
+            const ImVec2&   windowSize,
+            const ImVec2&   buttonSize
+            );
     bool verifyMetadata(
             const Location& location,
             const ShootingEventType& et,
@@ -53,6 +62,28 @@ namespace EventWindow {
             ShootingEvent& event,
             const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
             const std::map<Cartridge, std::map<GunMetadata,   ArmoryGun>>& 
+        );
+    void viewGunsUsedWindow(
+            const ShootingEvent& event,
+            GunMetadata&    selectedGun,
+            bool&           isGunValid,
+            bool&           removeGunPressed,
+            ImVec2&         tableSize,
+            const float     minTableWidth,
+            const float     maxTableWidth,
+            const ImVec2&   windowSize,
+            const ImVec2&   buttonSize
+        );
+    void viewAmmoUsedWindow(
+            const ShootingEvent&    event,
+            const GunMetadata&      selectedGun,
+            AmmoMetadata&           selectedAmmo,
+            bool&                   isAmmoValid,
+            bool&                   removeAmmo,
+            const bool              isGunValid,
+            const ImVec2&           tableSize,
+            const ImVec2&           windowSize,
+            const ImVec2&           buttonSize
         );
     void addGun(
             ScreenData::Add::EventWindow::GunsAndAmmoWindow::AddGunWindow& data, 
@@ -69,6 +100,19 @@ namespace EventWindow {
     void review(
             ScreenData::Add::EventWindow::ReviewWindow& data,
             ShootingEvent& event
+        );
+    void reviewOptionsWindow(
+            bool& submitEvent,
+            bool& resetInputs,
+            bool& applyToArmory,
+            bool& applyToStockpile,
+            const ImVec2& windowSize,
+            const ImVec2& buttonSize
+        );
+    void reviewEventInfoWindow(
+            const ShootingEventMetadata& info,
+            const bool isEventValid,
+            const ImVec2& windowSize
         );
 }   // End EventWindow
 
