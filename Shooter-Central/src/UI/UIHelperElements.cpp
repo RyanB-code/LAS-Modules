@@ -850,6 +850,32 @@ void ComboBoxes::eventTypes (const std::set<ShootingEventType>& list, ShootingEv
         ImGui::EndCombo();
     }
 }
+void ComboBoxes::cartridges     (const std::set<Cartridge>& list, Cartridge& selected){
+    if (ImGui::BeginCombo("##Cartridges Combo", selected.getName(), ImGuiComboFlags_HeightLarge)) {
+        for (const auto& item : list) {
+            bool isSelected {selected == item};
+
+            if (ImGui::Selectable(item.getName(), isSelected)){
+                selected = item;
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
+void ComboBoxes::weaponTypes    (const std::set<WeaponType>& list, WeaponType& selected){
+    if (ImGui::BeginCombo("##Weapon Type Combo", selected.getName(), ImGuiComboFlags_HeightLarge)) {
+        for (const auto& item : list) {
+            bool isSelected {selected == item};
+
+            if (ImGui::Selectable(item.getName(), isSelected)){
+                selected = item;
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
 
 
 
