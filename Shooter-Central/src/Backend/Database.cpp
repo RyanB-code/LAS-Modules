@@ -51,7 +51,8 @@ bool VerifyAmountOfAmmoFlags::shouldAdd() const {
 }
 VerifyGunMetadataFlags::VerifyGunMetadataFlags() :
     cartridgeInvalid    { false },
-    weaponTypeInvalid   { false }
+    weaponTypeInvalid   { false },
+    nameInvalid         { false }
 {
 
 }
@@ -59,6 +60,8 @@ bool VerifyGunMetadataFlags::shouldAdd() const {
     if(cartridgeInvalid)
         return false;
     if(weaponTypeInvalid)
+        return false;
+    if(nameInvalid)
         return false;
     
     return true;
@@ -76,7 +79,12 @@ AddAmmoFlags::AddAmmoFlags () :
 {
 
 }
+AddGunFlags::AddGunFlags () :
+    wasAdded        { false },
+    alreadyExists   { false }
+{
 
+}
 
 Database::Database() {
 
@@ -159,17 +167,31 @@ AddAmmoFlags Database::addToStockpile(const StockpileAmmo& data){
     return flags;
 }
 
-bool Database::addToArmory(const ArmoryGun& gun) {
+AddGunFlags Database::addToArmory(const ArmoryGun& gun) {
     const GunMetadata& info { gun.getGunInfo() };
+
+    AddGunFlags flags { };
 
     if(!armory.contains(info.cartridge)){
         if(!armory.try_emplace(info.cartridge).second)
-            return false;
+            return flags;
     }
 
-    return armory.at(info.cartridge).try_emplace(info, gun).second;
+    if(armory.at(info.cartridge).contains(info)){
+        flags.alreadyExists = true;
+        return flags;
+    }
+
+    flags.verifyFlags = verify(info);
+    
+    if(!flags.verifyFlags.shouldAdd())
+        return flags;
+    
+    flags.wasAdded = armory.at(info.cartridge).try_emplace(info, gun).second;
+
+    return flags;
 }
-bool Database::addToArmory(const GunMetadata& info) {
+AddGunFlags Database::addToArmory(const GunMetadata& info) {
     return addToArmory( ArmoryGun { info } );
 }
 bool Database::useAmmo (const AmountOfAmmo& amountOfAmmo){
@@ -336,6 +358,17 @@ VerifyAmountOfAmmoFlags verify  (const AmountOfAmmo& data){
 
     return flags;
 }
+VerifyGunMetadataFlags  verify  (const GunMetadata& info){
+    VerifyGunMetadataFlags flags { };
+    if(info.cartridge == EMPTY_CARTRIDGE)
+       flags.cartridgeInvalid = true; 
+    if(info.weaponType == EMPTY_WEAPON_TYPE)
+        flags.weaponTypeInvalid = true;
+    if(info.name.empty())
+        flags.nameInvalid = true;
+
+    return flags;
+}
 
 
 
@@ -348,7 +381,7 @@ void associateEvents(Database& db){
 
             // Add gun to armory
             if(!db.armoryContains(gunInfo)){
-                if(!db.addToArmory(gunInfo)){
+                if(!db.addToArmory(gunInfo).wasAdded){
                     LAS::log_error(std::format("associateEvents(), attempt to add gun '{}' failed", gunInfo.name)); 
                     continue;
                 }

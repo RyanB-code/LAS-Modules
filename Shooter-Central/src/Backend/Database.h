@@ -40,6 +40,7 @@ struct VerifyGunMetadataFlags {
 
     bool cartridgeInvalid   : 1;
     bool weaponTypeInvalid  : 1;
+    bool nameInvalid        : 1;
 
     bool shouldAdd() const;
 };
@@ -59,6 +60,14 @@ struct AddAmmoFlags {
     bool alreadyExists  : 1;
 
     VerifyAmountOfAmmoFlags verifyFlags { };
+};
+struct AddGunFlags {
+    AddGunFlags ();
+
+    bool wasAdded       : 1;
+    bool alreadyExists  : 1;
+
+    VerifyGunMetadataFlags verifyFlags { };
 };
 
 
@@ -94,9 +103,8 @@ public:
     AddAmmoFlags    addToStockpile  (const AmountOfAmmo& );
     AddAmmoFlags    addToStockpile  (const AmmoMetadata& );
     AddAmmoFlags    addToStockpile  (const StockpileAmmo& );
-
-    bool addToArmory        (const ArmoryGun& );
-    bool addToArmory        (const GunMetadata& ); 
+    AddGunFlags     addToArmory     (const ArmoryGun& );
+    AddGunFlags     addToArmory     (const GunMetadata& ); 
 
     bool useAmmo            (const AmountOfAmmo& );
 
@@ -142,7 +150,6 @@ private:
 VerifyEventFlags        verify  (const ShootingEvent& info);
 VerifyAmountOfAmmoFlags verify  (const AmmoMetadata& info);
 VerifyAmountOfAmmoFlags verify  (const AmountOfAmmo& info);
-
 VerifyGunMetadataFlags  verify  (const GunMetadata& info);
 
 

@@ -314,7 +314,7 @@ bool readGuns(Database& db, const std::filesystem::path& workingDirectory) {
         if(db.armoryContains(gunInfo))
             db.getGun(gunInfo) = data;
         else {
-            if(!db.addToArmory(data))
+            if(!db.addToArmory(data).wasAdded)
                 LAS::log_error(std::format("Failed to add ArmoryGun named [{}]", gunInfo.name));
         }
 	}
