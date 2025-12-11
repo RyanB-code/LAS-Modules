@@ -280,10 +280,12 @@ static const GunMetadata            EMPTY_GUN_METADATA      { };
 static const AmmoMetadata           EMPTY_AMMO_METADATA     { };
 static const ShootingEventMetadata  EMPTY_EVENT_METADATA    { };
 static const AmountOfAmmo           EMPTY_AMOUNT_OF_AMMO    { };
+
 static const Cartridge              EMPTY_CARTRIDGE         { };    
 static const Location               EMPTY_LOCATION          { };
 static const ShootingEventType      EMPTY_EVENT_TYPE        { };
 static const Manufacturer           EMPTY_MANUFACTURER      { };    
+static const WeaponType             EMPTY_WEAPON_TYPE       { };    
 
 
 
