@@ -47,6 +47,18 @@ namespace SetScreenData {
         pushEvent(&amend);
         return Status{true};
     }
+    Add_GunWindow::Add_GunWindow(const ScreenData::Add::GunWindow& data) : screenData { data }
+    {
+
+    }
+    Status Add_GunWindow::execute(UIController& controller) {
+        auto addWindow { controller.getScreenData_Add() };
+        addWindow.gunWindow = screenData;
+
+        SetScreenData::Add amend {addWindow};
+        pushEvent(&amend);
+        return Status{true};
+    }
 
     Edit::Edit(ScreenData::Edit set) : editData { set } {
             

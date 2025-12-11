@@ -26,6 +26,21 @@ void add_EventType           (char* textBuf, size_t size);
 void add_WeaponType          (char* textBuf, size_t size);
 void add_Location            (char* textBuf, size_t size);
 
+namespace GunWindow {
+    void main(
+            ScreenData::Add::GunWindow& gunWindow, 
+            const std::set<Cartridge>&  cartridges,
+            const std::set<WeaponType>& weaponTypes
+        );
+    void gunMetadataWindow(
+            ScreenData::Add::GunWindow& gunWindow, 
+            const std::set<Cartridge>&  cartridges,
+            const std::set<WeaponType>& weaponTypes,
+            size_t nameSize
+        );
+
+}
+
 namespace EventWindow {
 
     void main(  

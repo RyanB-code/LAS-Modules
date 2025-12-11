@@ -68,6 +68,16 @@ namespace SetScreenData {
         private:
             UI::ScreenData::Add::EventWindow screenData;
     };
+    class Add_GunWindow : public UIEvent {
+        public: 
+            Add_GunWindow(const ScreenData::Add::GunWindow& data=UI::ScreenData::Add::GunWindow { } );
+            ~Add_GunWindow() = default;
+
+            UI_EVENT_FUNCTIONS(Add_GunWindow)
+
+        private:
+            UI::ScreenData::Add::GunWindow screenData;
+    };
 
     class Edit : public UIEvent {
     public:

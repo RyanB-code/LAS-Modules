@@ -181,25 +181,25 @@ void addItemWindow(const Database& database, ScreenData::Add& data){
                 );
             break;
         case SubItem::EVENT_TYPE:
-            Add::add_EventType(data.subItemBuffers.eventType, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_EventType(data.subItemBuffers.eventType, MAX_CHAR_METADATA_ITEM);
             break;
         case SubItem::LOCATION: 
-            Add::add_Location(data.subItemBuffers.location, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Location(data.subItemBuffers.location, MAX_CHAR_METADATA_ITEM);
             break;
         case SubItem::AMMO:
        
             break;
         case SubItem::MANUFACTURER:
-            Add::add_Manufacturer(data.subItemBuffers.manufacturer, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Manufacturer(data.subItemBuffers.manufacturer, MAX_CHAR_METADATA_ITEM);
             break;
         case SubItem::CARTRIDGE:
-            Add::add_Cartridge(data.subItemBuffers.cartridge, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_Cartridge(data.subItemBuffers.cartridge, MAX_CHAR_METADATA_ITEM);
             break;
         case SubItem::GUN:
-
+            Add::GunWindow::main(data.gunWindow, database.getCartridges(), database.getWeaponTypes());
             break;
         case SubItem::WEAPON_TYPE:
-            Add::add_WeaponType(data.subItemBuffers.weaponType, ScreenData::Add::MAX_CHAR_INPUT);
+            Add::add_WeaponType(data.subItemBuffers.weaponType, MAX_CHAR_METADATA_ITEM);
             break;
         default:
             centerTextDisabled("Select an Item");
@@ -316,6 +316,79 @@ void add_Location(char* textBuf, size_t size){
 
         resetText(textBuf, size);
     }
+}
+void GunWindow::main(
+        ScreenData::Add::GunWindow& data, 
+        const std::set<Cartridge>&  cartridges,
+        const std::set<WeaponType>& weaponTypes
+    )
+{
+    const ImVec2 regionAvail { ImGui::GetContentRegionAvail() };
+    data.topWinSize.x   = regionAvail.x / 2 - 5;
+    data.mainWinSize    = ImVec2{ regionAvail.x - 2, regionAvail.y - data.topWinSize.y - 5};
+
+    if(data.topWinSize.x < data.minWinSize.x)
+        data.topWinSize.x = data.minWinSize.x;
+
+    if(data.mainWinSize.x < data.minWinSize.x)
+        data.mainWinSize.x = data.minWinSize.x;
+    if(data.mainWinSize.y < data.minWinSize.y)
+        data.mainWinSize.y = data.minWinSize.y;
+
+    if(ImGui::BeginChild("Directions", data.topWinSize)){
+        ImGui::Indent(20);
+        ImGui::Text("Directions");
+        ImGui::BulletText("Enter in new Gun information");
+        ImGui::BulletText("Must save before exiting LAS otherwise changes will not be made");
+        ImGui::Unindent();
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Submit", data.topWinSize)){
+        centerNextItemX(data.buttonSize.x * 2 + 20); // 20 is dummy size
+        ImGui::BeginGroup();
+
+        if(ImGui::Button("Add Gun", data.buttonSize)){
+            DatabaseEvents::Add::Gun addGun { GunMetadata { data.name, data.cartridge, data.weaponType } };
+            pushEvent(&addGun);
+        }
+        ImGui::SameLine();
+        ImGui::Dummy( ImVec2 { 20, 10} );
+        ImGui::SameLine();
+        if(ImGui::Button("Reset All", data.buttonSize)){
+            UIEvents::SetScreenData::Add_GunWindow resetInputs { };
+            pushEvent(&resetInputs);
+        }
+
+        ImGui::EndGroup();
+    }
+    ImGui::EndChild();
+
+    if(ImGui::BeginChild("Gun Info", data.mainWinSize)){
+        ImGui::SeparatorText("Input Gun Information");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::Indent(20);
+        ImGui::Text("WeaponType");
+        ImGui::SameLine(100);
+        ComboBoxes::weaponTypes(weaponTypes, data.weaponType);
+
+        ImGui::Text("Cartridge");
+        ImGui::SameLine(100);
+        ComboBoxes::cartridges(cartridges, data.cartridge);
+
+        ImGui::Text("Name");
+        ImGui::SameLine(100);
+        ImGui::InputText("##Input Name", data.name, MAX_CHAR_METADATA_ITEM);
+
+        ImGui::Spacing();
+    }
+    ImGui::EndChild();
+
+
 }
 void EventWindow::main(  
         ScreenData::Add::EventWindow& data, 

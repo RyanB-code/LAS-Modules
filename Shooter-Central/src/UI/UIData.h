@@ -179,15 +179,25 @@ struct View {
 
 
 struct Add {
-    static constexpr int MAX_CHAR_INPUT { 64 };
-
     struct SubItemBuffers {
-        char weaponType[MAX_CHAR_INPUT]     = "";
-        char manufacturer[MAX_CHAR_INPUT]   = "";
-        char cartridge[MAX_CHAR_INPUT]      = "";
-        char location[MAX_CHAR_INPUT]       = "";
-        char eventType[MAX_CHAR_INPUT]      = "";
+        char weaponType[MAX_CHAR_METADATA_ITEM]     = "";
+        char manufacturer[MAX_CHAR_METADATA_ITEM]   = "";
+        char cartridge[MAX_CHAR_METADATA_ITEM]      = "";
+        char location[MAX_CHAR_METADATA_ITEM]       = "";
+        char eventType[MAX_CHAR_METADATA_ITEM]      = "";
     }; 
+
+    struct GunWindow {
+        static constexpr ImVec2 buttonSize          { 100, 40 };
+        static constexpr ImVec2 minWinSize          { 400, 400 };
+
+        WeaponType  weaponType  { };
+        Cartridge   cartridge   { };
+        char name[MAX_CHAR_METADATA_ITEM] = "";
+
+        ImVec2 topWinSize   { minWinSize.x, 100 };
+        ImVec2 mainWinSize  { minWinSize };
+    };
 
     struct EventWindow {
         struct MetadataWindow {
@@ -278,6 +288,7 @@ struct Add {
     static constexpr float  minTableWidth       { 300 };
     static constexpr float  maxTableWidth       { 800 };     
 
+    GunWindow       gunWindow       { };
     EventWindow     eventWindow     { };
 
     Category        category        { Category::NONE }; 
