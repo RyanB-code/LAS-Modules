@@ -34,6 +34,7 @@ Status CreateEvent::execute (Containers& container) {
 
 // Metadata items
 namespace Add {
+
 Event::Event(const ShootingEvent& set, bool setApplyToArmory, bool setApplyToStockpile) : 
     event { set },
     applyToArmory       { setApplyToArmory },
@@ -117,6 +118,56 @@ Status Event::execute(Database& db) {
 
     return Status { false, "Add event failed" };
 }
+Gun::Gun(const GunMetadata& setInfo) : gunInfo {setInfo} {
+
+}
+Status Gun::execute (Database& db) {
+    using namespace ShooterCentral::UI;
+
+    AddGunFlags flags { db.addToArmory(gunInfo) };
+
+    if(!flags.wasAdded){
+        auto bodyFunction = [flags]() {
+            const VerifyGunMetadataFlags& verifyFlags { flags.verifyFlags };
+
+            centerText("Failed to Add Gun");
+            centerTextDisabled("(No changes were made)");
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            if(flags.alreadyExists)
+                ImGui::BulletText("Gun Already Exists");
+            if(verifyFlags.weaponTypeInvalid)
+                ImGui::BulletText("Invalid WeaponType");
+            if(verifyFlags.cartridgeInvalid)
+                ImGui::BulletText("Invalid Cartridge");
+            if(verifyFlags.nameInvalid)
+                ImGui::BulletText("Invalid Name");
+        };
+
+        CustomClosePopup popup { "Add Gun Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Add Gun failed" };
+    }
+    else{
+        db.getGun(gunInfo).setActive(true);
+        SimpleClosePopup popup {"Gun Created", "Gun was successfully created"};
+
+        UIEvents::PushPopup pushPopup { &popup };
+        UIEvents::SetScreenData::Add_GunWindow resetBuffers { };
+
+        pushEvent(&pushPopup);
+        pushEvent(&resetBuffers);
+
+        return Status { true };
+
+    }
+}
+
 
 Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer { m } {
 

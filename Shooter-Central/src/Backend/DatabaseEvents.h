@@ -43,6 +43,16 @@ namespace Add {
             bool applyToArmory      { false };
             bool applyToStockpile   { false };
     };
+    class Gun : public DatabaseEvent {
+        public:
+            Gun(const GunMetadata& setInfo);
+            ~Gun() = default;
+
+            DATABASE_EVENT_FUNCTIONS(Gun)
+
+        private:
+            GunMetadata gunInfo { };
+    };
 
 
     // Metadata items
