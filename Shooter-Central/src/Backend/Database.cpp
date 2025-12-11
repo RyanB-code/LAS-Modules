@@ -106,36 +106,10 @@ AddEventFlags Database::addEvent(const ShootingEvent& event){
     return flags;
 }
 AddAmmoFlags Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
-    const AmmoMetadata& info { amountOfAmmo.getAmmoInfo() };
-
-    AddAmmoFlags flags { };
-
-    if(!stockpile.contains(info.cartridge)){
-        if(!stockpile.try_emplace(info.cartridge).second){
-            flags.alreadyExists = true;
-            return flags;
-        }
-    }
-
-    flags.verifyFlags = verify(amountOfAmmo);
-    
-    if(!flags.verifyFlags.shouldAdd())
-        return flags;
-    
-    flags.wasAdded = stockpile.at(info.cartridge).try_emplace(info, StockpileAmmo{amountOfAmmo}).second;
-
-    if(flags.wasAdded){
-        // Add to amount per cartridge list
-        if(!addAmountPerCartridge(info.cartridge, amountOfAmmo.getAmount() )){
-            stockpile.at(info.cartridge).erase(info);
-            flags.wasAdded = false;
-        }
-    }
-
-    return flags;
+    return addToStockpile(amountOfAmmo);    
 }
 AddAmmoFlags Database::addToStockpile(const AmmoMetadata& info) {
-    return addToStockpile( AmountOfAmmo { info } );
+    return addToStockpile( StockpileAmmo { info } );
 }
 AddAmmoFlags Database::addToStockpile(const StockpileAmmo& data){
     const AmmoMetadata& info { data.getAmmoInfo() };
@@ -143,10 +117,13 @@ AddAmmoFlags Database::addToStockpile(const StockpileAmmo& data){
     AddAmmoFlags flags { };
 
     if(!stockpile.contains(info.cartridge)){
-        if(!stockpile.try_emplace(info.cartridge).second){
-            flags.alreadyExists = true;
+        if(!stockpile.try_emplace(info.cartridge).second)
             return flags;
-        }
+    }
+
+    if(stockpile.at(info.cartridge).contains(info)){
+        flags.alreadyExists = true;
+        return flags;
     }
 
     flags.verifyFlags = verify(data.getAmountOfAmmo());
