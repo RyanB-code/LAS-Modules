@@ -543,6 +543,15 @@ bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bo
                     }
                 }
             }
+
+            // Add event to gun history
+            if(!gun.addEvent(event)){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to add Event to history for Gun'{}'", gunInfo.name)
+                };
+                return false;
+            }
         }
     }   // End apply to armory
     
