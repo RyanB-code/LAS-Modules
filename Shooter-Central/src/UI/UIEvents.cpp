@@ -59,7 +59,18 @@ namespace SetScreenData {
         pushEvent(&amend);
         return Status{true};
     }
+    Add_AmmoWindow::Add_AmmoWindow(const ScreenData::Add::AmmoWindow& data) : screenData { data }
+    {
 
+    }
+    Status Add_AmmoWindow::execute(UIController& controller) {
+        auto addWindow { controller.getScreenData_Add() };
+        addWindow.ammoWindow = screenData;
+
+        SetScreenData::Add amend {addWindow};
+        pushEvent(&amend);
+        return Status{true};
+    }
     Edit::Edit(ScreenData::Edit set) : editData { set } {
             
     }
