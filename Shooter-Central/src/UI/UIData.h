@@ -199,6 +199,20 @@ struct Add {
         ImVec2 mainWinSize  { minWinSize };
     };
 
+    struct AmmoWindow {
+        static constexpr ImVec2 buttonSize          { 100, 40 };
+        static constexpr ImVec2 minWinSize          { 400, 400 };
+
+        char name[MAX_CHAR_METADATA_ITEM] = "";
+        Manufacturer    manufacturer    { };
+        Cartridge       cartridge       { };
+        int             grainWeight     { 0 };
+        int             amount          { 0 };
+
+        ImVec2 topWinSize   { minWinSize.x, 100 };
+        ImVec2 mainWinSize  { minWinSize };
+    };
+
     struct EventWindow {
         struct MetadataWindow {
             ShootingEventType   selectedET          { };
@@ -288,6 +302,7 @@ struct Add {
     static constexpr float  minTableWidth       { 300 };
     static constexpr float  maxTableWidth       { 800 };     
 
+    AmmoWindow      ammoWindow      { };
     GunWindow       gunWindow       { };
     EventWindow     eventWindow     { };
 

@@ -32,13 +32,14 @@ namespace GunWindow {
             const std::set<Cartridge>&  cartridges,
             const std::set<WeaponType>& weaponTypes
         );
-    void gunMetadataWindow(
-            ScreenData::Add::GunWindow& gunWindow, 
-            const std::set<Cartridge>&  cartridges,
-            const std::set<WeaponType>& weaponTypes,
-            size_t nameSize
-        );
+}
 
+namespace AmmoWindow {
+    void main(
+            ScreenData::Add::AmmoWindow&    ammoWinndow, 
+            const std::set<Cartridge>&      cartridges,
+            const std::set<Manufacturer>&   manufacturers
+        );
 }
 
 namespace EventWindow {
