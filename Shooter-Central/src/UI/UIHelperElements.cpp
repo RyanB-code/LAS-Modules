@@ -793,6 +793,87 @@ void ListBoxes::weaponTypes(const std::set<WeaponType>& list,ImVec2 size){
         ImGui::EndListBox();
     }
 }
+void ListBoxes::Selectable::cartridges(
+        const std::set<Cartridge>& list,
+        Cartridge& selected,
+        const ImVec2& size
+    )
+{
+    if(ImGui::BeginListBox("##Item List Box", size)){
+        for(const auto& item : list) {
+            bool isSelected { selected == item };
+
+            if(ImGui::Selectable(item.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
+                selected = item;
+        }
+        ImGui::EndListBox();
+    }
+}
+void ListBoxes::Selectable::manufacturers(
+        const std::set<Manufacturer>& list,
+        Manufacturer& selected,
+        const ImVec2& size
+    )
+{
+    if(ImGui::BeginListBox("##Item List Box", size)){
+        for(const auto& item : list) {
+            bool isSelected { selected == item };
+
+            if(ImGui::Selectable(item.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
+                selected = item;
+        }
+        ImGui::EndListBox();
+    }
+}
+
+void ListBoxes::Selectable::eventLocations(
+        const std::set<Location>& list,             
+        Location& selected,
+        const ImVec2& size
+    )
+{
+    if(ImGui::BeginListBox("##Item List Box", size)){
+        for(const auto& item : list) {
+            bool isSelected { selected == item };
+
+            if(ImGui::Selectable(item.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
+                selected = item;
+        }
+        ImGui::EndListBox();
+    }
+}
+void ListBoxes::Selectable::eventTypes(
+        const std::set<ShootingEventType>& list,
+        ShootingEventType& selected,
+        const ImVec2& size
+    )
+{
+    if(ImGui::BeginListBox("##Item List Box", size)){
+        for(const auto& item : list) {
+            bool isSelected { selected == item };
+
+            if(ImGui::Selectable(item.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
+                selected = item;
+        }
+        ImGui::EndListBox();
+    }
+}
+void ListBoxes::Selectable::weaponTypes(
+        const std::set<WeaponType>& list,
+        WeaponType& selected,
+        const ImVec2& size
+    )
+{
+    if(ImGui::BeginListBox("##Item List Box", size)){
+        for(const auto& item : list) {
+            bool isSelected { selected == item };
+
+            if(ImGui::Selectable(item.getName(), &isSelected, ImGuiSelectableFlags_SpanAllColumns))
+                selected = item;
+        }
+        ImGui::EndListBox();
+    }
+}
 
 void ComboBoxes::category(Category& selected) {
     std::string text { categoryToString(selected, "Select A Category") };

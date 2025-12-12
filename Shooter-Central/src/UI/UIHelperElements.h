@@ -93,6 +93,7 @@ namespace Tables{
             ImVec2 size
         );
 
+
 }
 namespace ListBoxes{
     void cartridges     (const std::set<Cartridge>&,            ImVec2 size);
@@ -100,6 +101,34 @@ namespace ListBoxes{
     void eventLocations (const std::set<Location>&,             ImVec2 size);
     void eventTypes     (const std::set<ShootingEventType>&,    ImVec2 size); 
     void weaponTypes    (const std::set<WeaponType>&,           ImVec2 size);
+
+    namespace Selectable{
+        void cartridges(
+                const std::set<Cartridge>&,
+                Cartridge& selected,
+                const ImVec2& size
+            );
+        void manufacturers(
+                const std::set<Manufacturer>&,
+                Manufacturer& selected,
+                const ImVec2& size
+            );
+        void eventLocations(
+                const std::set<Location>&,             
+                Location& selected,
+                const ImVec2& size
+            );
+        void eventTypes(
+                const std::set<ShootingEventType>&,
+                ShootingEventType& selected,
+                const ImVec2& size
+            ); 
+        void weaponTypes(
+                const std::set<WeaponType>&,
+                WeaponType& selected,
+                const ImVec2& size
+            );
+    }
 }
 
 namespace ComboBoxes{
