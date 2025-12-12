@@ -110,7 +110,7 @@ namespace ComboBoxes{
     void eventTypes     (const std::set<ShootingEventType>& list, ShootingEventType& selected);
     void cartridges     (const std::set<Cartridge>& list, Cartridge& selected);
     void weaponTypes    (const std::set<WeaponType>& list, WeaponType& selected);
-
+    void manufacturers  (const std::set<Manufacturer>& list, Manufacturer& selected);
 }
 
 

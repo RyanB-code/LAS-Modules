@@ -876,7 +876,19 @@ void ComboBoxes::weaponTypes    (const std::set<WeaponType>& list, WeaponType& s
         ImGui::EndCombo();
     }
 }
+void ComboBoxes::manufacturers  (const std::set<Manufacturer>& list, Manufacturer& selected){
+    if (ImGui::BeginCombo("##Manufacturer Combo", selected.getName(), ImGuiComboFlags_HeightLarge)) {
+        for (const auto& item : list) {
+            bool isSelected {selected == item};
 
+            if (ImGui::Selectable(item.getName(), isSelected)){
+                selected = item;
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
 
 
 
