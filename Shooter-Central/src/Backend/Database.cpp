@@ -33,7 +33,8 @@ VerifyAmountOfAmmoFlags::VerifyAmountOfAmmoFlags() :
     cartridgeInvalid    { false },
     manufacturerInvalid { false },
     grainWeightInvalid  { false },
-    amountInvalid       { false }
+    amountInvalid       { false },
+    nameInvalid         { false }
 {
 
 }
@@ -45,6 +46,8 @@ bool VerifyAmountOfAmmoFlags::shouldAdd() const {
     if(grainWeightInvalid)
         return false;
     if(amountInvalid)
+        return false;
+    if(nameInvalid)
         return false;
     
     return true;
@@ -315,12 +318,15 @@ VerifyEventFlags verify (const ShootingEvent& event){
 }
 VerifyAmountOfAmmoFlags verify  (const AmmoMetadata& info){
     VerifyAmountOfAmmoFlags flags { };
+
     if(info.cartridge == EMPTY_CARTRIDGE)
        flags.cartridgeInvalid = true; 
     if(info.manufacturer == EMPTY_MANUFACTURER)
         flags.manufacturerInvalid = true;
     if(info.grainWeight <= 0)
         flags.grainWeightInvalid = true;
+    if(info.name.empty())
+        flags.nameInvalid = true;
 
     return flags;
 }
@@ -337,6 +343,7 @@ VerifyAmountOfAmmoFlags verify  (const AmountOfAmmo& data){
 }
 VerifyGunMetadataFlags  verify  (const GunMetadata& info){
     VerifyGunMetadataFlags flags { };
+
     if(info.cartridge == EMPTY_CARTRIDGE)
        flags.cartridgeInvalid = true; 
     if(info.weaponType == EMPTY_WEAPON_TYPE)

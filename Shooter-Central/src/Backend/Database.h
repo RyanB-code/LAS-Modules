@@ -31,6 +31,7 @@ struct VerifyAmountOfAmmoFlags {
     bool manufacturerInvalid    : 1;
     bool grainWeightInvalid     : 1;
     bool amountInvalid          : 1;
+    bool nameInvalid            : 1;
 
     bool shouldAdd() const;
 };
