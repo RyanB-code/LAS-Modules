@@ -6,29 +6,6 @@
 
 namespace ShooterCentral::DatabaseEvents {
 
-    /*
-    class CreateGun : public DatabaseEvent {
-    public:
-        CreateGun(const ObjectBuffers::GunMetadata& set);
-        ~CreateGun() = default;
-
-        DATABASEL_EVENT_FUNCTIONS(CreateGun)
-
-    private:
-        ObjectBuffers::GunMetadata info;
-    };
-    class CreateAmmo : public DatabaselEvent {
-    public:
-        CreateAmmo(const ObjectBuffers::AmmoMetadata& set);
-        ~CreateAmmo() = default;
-
-        DATABASEL_EVENT_FUNCTIONS(CreateAmmo)
-
-    private:
-        ObjectBuffers::AmmoMetadata info;
-    };
-    */
-
 namespace Add {
 
     class Event : public DatabaseEvent {
@@ -53,7 +30,17 @@ namespace Add {
         private:
             GunMetadata gunInfo { };
     };
+    class Ammo : public DatabaseEvent {
+        public:
+            Ammo(const AmmoMetadata& setInfo);
+            Ammo(const AmountOfAmmo& setAmmo);
+            ~Ammo() = default;
 
+            DATABASE_EVENT_FUNCTIONS(Ammo)
+
+        private:
+            AmountOfAmmo amountOfAmmo { };
+    };
 
     // Metadata items
     class Manufacturer : public DatabaseEvent {

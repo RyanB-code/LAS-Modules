@@ -2,37 +2,6 @@
 
 namespace ShooterCentral::DatabaseEvents {
 
-/* / Full objects
-CreateGun::CreateGun(const ObjectBuffers::GunMetadata& set) : info { set } {
-
-}
-Status CreateGun::execute (Containers& container) {
-    if(container.knownGuns_create(info).second)
-        return Status { true };
-
-    return Status { false, "Failed to create Gun object and add to database" };
-}
-CreateAmmo::CreateAmmo(const ObjectBuffers::AmmoMetadata& set) : info { set } {
-
-}
-Status CreateAmmo::execute (Containers& container) {
-    if(container.knownAmmo_create(info).second)
-        return Status { true };
-
-    return Status { false, "Failed to create Ammo object and add to database" };
-}
-CreateEvent::CreateEvent(const ObjectBuffers::ShootingEventMetadata& set) : info { set } {
-
-}
-Status CreateEvent::execute (Containers& container) {
-    if(container.events_create(info).second)
-        return Status { true };
-
-    return Status { false, "Failed to create Event object and add to database" };
-}
-*/
-
-// Metadata items
 namespace Add {
 
 Event::Event(const ShootingEvent& set, bool setApplyToArmory, bool setApplyToStockpile) : 
@@ -140,7 +109,7 @@ Status Gun::execute (Database& db) {
             if(flags.alreadyExists)
                 ImGui::BulletText("Gun Already Exists");
             if(verifyFlags.weaponTypeInvalid)
-                ImGui::BulletText("Invalid WeaponType");
+                ImGui::BulletText("Invalid Weapon Type");
             if(verifyFlags.cartridgeInvalid)
                 ImGui::BulletText("Invalid Cartridge");
             if(verifyFlags.nameInvalid)
@@ -164,10 +133,64 @@ Status Gun::execute (Database& db) {
         pushEvent(&resetBuffers);
 
         return Status { true };
+    }
+}
+Ammo::Ammo(const AmmoMetadata& setInfo) : amountOfAmmo { AmountOfAmmo { setInfo } } {
+
+}
+Ammo::Ammo(const AmountOfAmmo& setAmmo) : amountOfAmmo { setAmmo } {
+
+}
+Status Ammo::execute (Database& db) {
+    using namespace ShooterCentral::UI;
+
+    AddAmmoFlags flags { db.addToStockpile(amountOfAmmo) };
+
+    if(!flags.wasAdded){
+        auto bodyFunction = [flags]() {
+            const VerifyAmountOfAmmoFlags& verifyFlags { flags.verifyFlags };
+
+            centerText("Failed to Add Ammo");
+            centerTextDisabled("(No changes were made)");
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            if(flags.alreadyExists)
+                ImGui::BulletText("Ammo Type Already Exists");
+            if(verifyFlags.nameInvalid)
+                ImGui::BulletText("Invalid Name");
+            if(verifyFlags.cartridgeInvalid)
+                ImGui::BulletText("Invalid Cartridge");
+            if(verifyFlags.manufacturerInvalid)
+                ImGui::BulletText("Invalid Manufacturer");
+            if(verifyFlags.grainWeightInvalid)
+                ImGui::BulletText("Invalid Grain Weight");
+            if(verifyFlags.amountInvalid)
+                ImGui::BulletText("Invalid Amount");
+        };
+
+        CustomClosePopup popup { "Add Ammo Type Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Add Ammo Type failed" };
+    }
+    else{
+        db.getAmmo(amountOfAmmo.getAmmoInfo()).setActive(true);
+        SimpleClosePopup popup {"Ammo Type Created", "Ammo type was successfully created"};
+
+        UIEvents::PushPopup pushPopup { &popup };
+        UIEvents::SetScreenData::Add_AmmoWindow resetBuffers { };
+
+        pushEvent(&pushPopup);
+        pushEvent(&resetBuffers);
+
+        return Status { true };
 
     }
 }
-
 
 Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer { m } {
 
