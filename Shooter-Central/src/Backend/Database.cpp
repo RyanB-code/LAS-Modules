@@ -109,7 +109,7 @@ AddEventFlags Database::addEvent(const ShootingEvent& event){
     return flags;
 }
 AddAmmoFlags Database::addToStockpile     (const AmountOfAmmo& amountOfAmmo){
-    return addToStockpile(amountOfAmmo);    
+    return addToStockpile( StockpileAmmo {amountOfAmmo} );    
 }
 AddAmmoFlags Database::addToStockpile(const AmmoMetadata& info) {
     return addToStockpile( StockpileAmmo { info } );
