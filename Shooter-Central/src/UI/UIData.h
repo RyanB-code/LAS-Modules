@@ -318,7 +318,20 @@ struct Add {
 };
 
 struct Edit{
-    
+    static constexpr ImVec2 buttonSize      { 100, 40 };
+    static constexpr ImVec2 minWinSize      { 400, 600 };
+    static constexpr float  minTableWidth   { 300 };
+    static constexpr float  maxTableWidth   { 800 };     
+
+    Category        category        { Category::NONE }; 
+    SubItem         subItem         { SubItem::NONE };
+
+    bool verticalLayout { false };
+
+    ImVec2 editItemWinSize          { minWinSize };
+    ImVec2 existingItemWinSize      { minWinSize };
+    ImVec2 existingItemTableSize    { minTableWidth, 400 };
+
 };
 
 }   // ScreenData namespace

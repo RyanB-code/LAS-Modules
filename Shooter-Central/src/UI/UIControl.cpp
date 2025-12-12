@@ -87,7 +87,7 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
             Add::main(database, addData);
             break;
         case Screen::EDIT:
-
+            Edit::main(database, editData);
             break;
         default:
             LAS::log_warn("SC Screen case not handled");
