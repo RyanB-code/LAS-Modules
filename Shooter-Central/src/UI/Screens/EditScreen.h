@@ -23,12 +23,19 @@ namespace ShooterCentral::UI::Edit {
             const ImVec2& size
         );
     void editItemWindow(
-            ScreenData::Edit::ItemBuffers& data,
+            ScreenData::Edit& data,
             const Database& database,
             SubItem selectedItem
         );
 
-    void editEventType (char* oldInfo, char* textBuf, size_t size);
+    void editMetadataItem (
+            char* oldInfo, 
+            char* textBuf, 
+            size_t size,
+            bool& changeAllOccurrences,
+            bool& submitted,
+            const ImVec2& buttonSize
+        );
 
 }   // End SC::UI::ScreenData
 

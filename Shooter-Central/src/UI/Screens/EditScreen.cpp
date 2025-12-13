@@ -59,7 +59,7 @@ void main(const Database& database, ScreenData::Edit& data){
         ImGui::Spacing();
         ImGui::Spacing();
 
-        editItemWindow(data.itemBuffers, database, data.subItem);
+        editItemWindow(data, database, data.subItem);
     }
     ImGui::EndChild();
 
@@ -100,11 +100,6 @@ void selectExistingItemWindow (
             break;
         case SubItem::MANUFACTURER:
             centerTextDisabled("All Manufacturers");
-
-            if(buffers.manufacturer != EMPTY_MANUFACTURER){
-                LAS::log_debug("Selected man");
-                buffers.manufacturer = EMPTY_MANUFACTURER;
-            }
             ListBoxes::Selectable::manufacturers(database.getManufacturers(), buffers.manufacturer, size);
             break;
         case SubItem::CARTRIDGE:
@@ -128,13 +123,18 @@ void selectExistingItemWindow (
     ImGui::EndGroup();
 }
 void editItemWindow(
-        ScreenData::Edit::ItemBuffers& data,
+        ScreenData::Edit& screenData,
         const Database& database,
         SubItem selectedItem
     )
 {
+
+    ScreenData::Edit::ItemBuffers& data { screenData.itemBuffers };
+
     static SubItem lastItem { SubItem::NONE };
     static ScreenData::Edit::ItemBuffers lastBuffers { };
+
+    bool selectedItemEmpty { true };
 
     if(selectedItem != lastItem)
         resetText(data.metadataItemBuffer, MAX_CHAR_METADATA_ITEM);
@@ -151,67 +151,141 @@ void editItemWindow(
 
             lastBuffers.eventType = data.eventType;
 
-            if(data.eventType == EMPTY_EVENT_TYPE){
-                centerNextItemY(5);
-                centerTextDisabled("Select an Item");
-            }
-            else
-                editEventType(data.metadataItemOld, data.metadataItemBuffer, MAX_CHAR_METADATA_ITEM);
+            if(data.eventType != EMPTY_EVENT_TYPE)
+                selectedItemEmpty = false;
 
             break;
         case SubItem::LOCATION: 
-            //editLocation(data.eventType, MAX_CHAR_METADATA_ITEM);
+            if(data.location != lastBuffers.location)
+                resetText(data.metadataItemOld, MAX_CHAR_METADATA_ITEM, data.location.getName());
+
+            lastBuffers.location = data.location;
+
+            if(data.location != EMPTY_LOCATION)
+                selectedItemEmpty = false;
+
             break;
         case SubItem::AMMO:
 
             break;
         case SubItem::MANUFACTURER:
-            //Add::add_Manufacturer(data.subItemBuffers.manufacturer, MAX_CHAR_METADATA_ITEM);
+            if(data.manufacturer != lastBuffers.manufacturer)
+                resetText(data.metadataItemOld, MAX_CHAR_METADATA_ITEM, data.manufacturer.getName());
+
+            lastBuffers.manufacturer = data.manufacturer;
+
+            if(data.manufacturer != EMPTY_MANUFACTURER)
+                selectedItemEmpty = false;
+
             break;
         case SubItem::CARTRIDGE:
-            //Add::add_Cartridge(data.subItemBuffers.cartridge, MAX_CHAR_METADATA_ITEM);
+            if(data.cartridge != lastBuffers.cartridge)
+                resetText(data.metadataItemOld, MAX_CHAR_METADATA_ITEM, data.cartridge.getName());
+
+            lastBuffers.cartridge = data.cartridge;
+
+            if(data.cartridge != EMPTY_CARTRIDGE)
+                selectedItemEmpty = false;
+
             break;
         case SubItem::GUN:
 
             break;
         case SubItem::WEAPON_TYPE:
-            //Add::add_WeaponType(data.subItemBuffers.weaponType, MAX_CHAR_METADATA_ITEM);
+            if(data.weaponType != lastBuffers.weaponType)
+                resetText(data.metadataItemOld, MAX_CHAR_METADATA_ITEM, data.weaponType.getName());
+
+            lastBuffers.weaponType = data.weaponType;
+
+            if(data.weaponType != EMPTY_WEAPON_TYPE)
+                selectedItemEmpty = false;
+
             break;
         default:
-            centerNextItemY(5);
-            centerTextDisabled("Select an Item");
+
             break;
     }
  
+    if(selectedItemEmpty){
+        centerNextItemY(5);
+        centerTextDisabled("Select an Item");
+        return;
+    }
+    
+    bool submitted { false };
+    editMetadataItem(
+            data.metadataItemOld, 
+            data.metadataItemBuffer, 
+            MAX_CHAR_METADATA_ITEM,
+            screenData.changeAllOccurrences,
+            submitted,
+            screenData.buttonSize
+        ); 
 }
 
 
-void editEventType (char* oldInfo, char* textBuf, size_t size){
-    ImGui::Indent(20);
-    ImGui::Text("Directions");
-    ImGui::BulletText("Edit information for the selected Event Type");
-    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+void editMetadataItem (
+        char* oldInfo, 
+        char* textBuf, 
+        size_t size,
+        bool& changeAllOccurrences,
+        bool& submitted,
+        const ImVec2& buttonSize
+    )
+{
+    ImVec2 childSizes { ImGui::GetContentRegionAvail().x / 2 - 5, 100 };
 
-    ImGui::Dummy(ImVec2{0.0f, 50.0f});
-
-    ImGui::Text("Current Info");
-    ImGui::SameLine(150);
-    ImGui::InputText("##Current EventType", oldInfo, size, ImGuiInputTextFlags_ReadOnly);
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    ImGui::Text("Event Type");
-    ImGui::SameLine(150);
-    ImGui::InputText("##Edit EventType", textBuf, size);
-    ImGui::Unindent();
-
-    ImGui::Dummy(ImVec2{0.0f, 50.0f});
-
-    if(centerButton("Button", ImVec2{200,50})){
-        LAS::log_debug("Submitted");
+    if(ImGui::BeginChild("Directions", childSizes )){
+        ImGui::Indent(20);
+        ImGui::Text("Directions");
+        ImGui::BulletText("Edit information for the selected category");
+        ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
     }
+    ImGui::EndChild();
 
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Options and Confirm", childSizes)){
+        // Use same var, since no longer needed for Directions window
+        childSizes.x = ImGui::GetContentRegionAvail().x / 2 - 5; 
+        childSizes.y = 60;
+
+        centerTextDisabled("Options and Confirm");
+        ImGui::Separator();
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if(ImGui::BeginChild("Options", childSizes)){ 
+           centerNextItemX(250);
+           ImGui::BeginGroup();
+           ImGui::Text("Change All Occurrences");
+           ImGui::SameLine(200);
+           ImGui::Checkbox("##Change All Occurrences", &changeAllOccurrences);
+           ImGui::EndGroup();
+        }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+        if(ImGui::BeginChild("Confirm", childSizes))
+            submitted = centerButton("Submit", buttonSize);    
+       ImGui::EndChild();
+    }
+    ImGui::EndChild();
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    // View and change info below
+    ImGui::Text("Current Name");
+    ImGui::SameLine(150);
+    ImGui::InputText("##Current Item", oldInfo, size, ImGuiInputTextFlags_ReadOnly);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Revised Name");
+    ImGui::SameLine(150);
+    ImGui::InputText("##Revised Item", textBuf, size);
+    ImGui::Unindent();
 }
 
 }   // End Edit namespace
