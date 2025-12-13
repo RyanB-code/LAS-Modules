@@ -318,10 +318,27 @@ struct Add {
 };
 
 struct Edit{
+    struct ItemBuffers{
+        char metadataItemBuffer[MAX_CHAR_METADATA_ITEM] = "";   // Holds what new text will be
+        char metadataItemOld[MAX_CHAR_METADATA_ITEM]    = "";   // Shows what the old item was 
+
+        Cartridge           cartridge       { };
+        Manufacturer        manufacturer    { };
+        Location            location        { };
+        ShootingEventType   eventType       { };
+        WeaponType          weaponType      { };
+        
+        ShootingEventMetadata   eventInfo   { };
+        GunMetadata             gunInfo     { };
+        AmmoMetadata            ammoInfo    { };
+        
+    };
     static constexpr ImVec2 buttonSize      { 100, 40 };
     static constexpr ImVec2 minWinSize      { 400, 600 };
     static constexpr float  minTableWidth   { 300 };
     static constexpr float  maxTableWidth   { 800 };     
+
+    ItemBuffers itemBuffers { };
 
     Category        category        { Category::NONE }; 
     SubItem         subItem         { SubItem::NONE };

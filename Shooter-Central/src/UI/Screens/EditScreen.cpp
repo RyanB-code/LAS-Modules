@@ -47,7 +47,7 @@ void main(const Database& database, ScreenData::Edit& data){
         if(data.existingItemTableSize.x > data.maxTableWidth)
             data.existingItemTableSize.x = data.maxTableWidth;
 
-        selectExistingItemWindow(database, data.subItem, data.existingItemTableSize);
+        selectExistingItemWindow(data.itemBuffers, database, data.subItem, data.existingItemTableSize);
     }
     ImGui::EndChild();
 
@@ -59,18 +59,18 @@ void main(const Database& database, ScreenData::Edit& data){
         ImGui::Spacing();
         ImGui::Spacing();
 
-        //addItemWindow(database, data);
+        editItemWindow(data.itemBuffers, database, data.subItem);
     }
     ImGui::EndChild();
 
 }
-void selectExistingItemWindow (const Database& database, const SubItem& selected, const ImVec2& size){
-    static ShootingEventMetadata   selectedEvent    { };
-    static GunMetadata             selectedGun      { };
-    static AmmoMetadata            selectedAmmo     { };
-
-    static Manufacturer selectedMan { };
-
+void selectExistingItemWindow (
+        ScreenData::Edit::ItemBuffers& buffers,
+        const Database& database, 
+        const SubItem& selected, 
+        const ImVec2& size
+    )
+{
     ImGui::SeparatorText("Select Item to Edit"); 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -82,96 +82,136 @@ void selectExistingItemWindow (const Database& database, const SubItem& selected
             centerTextDisabled("All Events");
             ImGui::Spacing();
             ImGui::Spacing();
-
-            Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), selectedEvent, size);
-
-            if(selectedEvent != EMPTY_EVENT_METADATA){
-                ScreenData::View viewWindow { };
-                viewWindow.eventsWindow.selectedEvent = selectedEvent;
-                viewWindow.category = Category::EVENTS;
-
-                UIEvents::SetScreenData::View setData { viewWindow };
-                UIEvents::SetScreen setScreen { Screen::VIEW };
-
-                pushEvent(&setData);
-                pushEvent(&setScreen);
-
-                selectedEvent = EMPTY_EVENT_METADATA;
-            }
+            Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), buffers.eventInfo, size);
             break;
         case SubItem::EVENT_TYPE:
             centerTextDisabled("All Event Types");
-            ListBoxes::eventTypes(database.getEventTypes(), size);
+            ListBoxes::Selectable::eventTypes(database.getEventTypes(), buffers.eventType, size);
             break;
         case SubItem::LOCATION:
             centerTextDisabled("All Event Locations");
-            ListBoxes::eventLocations(database.getLocations(), size);
+            ListBoxes::Selectable::eventLocations(database.getLocations(), buffers.location, size);
             break;
         case SubItem::AMMO:
             centerTextDisabled("All Ammo");
             ImGui::Spacing();
             ImGui::Spacing();
-
-            Tables::Selectable::ammoMetadata(database.getStockpile(), selectedAmmo, size);
-
-            if(selectedAmmo != EMPTY_AMMO_METADATA){
-                ScreenData::View viewWindow { };
-                viewWindow.stockpileWindow.selectedAmmo = selectedAmmo;
-                viewWindow.stockpileWindow.selectedCartridge = selectedAmmo.cartridge;
-                viewWindow.category = Category::STOCKPILE;
-
-                UIEvents::SetScreenData::View setData { viewWindow };
-                UIEvents::SetScreen setScreen { Screen::VIEW };
-
-                pushEvent(&setData);
-                pushEvent(&setScreen);
-                selectedAmmo = EMPTY_AMMO_METADATA;
-            }
+            Tables::Selectable::ammoMetadata(database.getStockpile(), buffers.ammoInfo, size); 
             break;
         case SubItem::MANUFACTURER:
             centerTextDisabled("All Manufacturers");
 
-            if(selectedMan != EMPTY_MANUFACTURER){
+            if(buffers.manufacturer != EMPTY_MANUFACTURER){
                 LAS::log_debug("Selected man");
-                selectedMan = EMPTY_MANUFACTURER;
+                buffers.manufacturer = EMPTY_MANUFACTURER;
             }
-
-            ListBoxes::Selectable::manufacturers(database.getManufacturers(), selectedMan, size);
-
+            ListBoxes::Selectable::manufacturers(database.getManufacturers(), buffers.manufacturer, size);
             break;
         case SubItem::CARTRIDGE:
             centerTextDisabled("All Cartridges");
-            ListBoxes::cartridges(database.getCartridges(), size);
+            ListBoxes::Selectable::cartridges(database.getCartridges(), buffers.cartridge, size);
             break;
         case SubItem::GUN:
             centerTextDisabled("All Guns");
             ImGui::Spacing();
             ImGui::Spacing();
-
-            Tables::Selectable::gunMetadataWithRoundCount(database.getArmory(), selectedGun, size);
-
-            if(selectedGun != EMPTY_GUN_METADATA){
-                ScreenData::View viewWindow { };
-                viewWindow.armoryWindow.selectedGun = selectedGun;
-                viewWindow.category = Category::GUNS;
-
-                UIEvents::SetScreenData::View setData { viewWindow };
-                UIEvents::SetScreen setScreen { Screen::VIEW };
-
-                pushEvent(&setData);
-                pushEvent(&setScreen);
-                selectedGun = EMPTY_GUN_METADATA;
-            }
+            Tables::Selectable::gunMetadataWithRoundCount(database.getArmory(), buffers.gunInfo, size); 
             break;
         case SubItem::WEAPON_TYPE:
             centerTextDisabled("All Weapon Types");
-            ListBoxes::weaponTypes(database.getWeaponTypes(), size);
+            ListBoxes::Selectable::weaponTypes(database.getWeaponTypes(), buffers.weaponType, size);
             break;
         default:
 
             break;
     }
     ImGui::EndGroup();
+}
+void editItemWindow(
+        ScreenData::Edit::ItemBuffers& data,
+        const Database& database,
+        SubItem selectedItem
+    )
+{
+    static SubItem lastItem { SubItem::NONE };
+    static ScreenData::Edit::ItemBuffers lastBuffers { };
+
+    if(selectedItem != lastItem)
+        resetText(data.metadataItemBuffer, MAX_CHAR_METADATA_ITEM);
+    
+    lastItem = selectedItem;
+
+    switch(selectedItem){
+        case SubItem::EVENT:
+            
+            break;
+        case SubItem::EVENT_TYPE:
+            if(data.eventType != lastBuffers.eventType)
+                resetText(data.metadataItemOld, MAX_CHAR_METADATA_ITEM, data.eventType.getName());
+
+            lastBuffers.eventType = data.eventType;
+
+            if(data.eventType == EMPTY_EVENT_TYPE){
+                centerNextItemY(5);
+                centerTextDisabled("Select an Item");
+            }
+            else
+                editEventType(data.metadataItemOld, data.metadataItemBuffer, MAX_CHAR_METADATA_ITEM);
+
+            break;
+        case SubItem::LOCATION: 
+            //editLocation(data.eventType, MAX_CHAR_METADATA_ITEM);
+            break;
+        case SubItem::AMMO:
+
+            break;
+        case SubItem::MANUFACTURER:
+            //Add::add_Manufacturer(data.subItemBuffers.manufacturer, MAX_CHAR_METADATA_ITEM);
+            break;
+        case SubItem::CARTRIDGE:
+            //Add::add_Cartridge(data.subItemBuffers.cartridge, MAX_CHAR_METADATA_ITEM);
+            break;
+        case SubItem::GUN:
+
+            break;
+        case SubItem::WEAPON_TYPE:
+            //Add::add_WeaponType(data.subItemBuffers.weaponType, MAX_CHAR_METADATA_ITEM);
+            break;
+        default:
+            centerNextItemY(5);
+            centerTextDisabled("Select an Item");
+            break;
+    }
+ 
+}
+
+
+void editEventType (char* oldInfo, char* textBuf, size_t size){
+    ImGui::Indent(20);
+    ImGui::Text("Directions");
+    ImGui::BulletText("Edit information for the selected Event Type");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    ImGui::Text("Current Info");
+    ImGui::SameLine(150);
+    ImGui::InputText("##Current EventType", oldInfo, size, ImGuiInputTextFlags_ReadOnly);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Event Type");
+    ImGui::SameLine(150);
+    ImGui::InputText("##Edit EventType", textBuf, size);
+    ImGui::Unindent();
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    if(centerButton("Button", ImVec2{200,50})){
+        LAS::log_debug("Submitted");
+    }
+
 }
 
 }   // End Edit namespace

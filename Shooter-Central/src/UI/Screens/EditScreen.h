@@ -17,12 +17,18 @@ namespace ShooterCentral::UI::Edit {
 
     void main   (const Database&, ScreenData::Edit& );
     void selectExistingItemWindow (
+            ScreenData::Edit::ItemBuffers& buffers,
             const Database& database, 
             const SubItem& selected, 
             const ImVec2& size
         );
+    void editItemWindow(
+            ScreenData::Edit::ItemBuffers& data,
+            const Database& database,
+            SubItem selectedItem
+        );
 
-
+    void editEventType (char* oldInfo, char* textBuf, size_t size);
 
 }   // End SC::UI::ScreenData
 
