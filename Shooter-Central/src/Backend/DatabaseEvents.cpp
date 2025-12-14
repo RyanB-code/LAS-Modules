@@ -233,13 +233,33 @@ Location::Location(const ShooterCentral::Location& loc) : location { loc } {
     
 }
 Status Location::execute (Database& db) {
-    if(db.addLocation(location))
+    if(db.addMetadataItem(location))
         return Status{true};
 
     return Status{false, "Failed to add Location" };
 }
 
 }   // Add namespace
+    
+
+namespace Edit {
+
+Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& setOld, const ShooterCentral::Manufacturer& setNew )
+    :   old { setOld },
+        newer { setNew }
+{
+
+}
+Status Manufacturer::execute (Database& db) {
+    /*
+    if(db.addManufacturer(manufacturer))
+        return Status{true};
+
+    return Status{false, "Failed to add Manufacturer" };
+    */
+}
+
+}   // Edit namespace
 
 }   // End DatabaseEvents namespace
 

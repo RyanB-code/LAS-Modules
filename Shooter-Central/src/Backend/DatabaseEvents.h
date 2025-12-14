@@ -96,5 +96,19 @@ namespace Add {
     };
 }   // Add namespace
 
+namespace Edit {
+    class Manufacturer : public DatabaseEvent {
+        public:
+            Manufacturer(const ShooterCentral::Manufacturer& setOld, const ShooterCentral::Manufacturer& setNew );
+            ~Manufacturer() = default;
+
+            DATABASE_EVENT_FUNCTIONS(Manufacturer)
+
+        private:
+            ShooterCentral::Manufacturer old    { };
+            ShooterCentral::Manufacturer newer  { };
+    };
+}   // Edit nameespce
+
 }   // End DatabaseEvents namespace
 
