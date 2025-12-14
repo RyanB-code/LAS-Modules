@@ -204,20 +204,35 @@ ArmoryGun& Database::getGun (const GunMetadata& info) {
 
     return armory.at(info.cartridge).at(info);
 }
-bool Database::addManufacturer  (const Manufacturer& add){
+bool Database::addMetadataItem  (const Manufacturer& add){
     return manufacturers.emplace(add).second;
 }
-bool Database::addCartridge(const Cartridge& add){
+bool Database::addMetadataItem(const Cartridge& add){
     return cartridges.emplace(add).second;
 }
-bool Database::addWeaponType  (const WeaponType& add){
+bool Database::addMetadataItem  (const WeaponType& add){
     return weaponTypes.emplace(add).second;
 }
-bool Database::addLocation  (const Location& add){
+bool Database::addMetadataItem  (const Location& add){
     return locations.emplace(add).second;
 }
-bool Database::addEventType  (const ShootingEventType& add){
+bool Database::addMetadataItem  (const ShootingEventType& add){
     return eventTypes.emplace(add).second;
+}
+void Database::deleteMetadataItem  (const Manufacturer& item){
+    manufacturers.erase(item);
+}
+void Database::deleteMetadataItem(const Cartridge& item){
+    cartridges.erase(item);
+}
+void Database::deleteMetadataItem  (const WeaponType& item){
+    weaponTypes.erase(item);
+}
+void Database::deleteMetadataItem  (const Location& item){
+    locations.erase(item);
+}
+void Database::deleteMetadataItem  (const ShootingEventType& item){
+    eventTypes.erase(item);
 }
 int Database::amountInStockpile   (const AmmoMetadata& info) const{
     const Cartridge& cartridge { info.cartridge };
@@ -434,35 +449,35 @@ void addAllMetadataInfo (Database& db){
 
 void addMetadataInfo(Database& db, const GunMetadata& info){
     if(!db.metadataContains(info.cartridge)){
-        if(!db.addCartridge(info.cartridge))
+        if(!db.addMetadataItem(info.cartridge))
             LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
     }
 
     if(!db.metadataContains(info.weaponType)){
-        if(!db.addWeaponType(info.weaponType))
+        if(!db.addMetadataItem(info.weaponType))
             LAS::log_warn(std::format("addMetadataInfo() could not add WeaponType {}", info.weaponType.getName() ) );
     }
 }
 void addMetadataInfo(Database& db, const AmmoMetadata& info){
     if(!db.metadataContains(info.manufacturer)){
-        if(!db.addManufacturer(info.manufacturer))
+        if(!db.addMetadataItem(info.manufacturer))
             LAS::log_warn(std::format("addMetadataInfo() could not add Manufacturer {}", info.manufacturer.getName()) );
     }
 
     if(!db.metadataContains(info.cartridge)){
-        if(!db.addCartridge(info.cartridge))
+        if(!db.addMetadataItem(info.cartridge))
             LAS::log_warn(std::format("addMetadataInfo() could not add Cartridge {}", info.cartridge.getName()) );
     }
 
 }
 void addMetadataInfo(Database& db, const ShootingEventMetadata& info){
     if(!db.metadataContains(info.location)){
-        if(!db.addLocation(info.location))
+        if(!db.addMetadataItem(info.location))
             LAS::log_warn(std::format("addMetadataInfo() could not add Location {}", info.location.getName()) );
     }
 
     if(!db.metadataContains(info.eventType)){
-        if(!db.addEventType(info.eventType))
+        if(!db.addMetadataItem(info.eventType))
             LAS::log_warn(std::format("addMetadataInfo() could not add EventType {}", info.eventType.getName()) );
     }
 }

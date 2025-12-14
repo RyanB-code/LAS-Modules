@@ -116,11 +116,17 @@ public:
     int amountInStockpile   (const Cartridge& ) const;
     int amountInStockpile   (const AmmoMetadata& ) const;
 
-    bool addManufacturer    (const Manufacturer& );
-    bool addCartridge       (const Cartridge& );
-    bool addWeaponType      (const WeaponType& );
-    bool addLocation        (const Location& );
-    bool addEventType       (const ShootingEventType& );
+    bool addMetadataItem    (const Manufacturer& );
+    bool addMetadataItem    (const Cartridge& );
+    bool addMetadataItem    (const WeaponType& );
+    bool addMetadataItem    (const Location& );
+    bool addMetadataItem    (const ShootingEventType& );
+
+    void deleteMetadataItem (const Manufacturer& );
+    void deleteMetadataItem (const Cartridge& );
+    void deleteMetadataItem (const WeaponType& );
+    void deleteMetadataItem (const Location& );
+    void deleteMetadataItem (const ShootingEventType& );
 
     bool armoryContains     (const GunMetadata& ) const;
     bool stockpileContains  (const AmmoMetadata& ) const;
