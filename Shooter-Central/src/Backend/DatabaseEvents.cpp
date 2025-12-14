@@ -196,7 +196,7 @@ Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer
 
 }
 Status Manufacturer::execute (Database& db) {
-    if(db.addManufacturer(manufacturer))
+    if(db.addMetadataItem(manufacturer))
         return Status{true};
 
     return Status{false, "Failed to add Manufacturer" };
@@ -205,7 +205,7 @@ Cartridge::Cartridge(const ShooterCentral::Cartridge& c) : cartridge { c } {
 
 }
 Status Cartridge::execute (Database& db) {
-    if(db.addCartridge(cartridge))
+    if(db.addMetadataItem(cartridge))
         return Status{true};
 
     return Status{false, "Failed to add Cartridge" };
@@ -214,7 +214,7 @@ EventType::EventType(const ShooterCentral::ShootingEventType& et) : eventType { 
 
 }
 Status EventType::execute (Database& db) {
-    if(db.addEventType(eventType))
+    if(db.addMetadataItem(eventType))
         return Status{true};
 
     return Status{false, "Failed to add ShootingEventType" };
@@ -223,7 +223,7 @@ WeaponType::WeaponType(const ShooterCentral::WeaponType& wt) : weaponType { wt }
     
 }
 Status WeaponType::execute (Database& db) {
-    if(db.addWeaponType(weaponType))
+    if(db.addMetadataItem(weaponType))
         return Status{true};
 
     return Status{false, "Failed to add WeaponType" };
