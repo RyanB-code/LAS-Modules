@@ -66,10 +66,7 @@ void printEvent(const ShootingEvent& event) {
 }
 
 
-bool Framework::setup(const std::string& directory, std::shared_ptr<bool> setShown){
-    // REAL SETUP DATA
-    shown = setShown;
-
+bool Framework::setup(const std::string& directory){
     using namespace ShooterCentral::Setup;
 
     Filepaths paths {directory};
@@ -180,14 +177,7 @@ void Framework::update() {
 
 }
 void Framework::draw() {
-    if(!ImGui::Begin(TITLE, &*shown, 0)){
-        ImGui::End();
-        return;
-    }
-
     view.draw(database, unsavedChanges);
-
-    ImGui::End();
 }
 bool Setup::setupFilesystem(Framework::Filepaths& paths){
     if(paths.parentDir.empty())

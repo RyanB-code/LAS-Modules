@@ -26,7 +26,7 @@ bool LASM_loadModuleInfo(LAS::Information::ModuleInfo& moduleInfo){
     return true;
 }
 bool LASM_init(const LAS::Information::EnvironmentInfo& envInfo){
-    return application.setup(envInfo.directory, envInfo.moduleShown);
+    return application.setup(envInfo.directory);
 }
 void LASM_cleanup(){
     LAS::log_info("Cleanup from Shooter Central lasm_cleanup()");

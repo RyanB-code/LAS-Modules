@@ -40,7 +40,7 @@ public:
         std::string miscDir;
     };
 
-    bool setup(const std::string& directory, std::shared_ptr<bool> shown);   // Called inside LASM_init
+    bool setup(const std::string& directory);   // Called inside LASM_init
     
     void update();
     void draw();
@@ -49,7 +49,6 @@ public:
     static constexpr char SHORT_TAG[] = "sc"; 
 
 private:
-    std::shared_ptr<bool>   shown;
     Database                database        { };
     UI::UIController        view            { };
     UnsavedChanges          unsavedChanges  { };
