@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 set(CMAKE_CXX_STANDARD		23)
 set(CMAKE_CXX_STANDARD_REQUIRED	True)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # So clangd lsp can find compile commands
 
 set(PROJECT_NAME		"ShooterCentral")
 set(LIB_NAME			"${PROJECT_NAME}.lasm")
