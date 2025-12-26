@@ -188,6 +188,10 @@ bool Database::useAmmo (const AmountOfAmmo& amountOfAmmo){
     
     return true;
 }
+void Database::deleteFromStockpile (const AmmoMetadata& info){
+    if(stockpile.contains(info.cartridge))
+        stockpile.at(info.cartridge).erase(info);
+}
 
 ShootingEvent& Database::getEvent(const ShootingEventMetadata& info) {
     return events.at(info);
@@ -586,6 +590,64 @@ bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bo
     }
 
     addAllMetadataInfo(db);
+    return true;
+}
+
+bool changeAllOccurrences(Database& db, const Manufacturer& old, const Manufacturer& revised){
+    const Database snapshot { db };
+
+    db.deleteMetadataItem(old);
+    if(!db.addMetadataItem(revised)){
+        db = snapshot;
+        throw std::invalid_argument{
+            std::format("Failed to add Manufacturer '{}'", revised.getName())
+        };
+    }
+
+    std::vector<AmmoMetadata> toModify { };
+
+    // Change all in stockpile
+    for(const auto& [cartridge, map] : db.getStockpile()){
+        for(const auto& [key, stockpileAmmo] : map){ 
+            const AmmoMetadata& ammoInfo { stockpileAmmo.getAmmoInfo() };
+
+            if(ammoInfo.manufacturer == old){
+                toModify.emplace_back(ammoInfo);
+            }
+        }
+    }
+
+    for(const auto& oldAmmoInfo : toModify){
+        AmmoMetadata newAmmoInfo { oldAmmoInfo };
+        newAmmoInfo.manufacturer = revised;
+
+        // Attempt to make new one
+        if(!db.addToStockpile(newAmmoInfo).wasAdded){
+            db = snapshot;
+            throw std::invalid_argument{
+                std::format("Failed to revise AmmoMetadata for '{}'", oldAmmoInfo.name)
+            };
+        }
+
+        StockpileAmmo& newAmmo { db.getAmmo(newAmmoInfo) };
+
+        // Closed-scope so erase later wont cause UB
+        {
+            StockpileAmmo& oldAmmo { db.getAmmo(oldAmmoInfo) };
+
+            // Copy all items
+            newAmmo.addAmount(oldAmmo.getAmountOnHand() ); 
+            newAmmo.setActive(oldAmmo.isActive() );
+
+            for(const GunMetadata& gunInfo : oldAmmo.getGunsUsed()){
+                newAmmo.addGun(gunInfo);
+            }
+        }
+
+
+        // Erase the old one
+        db.deleteFromStockpile(oldAmmoInfo);
+    }
     return true;
 }
 

@@ -32,7 +32,6 @@ namespace ShooterCentral::UI::Edit {
             char* oldInfo, 
             char* textBuf, 
             size_t size,
-            bool& changeAllOccurrences,
             bool& submitted,
             const ImVec2& buttonSize
         );

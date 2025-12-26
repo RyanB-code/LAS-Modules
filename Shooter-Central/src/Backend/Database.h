@@ -107,6 +107,8 @@ public:
     AddGunFlags     addToArmory     (const ArmoryGun& );
     AddGunFlags     addToArmory     (const GunMetadata& ); 
 
+    void deleteFromStockpile        (const AmmoMetadata& );
+
     bool useAmmo            (const AmountOfAmmo& );
 
     ShootingEvent& getEvent (const ShootingEventMetadata& );    // Throws out_of_range if not present
@@ -168,8 +170,10 @@ void addMetadataInfo (Database&, const GunMetadata& );
 void addMetadataInfo (Database&, const AmmoMetadata& );
 void addMetadataInfo (Database&, const ShootingEventMetadata& );
 
-
+// Strong rollback gurantee if issue arises and throws invalid_argument with what
 bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile); 
+
+bool changeAllOccurrences(Database& db, const Manufacturer& old, const Manufacturer& revised);
 
 
 }   // End SC namespace

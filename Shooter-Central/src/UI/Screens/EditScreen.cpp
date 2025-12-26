@@ -217,10 +217,46 @@ void editItemWindow(
             data.metadataItemOld, 
             data.metadataItemBuffer, 
             MAX_CHAR_METADATA_ITEM,
-            screenData.changeAllOccurrences,
             submitted,
             screenData.buttonSize
         ); 
+
+    if(!submitted)
+        return;
+
+    // Submitted, edit the information
+    switch(selectedItem){
+        case SubItem::EVENT:
+            
+            break;
+        case SubItem::EVENT_TYPE:
+
+            break;
+        case SubItem::LOCATION: 
+
+           break;
+        case SubItem::AMMO:
+
+            break;
+        case SubItem::MANUFACTURER:
+            {
+                DatabaseEvents::Edit::Manufacturer edit { data.manufacturer, Manufacturer { data.metadataItemBuffer } };
+                pushEvent(&edit);
+            }
+            break;
+        case SubItem::CARTRIDGE:
+
+            break;
+        case SubItem::GUN:
+
+            break;
+        case SubItem::WEAPON_TYPE:
+
+            break;
+        default:
+
+            break;
+    }
 }
 
 
@@ -228,49 +264,23 @@ void editMetadataItem (
         char* oldInfo, 
         char* textBuf, 
         size_t size,
-        bool& changeAllOccurrences,
         bool& submitted,
         const ImVec2& buttonSize
     )
 {
     ImVec2 childSizes { ImGui::GetContentRegionAvail().x / 2 - 5, 100 };
 
-    if(ImGui::BeginChild("Directions", childSizes )){
-        ImGui::Indent(20);
-        ImGui::Text("Directions");
-        ImGui::BulletText("Edit information for the selected category");
-        ImGui::BulletText("Must save before exiting otherwise changes will not be made.");
-    }
-    ImGui::EndChild();
+    // HERE
+    // for this, edit all occurrences should be default since only editing new,
+    // the old metadata item will still be added since its present in old saved items.
+    // Unless I add inactive bool to metadata items
 
-    ImGui::SameLine();
-
-    if(ImGui::BeginChild("Options and Confirm", childSizes)){
-        // Use same var, since no longer needed for Directions window
-        childSizes.x = ImGui::GetContentRegionAvail().x / 2 - 5; 
-        childSizes.y = 60;
-
-        centerTextDisabled("Options and Confirm");
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        if(ImGui::BeginChild("Options", childSizes)){ 
-           centerNextItemX(250);
-           ImGui::BeginGroup();
-           ImGui::Text("Change All Occurrences");
-           ImGui::SameLine(200);
-           ImGui::Checkbox("##Change All Occurrences", &changeAllOccurrences);
-           ImGui::EndGroup();
-        }
-        ImGui::EndChild();
-
-        ImGui::SameLine();
-        if(ImGui::BeginChild("Confirm", childSizes))
-            submitted = centerButton("Submit", buttonSize);    
-       ImGui::EndChild();
-    }
-    ImGui::EndChild();
+    ImGui::Indent(20);
+    ImGui::Text("Directions");
+    ImGui::BulletText("Edit information for the selected category");
+    ImGui::BulletText("This will change all occurrences for EVERY use of the item");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made");
+    ImGui::Unindent();
 
     ImGui::Dummy(ImVec2{0.0f, 50.0f});
 
@@ -286,6 +296,9 @@ void editMetadataItem (
     ImGui::SameLine(150);
     ImGui::InputText("##Revised Item", textBuf, size);
     ImGui::Unindent();
+    
+    ImGui::Dummy( ImVec2 { 0, 50} );
+    submitted = centerButton("Submit", buttonSize);    
 }
 
 }   // End Edit namespace

@@ -105,8 +105,8 @@ namespace Edit {
             DATABASE_EVENT_FUNCTIONS(Manufacturer)
 
         private:
-            ShooterCentral::Manufacturer old    { };
-            ShooterCentral::Manufacturer newer  { };
+            ShooterCentral::Manufacturer old        { };
+            ShooterCentral::Manufacturer revised    { };
     };
 }   // Edit nameespce
 

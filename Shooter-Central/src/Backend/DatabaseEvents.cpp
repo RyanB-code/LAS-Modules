@@ -245,18 +245,66 @@ Status Location::execute (Database& db) {
 namespace Edit {
 
 Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& setOld, const ShooterCentral::Manufacturer& setNew )
-    :   old { setOld },
-        newer { setNew }
+    :   old     { setOld },
+        revised { setNew }
 {
 
 }
 Status Manufacturer::execute (Database& db) {
-    /*
-    if(db.addManufacturer(manufacturer))
-        return Status{true};
+    using namespace ShooterCentral::UI;
 
-    return Status{false, "Failed to add Manufacturer" };
-    */
+    bool success { false };
+    try {
+        success = changeAllOccurrences(db, old, revised);
+    }
+    catch(std::invalid_argument& e){
+        auto bodyFunction = [e]() {
+            centerText("Failed to Edit Item");
+            centerTextDisabled("(No changes were made)");
+
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::BulletText("%s", e.what());
+        };
+
+        CustomClosePopup popup { "Edit Item Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Edit Item failed" };
+    }
+
+
+
+    if(success){
+        SimpleClosePopup popup {"Item Changed Successfully", "Item was successfully changed"};
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        UIEvents::SetScreenData::Home resetBuffers1 { ScreenData::Home{ } };
+        UIEvents::SetScreenData::View resetBuffers2 { ScreenData::View{ } };
+        UIEvents::SetScreenData::Add  resetBuffers3 { ScreenData::Add{ } };
+        UIEvents::SetScreenData::Edit resetBuffers4 { ScreenData::Edit{ } };
+
+        pushEvent(&resetBuffers1);
+        pushEvent(&resetBuffers2);
+        pushEvent(&resetBuffers3);
+        pushEvent(&resetBuffers4);
+
+        return Status { true };
+    }
+    else{
+        SimpleClosePopup popup {"Edit Item Failed", "An Unknown Error Occurred"};
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        return Status { false };
+    }
+
 }
 
 }   // Edit namespace
