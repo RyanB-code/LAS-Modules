@@ -343,7 +343,6 @@ struct Edit{
     Category        category        { Category::NONE }; 
     SubItem         subItem         { SubItem::NONE };
 
-    bool changeAllOccurrences { false };
     bool verticalLayout { false };
 
     ImVec2 editItemWinSize          { minWinSize };
