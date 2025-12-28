@@ -604,50 +604,88 @@ bool changeAllOccurrences(Database& db, const Manufacturer& old, const Manufactu
         };
     }
 
-    std::vector<AmmoMetadata> toModify { };
+    {   // Start toModify scope
+        std::vector<AmmoMetadata> toModify { };
 
-    // Change all in stockpile
-    for(const auto& [cartridge, map] : db.getStockpile()){
-        for(const auto& [key, stockpileAmmo] : map){ 
-            const AmmoMetadata& ammoInfo { stockpileAmmo.getAmmoInfo() };
-
-            if(ammoInfo.manufacturer == old){
-                toModify.emplace_back(ammoInfo);
+        // Change all in stockpile
+        for(const auto& [cartridge, map] : db.getStockpile()){
+            for(const auto& [key, stockpileAmmo] : map){ 
+                const AmmoMetadata& ammoInfo { stockpileAmmo.getAmmoInfo() };
+                if(ammoInfo.manufacturer == old){
+                    toModify.emplace_back(ammoInfo);
+                }
             }
-        }
-    }
 
-    for(const auto& oldAmmoInfo : toModify){
-        AmmoMetadata newAmmoInfo { oldAmmoInfo };
-        newAmmoInfo.manufacturer = revised;
-
-        // Attempt to make new one
-        if(!db.addToStockpile(newAmmoInfo).wasAdded){
-            db = snapshot;
-            throw std::invalid_argument{
-                std::format("Failed to revise AmmoMetadata for '{}'", oldAmmoInfo.name)
-            };
         }
 
-        StockpileAmmo& newAmmo { db.getAmmo(newAmmoInfo) };
+        for(const auto& oldAmmoInfo : toModify){
+            AmmoMetadata newAmmoInfo { oldAmmoInfo };
+            newAmmoInfo.manufacturer = revised;
 
-        // Closed-scope so erase later wont cause UB
-        {
-            StockpileAmmo& oldAmmo { db.getAmmo(oldAmmoInfo) };
-
-            // Copy all items
-            newAmmo.addAmount(oldAmmo.getAmountOnHand() ); 
-            newAmmo.setActive(oldAmmo.isActive() );
-
-            for(const GunMetadata& gunInfo : oldAmmo.getGunsUsed()){
-                newAmmo.addGun(gunInfo);
+            // Attempt to make new one
+            if(!db.addToStockpile(newAmmoInfo).wasAdded){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to revise AmmoMetadata for '{}'", oldAmmoInfo.name)
+                };
             }
+
+            StockpileAmmo& newAmmo { db.getAmmo(newAmmoInfo) };
+
+            // Closed-scope so erase later wont cause UB
+            {
+                StockpileAmmo& oldAmmo { db.getAmmo(oldAmmoInfo) };
+
+                // Copy all items
+                newAmmo.addAmount(oldAmmo.getAmountOnHand() ); 
+                newAmmo.setActive(oldAmmo.isActive() );
+
+                for(const GunMetadata& gunInfo : oldAmmo.getGunsUsed()){
+                    newAmmo.addGun(gunInfo);
+                }
+            }
+
+            // Erase the old one
+            db.deleteFromStockpile(oldAmmoInfo);
         }
+    } // End toModify scope
 
 
-        // Erase the old one
-        db.deleteFromStockpile(oldAmmoInfo);
-    }
+    // Edit event ammo used
+    for (const auto& [key, event] : db.getEvents()){
+        
+        for(const auto& gunTrackingAmmoUsed : event.getGunsUsed() ){
+            std::vector<AmountOfAmmo> toModify { };
+            
+            // Add to list if changes need to be made
+            for(const auto& amountOfAmmo : gunTrackingAmmoUsed.getAmmoUsed()){
+                if(amountOfAmmo.getAmmoInfo().manufacturer == old){
+                    toModify.emplace_back(amountOfAmmo);
+                }
+            }
+            
+            // Replace old info with new
+            for(const auto& oldAmountOfAmmo : toModify){
+                AmmoMetadata newAmmoInfo { oldAmountOfAmmo.getAmmoInfo() };
+                newAmmoInfo.manufacturer = revised;
+                AmountOfAmmo newAmountOfAmmo { newAmmoInfo, oldAmountOfAmmo.getAmount() };
+
+                ShootingEvent& eventToModify { db.getEvent(key) };
+                eventToModify.getGun(gunTrackingAmmoUsed.getGunInfo()).removeAmmoUsed(oldAmountOfAmmo.getAmmoInfo());
+                
+                if(!eventToModify.getGun(gunTrackingAmmoUsed.getGunInfo()).addAmmoUsed(newAmountOfAmmo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Failed to revise AmmoMetadata '{}' used in Event on '{}'", newAmmoInfo.name, printDate(eventToModify.getInfo().date))
+                    };
+                }
+
+            }   // End going through toModify
+
+        }   // End guns for event
+
+    }   // End Events
+
     return true;
 }
 
