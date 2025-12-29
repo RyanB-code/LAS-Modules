@@ -229,10 +229,11 @@ public:
     int totalAmmoTypesUsed()    const;
 
     bool addAmmoUsed    (const AmountOfAmmo& ammo);
-    /* bool removeAmmoUsed (const AmmoMetadata& ammo); */
+    bool removeAmmoUsed (const AmmoMetadata& ammo);
     bool hasUsedAmmo    (const AmmoMetadata& ammo) const;
 
     bool addEvent       (const ShootingEvent& event);           // If key already exists, returns false since data is not overwritten 
+    void removeEvent    (const ShootingEventMetadata& data);
     bool wasUsedInEvent (const ShootingEventMetadata& data);
 
     void        setActive(bool set)     { m_isActive = set; }

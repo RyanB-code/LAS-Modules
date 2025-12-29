@@ -107,7 +107,9 @@ public:
     AddGunFlags     addToArmory     (const ArmoryGun& );
     AddGunFlags     addToArmory     (const GunMetadata& ); 
 
-    void deleteFromStockpile        (const AmmoMetadata& );
+    void deleteEvent            (const ShootingEventMetadata& );
+    void deleteFromStockpile    (const AmmoMetadata& );
+
 
     bool useAmmo            (const AmountOfAmmo& );
 

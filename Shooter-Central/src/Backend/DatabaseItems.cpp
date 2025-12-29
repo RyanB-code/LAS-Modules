@@ -417,19 +417,14 @@ bool ArmoryGun::addAmmoUsed(const AmountOfAmmo& addAmmo) {
      
     return false;
 }
-/* May not acutally need this so commenting out
- *
-        bool ArmoryGun::removeAmmoUsed(const AmmoMetadata& ammo){
-            if(!ammoUsed.contains(ammo))
-                return true;
+bool ArmoryGun::removeAmmoUsed(const AmmoMetadata& ammo){
+    if(!ammoUsed.contains(ammo))
+        return true;
 
-            roundcount -= ammoUsed.at(ammo).getAmount();    // Remove from roundcount
-            ammoUsedt.erase(ammo);
-            return !ammoUsedList.contains(ammo); // Return the inverse of contains()
-        }
- *
- *
-*/
+    roundCount -= ammoUsed.at(ammo).getAmount();    // Remove from roundcount
+    ammoUsed.erase(ammo);
+    return !ammoUsed.contains(ammo); // Return the inverse of contains()
+}
 bool ArmoryGun::hasUsedAmmo(const AmmoMetadata& ammo) const {
     return ammoUsed.contains(ammo);
 }
@@ -458,6 +453,9 @@ bool ArmoryGun::addEvent(const ShootingEvent& event) {
         eventsUsed.erase(event.getInfo());
         return false;
     }
+}
+void ArmoryGun::removeEvent(const ShootingEventMetadata& data){
+    eventsUsed.erase(data);
 }
 bool ArmoryGun::wasUsedInEvent(const ShootingEventMetadata& data){
     return eventsUsed.contains(data);
