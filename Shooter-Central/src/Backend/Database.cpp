@@ -722,7 +722,7 @@ bool changeAllOccurrences(Database& db, const Manufacturer& old, const Manufactu
                 if(!eventToModify.getGun(gunTrackingAmmoUsed.getGunInfo()).addAmmoUsed(newAmountOfAmmo)){
                     db = snapshot;
                     throw std::invalid_argument{
-                        std::format("Failed to revise AmmoMetadata '{}' used in Event on '{}'", newAmmoInfo.name, printDate(eventToModify.getInfo().date))
+                        std::format("Failed to revise AmmoMetadata '{}' used in Event {}", newAmmoInfo.name, eventName(eventToModify.getInfo()))
                     };
                 }
 
