@@ -293,5 +293,6 @@ static const WeaponType             EMPTY_WEAPON_TYPE       { };
 // Helping Functions
 std::chrono::system_clock::time_point stringToTimepoint(const std::string& timeString);
 std::string printDate(const std::chrono::year_month_day&);
+std::string eventName(const ShootingEventMetadata& );
 
 }   // End SC namespace

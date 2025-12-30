@@ -546,6 +546,10 @@ std::chrono::system_clock::time_point ShooterCentral::stringToTimepoint(const st
 std::string ShooterCentral::printDate(const std::chrono::year_month_day& date) {
     return std::format("{:%Od %b %Y}", date);
 }
+std::string ShooterCentral::eventName(const ShootingEventMetadata& info){
+    return std::format("{} at {} on {}", info.eventType.getName(), info.location.getName(), printDate(info.date));
+
+}
 
 
 
