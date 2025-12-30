@@ -233,7 +233,10 @@ void editItemWindow(
 
             break;
         case SubItem::LOCATION: 
-
+            {
+                DatabaseEvents::Edit::Location edit { data.location, Location { data.metadataItemBuffer } };
+                pushEvent(&edit);
+            }
            break;
         case SubItem::AMMO:
 

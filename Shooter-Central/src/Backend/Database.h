@@ -176,6 +176,7 @@ void addMetadataInfo (Database&, const ShootingEventMetadata& );
 bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile); 
 
 bool changeAllOccurrences(Database& db, const Manufacturer& old, const Manufacturer& revised);
+bool changeAllOccurrences(Database& db, const Location& old, const Location& revised);
 
 
 }   // End SC namespace

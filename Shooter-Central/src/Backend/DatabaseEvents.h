@@ -108,6 +108,17 @@ namespace Edit {
             ShooterCentral::Manufacturer old        { };
             ShooterCentral::Manufacturer revised    { };
     };
+    class Location : public DatabaseEvent {
+        public:
+            Location(const ShooterCentral::Location& setOld, const ShooterCentral::Location& setNew );
+            ~Location() = default;
+
+            DATABASE_EVENT_FUNCTIONS(Location)
+
+        private:
+            ShooterCentral::Location old        { };
+            ShooterCentral::Location revised    { };
+    };
 }   // Edit nameespce
 
 }   // End DatabaseEvents namespace
