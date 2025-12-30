@@ -167,8 +167,8 @@ private:
 
 class StockpileAmmo {
 public:
-    StockpileAmmo(const AmountOfAmmo& setAmountofAmmo);
-    StockpileAmmo(const AmmoMetadata& setAmmoInfo = AmmoMetadata{ });
+    explicit StockpileAmmo(const AmountOfAmmo& setAmountofAmmo);
+    explicit StockpileAmmo(const AmmoMetadata& setAmmoInfo = AmmoMetadata{ });
     ~StockpileAmmo() = default;
 
     void addAmount      (int amount);
@@ -219,7 +219,7 @@ private:
 
 class ArmoryGun {
 public:
-    ArmoryGun(const GunMetadata& setGun=GunMetadata{ } );
+    explicit ArmoryGun(const GunMetadata& setGun=GunMetadata{ } );
     ~ArmoryGun() = default;
 
     const GunMetadata& getGunInfo() const;
@@ -254,7 +254,7 @@ private:
 
 class ShootingEvent {
 public:
-    ShootingEvent(const ShootingEventMetadata& setInfo=ShootingEventMetadata{ } );
+    explicit ShootingEvent(const ShootingEventMetadata& setInfo=ShootingEventMetadata{ } );
     ~ShootingEvent() = default;
 
     void    setInfo (const ShootingEventMetadata& info) { eventInfo = info; }
