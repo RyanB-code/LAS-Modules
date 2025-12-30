@@ -171,9 +171,7 @@ void eventsWindow(
         eventsWindow_selectedEventInformation(screenData.selectedEvent);
 
 }
-void eventsWindow_selectedEventInformation(const ShootingEvent& event){
-    const ShootingEventMetadata& info   { event.getInfo() };
-
+void eventsWindow_selectedEventInformation(const ShootingEventMetadata& info){
     if(ImGui::BeginChild("Selected Event Details", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
         ImGui::TextDisabled("Date: ");

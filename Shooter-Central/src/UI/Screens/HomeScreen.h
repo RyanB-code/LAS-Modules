@@ -32,7 +32,7 @@ namespace ShooterCentral::UI::Home {
             const std::map<ShootingEventMetadata, ShootingEvent>&, 
             UI::ScreenData::Home::EventsWindow& screenData 
         );
-    void eventsWindow_selectedEventInformation(const ShootingEvent& event);
+    void eventsWindow_selectedEventInformation(const ShootingEventMetadata& );
 
     void stockpileWindow (
             const std::map<Cartridge, int>&, 
