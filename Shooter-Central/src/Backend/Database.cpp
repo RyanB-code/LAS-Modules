@@ -196,6 +196,10 @@ void Database::deleteFromStockpile (const AmmoMetadata& info){
     if(stockpile.contains(info.cartridge))
         stockpile.at(info.cartridge).erase(info);
 }
+void Database::deleteGun(const GunMetadata& info){
+    if(armory.contains(info.cartridge))
+        armory.at(info.cartridge).erase(info);
+}
 
 ShootingEvent& Database::getEvent(const ShootingEventMetadata& info) {
     return events.at(info);

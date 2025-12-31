@@ -109,7 +109,7 @@ public:
 
     void deleteEvent            (const ShootingEventMetadata& );
     void deleteFromStockpile    (const AmmoMetadata& );
-
+    void deleteGun              (const GunMetadata& );
 
     bool useAmmo            (const AmountOfAmmo& );
 
