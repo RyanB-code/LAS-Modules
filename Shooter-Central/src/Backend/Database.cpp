@@ -975,6 +975,7 @@ bool changeAllOccurrences(Database& db, const WeaponType& old, const WeaponType&
             targetEvent.removeGun(oldInfo);
             
             if(!targetEvent.addGun(newGunUsed)){
+                db = snapshot;
                 throw std::invalid_argument{
                     std::format("Failed to add revised GunTrackingAmmoUsed '{}' to Event {}",
                         newInfo.name,
