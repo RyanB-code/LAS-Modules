@@ -258,10 +258,10 @@ public:
     ~ShootingEvent() = default;
 
     void    setInfo (const ShootingEventMetadata& info) { eventInfo = info; }
-
     int     totalGunsUsed   () const;
+
     bool    addGun          (const GunTrackingAmmoUsed& gun);        // Will not amend existing entries if a gun is already in the container
-    bool    removeGun       (const GunMetadata& gun);
+    void    removeGun       (const GunMetadata& gun);
     bool    hasUsedGun      (const GunMetadata& gun) const;
 
     GunTrackingAmmoUsed&        getGun (const GunMetadata& gun);           // throws out_of_range if not found

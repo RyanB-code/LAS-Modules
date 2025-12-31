@@ -485,18 +485,13 @@ bool ShootingEvent::addGun(const GunTrackingAmmoUsed& gun) {
     gunsUsed.emplace_back(gun);
     return true;
 }
-bool ShootingEvent::removeGun       (const GunMetadata& gun){
-    bool gunFound { false };
-
+void ShootingEvent::removeGun       (const GunMetadata& gun){
     for(auto itr { gunsUsed.begin() }; itr != gunsUsed.end(); ++itr){
         if(itr->getGunInfo() == gun){
             gunsUsed.erase(itr);
-            gunFound = true;
             break;
         }
     }
-
-    return gunFound;
 }
 
 bool ShootingEvent::hasUsedGun(const GunMetadata& gun) const {

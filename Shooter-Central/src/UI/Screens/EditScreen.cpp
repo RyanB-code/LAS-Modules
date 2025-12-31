@@ -230,7 +230,10 @@ void editItemWindow(
             
             break;
         case SubItem::EVENT_TYPE:
-
+            {
+                DatabaseEvents::Edit::EventType edit { data.eventType, ShootingEventType { data.metadataItemBuffer } };
+                pushEvent(&edit);
+            }
             break;
         case SubItem::LOCATION: 
             {
@@ -254,7 +257,10 @@ void editItemWindow(
 
             break;
         case SubItem::WEAPON_TYPE:
-
+            {
+                DatabaseEvents::Edit::WeaponType edit { data.weaponType, WeaponType { data.metadataItemBuffer } };
+                pushEvent(&edit);
+            }
             break;
         default:
 

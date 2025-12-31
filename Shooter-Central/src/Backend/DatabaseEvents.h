@@ -119,6 +119,28 @@ namespace Edit {
             ShooterCentral::Location old        { };
             ShooterCentral::Location revised    { };
     };
+    class EventType : public DatabaseEvent {
+        public:
+            EventType(const ShooterCentral::ShootingEventType& setOld, const ShooterCentral::ShootingEventType& setNew );
+            ~EventType() = default;
+
+            DATABASE_EVENT_FUNCTIONS(EventType)
+
+        private:
+            ShooterCentral::ShootingEventType old        { };
+            ShooterCentral::ShootingEventType revised    { };
+    };
+    class WeaponType : public DatabaseEvent {
+        public:
+            WeaponType(const ShooterCentral::WeaponType& setOld, const ShooterCentral::WeaponType& setNew );
+            ~WeaponType() = default;
+
+            DATABASE_EVENT_FUNCTIONS(WeaponType)
+
+        private:
+            ShooterCentral::WeaponType old        { };
+            ShooterCentral::WeaponType revised    { };
+    };
 }   // Edit nameespce
 
 }   // End DatabaseEvents namespace

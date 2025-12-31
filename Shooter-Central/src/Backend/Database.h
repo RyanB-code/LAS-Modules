@@ -177,6 +177,8 @@ bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bo
 
 bool changeAllOccurrences(Database& db, const Manufacturer& old, const Manufacturer& revised);
 bool changeAllOccurrences(Database& db, const Location& old, const Location& revised);
+bool changeAllOccurrences(Database& db, const ShootingEventType& old, const ShootingEventType& revised);
+bool changeAllOccurrences(Database& db, const WeaponType& old, const WeaponType& revised);
 
 
 }   // End SC namespace
