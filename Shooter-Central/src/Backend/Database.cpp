@@ -195,10 +195,20 @@ void Database::deleteEvent(const ShootingEventMetadata& info){
 void Database::deleteFromStockpile (const AmmoMetadata& info){
     if(stockpile.contains(info.cartridge))
         stockpile.at(info.cartridge).erase(info);
+
+    // Erase if Cartridge map has no entries
+    if(stockpile.at(info.cartridge).empty()){
+        stockpile.erase(info.cartridge);
+        amountPerCartridge.erase(info.cartridge);
+    }
 }
 void Database::deleteGun(const GunMetadata& info){
     if(armory.contains(info.cartridge))
         armory.at(info.cartridge).erase(info);
+
+    // Erase if Cartridge map has no entries
+    if(armory.at(info.cartridge).empty())
+        armory.erase(info.cartridge);
 }
 
 ShootingEvent& Database::getEvent(const ShootingEventMetadata& info) {
