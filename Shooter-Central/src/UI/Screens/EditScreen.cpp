@@ -251,7 +251,10 @@ void editItemWindow(
             }
             break;
         case SubItem::CARTRIDGE:
-
+            {
+                DatabaseEvents::Edit::Cartridge edit { data.cartridge, Cartridge { data.metadataItemBuffer } };
+                pushEvent(&edit);
+            }
             break;
         case SubItem::GUN:
 

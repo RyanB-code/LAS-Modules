@@ -1082,6 +1082,177 @@ bool changeAllOccurrences(Database& db, const WeaponType& old, const WeaponType&
     
     return true;
 }
+bool changeAllOccurrences(Database& db, const Cartridge& old, const Cartridge& revised){
+    const Database snapshot { db };
+
+    db.deleteMetadataItem(old);
+    if(!db.addMetadataItem(revised)){
+        db = snapshot;
+        throw std::invalid_argument{
+            std::format("Failed to add Cartridge '{}'", revised.getName())
+        };
+    }
+
+    // Edit all Events
+    for (const auto& [key, event] : db.getEvents()){
+        std::vector<GunMetadata> toModify;
+
+        // Mark if changes need to be made
+        for(const auto& gunTrackingAmmoUsed : event.getGunsUsed() ){
+            if(gunTrackingAmmoUsed.getGunInfo().cartridge == old){
+                toModify.emplace_back(gunTrackingAmmoUsed.getGunInfo());
+            }
+        }
+
+        // Select GunTrackingAmmoUsed to be changed, copy it, and apply to Event
+        ShootingEvent& targetEvent { db.getEvent(key) };    
+        for(const GunMetadata& oldInfo : toModify){
+            GunTrackingAmmoUsed oldGunUsed { targetEvent.getGun(oldInfo) };
+
+            GunMetadata newInfo { oldInfo };
+            newInfo.cartridge = revised;
+
+            GunTrackingAmmoUsed newGunUsed { newInfo };
+
+            for(const auto& oldAmountOfAmmo : oldGunUsed.getAmmoUsed() ){
+                // Edit the Ammo Used cartridge here
+                AmmoMetadata newAmmoInfo { oldAmountOfAmmo.getAmmoInfo() };
+                newAmmoInfo.cartridge = revised;
+
+                AmountOfAmmo newAmountOfAmmo { newAmmoInfo, oldAmountOfAmmo.getAmount() };
+
+                if(!newGunUsed.addAmmoUsed(newAmountOfAmmo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Failed to copy revised Ammo '{}' to revised Gun '{}' for Event {}",
+                                newAmountOfAmmo.getAmmoInfo().name,
+                                newInfo.name,
+                                eventName(key)
+                            )
+                    };
+                }
+            }
+
+            targetEvent.removeGun(oldInfo);
+
+            if(!targetEvent.addGun(newGunUsed)){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to add revised GunTrackingAmmoUsed '{}' to Event {}",
+                            newInfo.name,
+                            eventName(key)
+                            )
+                };
+            }
+
+        }   // End modifying every GunUsed for the Event 
+
+    }   // End going through Events
+    
+
+    // Edit all Guns
+    {
+        std::vector<GunMetadata> toModify { };
+        for(const auto& [cartridge, map] : db.getArmory()){
+           if(cartridge == old){
+                for(const auto& [key, armoryGun] : map){
+                    toModify.emplace_back(armoryGun.getGunInfo());
+                }
+           }
+        }
+
+        for(const auto& oldGunInfo : toModify){
+            GunMetadata newGunInfo { oldGunInfo };
+            newGunInfo.cartridge = revised;
+
+            ArmoryGun newGun { newGunInfo };
+
+            ArmoryGun& oldGun { db.getGun(oldGunInfo) };
+
+            newGun.setActive(oldGun.isActive());
+
+            // Copy all Events
+            for(const ShootingEventMetadata& eventInfo : oldGun.getEventsUsed()){
+                if(!newGun.addEvent( db.getEvent(eventInfo) )){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Failed copying EventMetadata to revised Gun {}", newGunInfo.name)
+                    };
+                }
+            }
+
+            // Change Ammo Used Cartridges and copy to new gun
+            for(const auto& [key, oldAmountOfAmmo] : oldGun.getAmmoUsed()){
+                AmmoMetadata newAmmoInfo { oldAmountOfAmmo.getAmmoInfo() };
+                newAmmoInfo.cartridge = revised;
+
+                AmountOfAmmo newAmountOfAmmo { newAmmoInfo, oldAmountOfAmmo.getAmount() };
+
+                if(!newGun.addAmmoUsed(newAmountOfAmmo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Failed adding revised AmountOfAmmo to revised Gun {}", newGunInfo.name)
+                    };
+                }
+            }
+
+            db.deleteGun(oldGunInfo);
+            if(!db.addToArmory(newGun).wasAdded){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to add revised Gun '{}' to Armory", newGunInfo.name)
+                };
+            }
+        }
+    }   // GunMetadata toModify scope end
+
+    // Edit all Ammo
+    {
+        std::vector<AmmoMetadata> toModify;
+        for(const auto& [cartridge, map] : db.getStockpile()){
+           if(cartridge == old){
+                for(const auto& [key, stockpileAmmo] : map){
+                    toModify.emplace_back(stockpileAmmo.getAmmoInfo());
+                }
+           }
+        }
+
+        for(const auto& oldAmmoInfo : toModify){
+            AmmoMetadata newAmmoInfo { oldAmmoInfo };
+            newAmmoInfo.cartridge = revised;
+
+            StockpileAmmo newAmmo { newAmmoInfo };
+
+            StockpileAmmo& oldAmmo { db.getAmmo(oldAmmoInfo) };
+
+            newAmmo.addAmount(oldAmmo.getAmountOnHand() ); 
+            newAmmo.setActive(oldAmmo.isActive() );
+
+            for(const GunMetadata& oldGunInfo : oldAmmo.getGunsUsed()){
+                GunMetadata newGunInfo { oldGunInfo };
+                newGunInfo.cartridge = revised;
+
+                if(!newAmmo.addGun(newGunInfo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Failed to add revised Gun '{}' to revised StockpileAmmo '{}'", newGunInfo.name, newAmmoInfo.name)
+                    };
+                }
+            }
+
+            // Erase the old one
+            db.deleteFromStockpile(oldAmmoInfo);
+            if(!db.addToStockpile(newAmmo).wasAdded){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to add revised Ammo '{}' to Stockpile", newAmmoInfo.name)
+                };
+            }
+        }
+    }
+
+    return true;
+}
 
 
 }   // End SC namespace

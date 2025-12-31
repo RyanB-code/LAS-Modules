@@ -141,6 +141,17 @@ namespace Edit {
             ShooterCentral::WeaponType old        { };
             ShooterCentral::WeaponType revised    { };
     };
+    class Cartridge: public DatabaseEvent {
+        public:
+            Cartridge(const ShooterCentral::Cartridge& setOld, const ShooterCentral::Cartridge& setNew );
+            ~Cartridge() = default;
+
+            DATABASE_EVENT_FUNCTIONS(Cartridge)
+
+        private:
+            ShooterCentral::Cartridge old        { };
+            ShooterCentral::Cartridge revised    { };
+    };
 }   // Edit nameespce
 
 }   // End DatabaseEvents namespace
