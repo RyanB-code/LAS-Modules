@@ -560,7 +560,68 @@ Status Cartridge::execute (Database& db) {
         return Status { false };
     }
 }
+GunMetadata::GunMetadata(
+        const ShooterCentral::GunMetadata& setOld, 
+        const ShooterCentral::GunMetadata& setNew
+    ):
+        old     { setOld },
+        revised { setNew }
+{
 
+}
+Status GunMetadata::execute (Database& db) {
+    using namespace ShooterCentral::UI;
+
+    bool success { false };
+    try {
+        success = changeAllOccurrences(db, old, revised);
+    }
+    catch(std::invalid_argument& e){
+        auto bodyFunction = [e]() {
+            centerText("Failed to Edit Gun");
+            centerTextDisabled("(No changes were made)");
+
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::BulletText("%s", e.what());
+        };
+
+        CustomClosePopup popup { "Edit Gun Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Edit Gun failed" };
+    }
+
+    if(success){
+        SimpleClosePopup popup {"Gun Changed Successfully", "Gun was successfully changed"};
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        UIEvents::SetScreenData::Home resetBuffers1 { ScreenData::Home{ } };
+        UIEvents::SetScreenData::View resetBuffers2 { ScreenData::View{ } };
+        UIEvents::SetScreenData::Add  resetBuffers3 { ScreenData::Add{ } };
+        UIEvents::SetScreenData::Edit resetBuffers4 { ScreenData::Edit{ } };
+
+        pushEvent(&resetBuffers1);
+        pushEvent(&resetBuffers2);
+        pushEvent(&resetBuffers3);
+        pushEvent(&resetBuffers4);
+
+        return Status { true };
+    }
+    else{
+        SimpleClosePopup popup {"Edit Gun Failed", "An Unknown Error Occurred"};
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        return Status { false };
+    }
+}
 
 }   // Edit namespace
 

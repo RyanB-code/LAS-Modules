@@ -152,6 +152,17 @@ namespace Edit {
             ShooterCentral::Cartridge old        { };
             ShooterCentral::Cartridge revised    { };
     };
+    class GunMetadata: public DatabaseEvent {
+        public:
+            GunMetadata(const ShooterCentral::GunMetadata& setOld, const ShooterCentral::GunMetadata& setNew );
+            ~GunMetadata() = default;
+
+            DATABASE_EVENT_FUNCTIONS(GunMetadata)
+
+        private:
+            ShooterCentral::GunMetadata old        { };
+            ShooterCentral::GunMetadata revised    { };
+    };
 }   // Edit nameespce
 
 }   // End DatabaseEvents namespace

@@ -181,5 +181,7 @@ bool changeAllOccurrences(Database& db, const ShootingEventType& old, const Shoo
 bool changeAllOccurrences(Database& db, const WeaponType& old, const WeaponType& revised);
 bool changeAllOccurrences(Database& db, const Cartridge& old, const Cartridge& revised);
 
+bool changeAllOccurrences(Database& db, const GunMetadata& old, const GunMetadata& revised);
+
 
 }   // End SC namespace
