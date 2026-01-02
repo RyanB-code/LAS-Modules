@@ -82,7 +82,7 @@ void selectExistingItemWindow (
             centerTextDisabled("All Events");
             ImGui::Spacing();
             ImGui::Spacing();
-            Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), buffers.eventInfo, size);
+            Tables::Selectable::eventsWithNumGunsUsed(database.getEvents(), buffers.selectedEventInfo, size);
             break;
         case SubItem::EVENT_TYPE:
             centerTextDisabled("All Event Types");
@@ -96,7 +96,7 @@ void selectExistingItemWindow (
             centerTextDisabled("All Ammo");
             ImGui::Spacing();
             ImGui::Spacing();
-            Tables::Selectable::ammoMetadata(database.getStockpile(), buffers.ammoInfo, size); 
+            Tables::Selectable::ammoMetadata(database.getStockpile(), buffers.selectedAmmoInfo, size); 
             break;
         case SubItem::MANUFACTURER:
             centerTextDisabled("All Manufacturers");
@@ -110,7 +110,7 @@ void selectExistingItemWindow (
             centerTextDisabled("All Guns");
             ImGui::Spacing();
             ImGui::Spacing();
-            Tables::Selectable::gunMetadataWithRoundCount(database.getArmory(), buffers.gunInfo, size); 
+            Tables::Selectable::gunMetadataWithRoundCount(database.getArmory(), buffers.selectedGunInfo, size); 
             break;
         case SubItem::WEAPON_TYPE:
             centerTextDisabled("All Weapon Types");
@@ -135,6 +135,7 @@ void editItemWindow(
     static ScreenData::Edit::ItemBuffers lastBuffers { };
 
     bool selectedItemEmpty { true };
+    bool submitted { false };
 
     if(selectedItem != lastItem)
         resetText(data.metadataItemBuffer, MAX_CHAR_METADATA_ITEM);
@@ -151,8 +152,17 @@ void editItemWindow(
 
             lastBuffers.eventType = data.eventType;
 
-            if(data.eventType != EMPTY_EVENT_TYPE)
+            if(data.eventType != EMPTY_EVENT_TYPE){
                 selectedItemEmpty = false;
+
+                editMetadataItem(
+                        data.metadataItemOld, 
+                        data.metadataItemBuffer, 
+                        MAX_CHAR_METADATA_ITEM,
+                        submitted,
+                        screenData.buttonSize
+                    ); 
+            }
 
             break;
         case SubItem::LOCATION: 
@@ -161,8 +171,17 @@ void editItemWindow(
 
             lastBuffers.location = data.location;
 
-            if(data.location != EMPTY_LOCATION)
+            if(data.location != EMPTY_LOCATION){
                 selectedItemEmpty = false;
+
+                editMetadataItem(
+                        data.metadataItemOld, 
+                        data.metadataItemBuffer, 
+                        MAX_CHAR_METADATA_ITEM,
+                        submitted,
+                        screenData.buttonSize
+                    ); 
+            }
 
             break;
         case SubItem::AMMO:
@@ -174,9 +193,17 @@ void editItemWindow(
 
             lastBuffers.manufacturer = data.manufacturer;
 
-            if(data.manufacturer != EMPTY_MANUFACTURER)
+            if(data.manufacturer != EMPTY_MANUFACTURER){
                 selectedItemEmpty = false;
 
+                editMetadataItem(
+                        data.metadataItemOld, 
+                        data.metadataItemBuffer, 
+                        MAX_CHAR_METADATA_ITEM,
+                        submitted,
+                        screenData.buttonSize
+                    ); 
+            }
             break;
         case SubItem::CARTRIDGE:
             if(data.cartridge != lastBuffers.cartridge)
@@ -184,12 +211,39 @@ void editItemWindow(
 
             lastBuffers.cartridge = data.cartridge;
 
-            if(data.cartridge != EMPTY_CARTRIDGE)
+            if(data.cartridge != EMPTY_CARTRIDGE){
                 selectedItemEmpty = false;
+
+                editMetadataItem(
+                        data.metadataItemOld, 
+                        data.metadataItemBuffer, 
+                        MAX_CHAR_METADATA_ITEM,
+                        submitted,
+                        screenData.buttonSize
+                    ); 
+            }
 
             break;
         case SubItem::GUN:
+            if(data.selectedGunInfo != lastBuffers.selectedGunInfo){
+                resetText(data.nameBuffer, MAX_CHAR_METADATA_ITEM, data.selectedGunInfo.name.c_str());
+                data.gunInfoBuffer.weaponType = data.selectedGunInfo.weaponType;
+            }
 
+            lastBuffers.selectedGunInfo = data.selectedGunInfo;
+
+            if(data.selectedGunInfo != EMPTY_GUN_METADATA){
+                selectedItemEmpty = false;
+                editGun(
+                        data.nameBuffer,
+                        MAX_CHAR_METADATA_ITEM,
+                        data.selectedGunInfo, 
+                        data.gunInfoBuffer, 
+                        database.getWeaponTypes(),
+                        submitted, 
+                        screenData.buttonSize
+                    );
+            }
             break;
         case SubItem::WEAPON_TYPE:
             if(data.weaponType != lastBuffers.weaponType)
@@ -197,8 +251,17 @@ void editItemWindow(
 
             lastBuffers.weaponType = data.weaponType;
 
-            if(data.weaponType != EMPTY_WEAPON_TYPE)
+            if(data.weaponType != EMPTY_WEAPON_TYPE){
                 selectedItemEmpty = false;
+
+                editMetadataItem(
+                        data.metadataItemOld, 
+                        data.metadataItemBuffer, 
+                        MAX_CHAR_METADATA_ITEM,
+                        submitted,
+                        screenData.buttonSize
+                    ); 
+            }
 
             break;
         default:
@@ -212,15 +275,6 @@ void editItemWindow(
         return;
     }
     
-    bool submitted { false };
-    editMetadataItem(
-            data.metadataItemOld, 
-            data.metadataItemBuffer, 
-            MAX_CHAR_METADATA_ITEM,
-            submitted,
-            screenData.buttonSize
-        ); 
-
     if(!submitted)
         return;
 
@@ -257,6 +311,12 @@ void editItemWindow(
             }
             break;
         case SubItem::GUN:
+            data.gunInfoBuffer.name         = data.nameBuffer;
+            data.gunInfoBuffer.cartridge    = data.selectedGunInfo.cartridge;
+            {
+                DatabaseEvents::Edit::GunMetadata edit { data.selectedGunInfo, data.gunInfoBuffer };
+                pushEvent(&edit);
+            }
 
             break;
         case SubItem::WEAPON_TYPE:
@@ -280,13 +340,6 @@ void editMetadataItem (
         const ImVec2& buttonSize
     )
 {
-    ImVec2 childSizes { ImGui::GetContentRegionAvail().x / 2 - 5, 100 };
-
-    // HERE
-    // for this, edit all occurrences should be default since only editing new,
-    // the old metadata item will still be added since its present in old saved items.
-    // Unless I add inactive bool to metadata items
-
     ImGui::Indent(20);
     ImGui::Text("Directions");
     ImGui::BulletText("Edit information for the selected category");
@@ -311,6 +364,57 @@ void editMetadataItem (
     
     ImGui::Dummy( ImVec2 { 0, 50} );
     submitted = centerButton("Submit", buttonSize);    
+}
+void editGun(
+        char* nameBuffer,
+        size_t size,
+        const GunMetadata& oldInfo,
+        GunMetadata& newInfo,
+        const std::set<WeaponType>& weaponTypes,
+        bool& submitted,
+        const ImVec2& buttonSize
+    )
+{
+    ImGui::Indent(20);
+    ImGui::Text("Directions");
+    ImGui::BulletText("Edit information a Gun");
+    ImGui::BulletText("You CANNOT edit the Cartridge for the Gun only. You must edit entire Cartridges themselves");
+    ImGui::BulletText("This will change all occurrences for EVERY use of the item");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made");
+    ImGui::Unindent();
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    // View and change info below
+    ImGui::Indent(20);
+    ImGui::BeginGroup();
+    ImGui::TextDisabled("Name:            ");
+    ImGui::SameLine();
+    ImGui::Text("%s", oldInfo.name.c_str());
+
+    ImGui::SameLine(250);
+    ImGui::SetNextItemWidth(200);
+    ImGui::InputText("##New Name", nameBuffer, size);
+
+    ImGui::TextDisabled("Weapon Type:     ");
+    ImGui::SameLine();
+    ImGui::Text("%s", oldInfo.weaponType.getName()); 
+
+    ImGui::SameLine(250);
+    ImGui::SetNextItemWidth(200);
+    ComboBoxes::weaponTypes(weaponTypes, newInfo.weaponType);
+
+    ImGui::TextDisabled("Cartridge:       ");
+    ImGui::SameLine();
+    ImGui::Text("%s", oldInfo.cartridge.getName());
+
+    ImGui::SameLine(250);
+    ImGui::TextDisabled("(Cannot Change Cartridge)");
+    ImGui::EndGroup();
+        
+    ImGui::Dummy( ImVec2 { 0, 50} );
+    submitted = centerButton("Submit", buttonSize);    
+
 }
 
 }   // End Edit namespace
