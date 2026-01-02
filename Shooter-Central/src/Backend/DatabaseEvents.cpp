@@ -622,7 +622,68 @@ Status GunMetadata::execute (Database& db) {
         return Status { false };
     }
 }
+AmmoMetadata::AmmoMetadata(
+        const ShooterCentral::AmmoMetadata& setOld, 
+        const ShooterCentral::AmmoMetadata& setNew
+    ):
+        old     { setOld },
+        revised { setNew }
+{
 
+}
+Status AmmoMetadata::execute (Database& db) {
+    using namespace ShooterCentral::UI;
+
+    bool success { false };
+    try {
+        success = changeAllOccurrences(db, old, revised);
+    }
+    catch(std::invalid_argument& e){
+        auto bodyFunction = [e]() {
+            centerText("Failed to Edit Ammo");
+            centerTextDisabled("(No changes were made)");
+
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::BulletText("%s", e.what());
+        };
+
+        CustomClosePopup popup { "Edit Ammo Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Edit Ammo failed" };
+    }
+
+    if(success){
+        SimpleClosePopup popup {"Ammo Changed Successfully", "Ammo was successfully changed"};
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        UIEvents::SetScreenData::Home resetBuffers1 { ScreenData::Home{ } };
+        UIEvents::SetScreenData::View resetBuffers2 { ScreenData::View{ } };
+        UIEvents::SetScreenData::Add  resetBuffers3 { ScreenData::Add{ } };
+        UIEvents::SetScreenData::Edit resetBuffers4 { ScreenData::Edit{ } };
+
+        pushEvent(&resetBuffers1);
+        pushEvent(&resetBuffers2);
+        pushEvent(&resetBuffers3);
+        pushEvent(&resetBuffers4);
+
+        return Status { true };
+    }
+    else{
+        SimpleClosePopup popup {"Edit Ammo Failed", "An Unknown Error Occurred"};
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        return Status { false };
+    }
+}
 }   // Edit namespace
 
 }   // End DatabaseEvents namespace

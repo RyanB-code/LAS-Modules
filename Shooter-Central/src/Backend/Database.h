@@ -182,6 +182,7 @@ bool changeAllOccurrences(Database& db, const WeaponType& old, const WeaponType&
 bool changeAllOccurrences(Database& db, const Cartridge& old, const Cartridge& revised);
 
 bool changeAllOccurrences(Database& db, const GunMetadata& old, const GunMetadata& revised);
+bool changeAllOccurrences(Database& db, const AmmoMetadata& old, const AmmoMetadata& revised);
 
 
 }   // End SC namespace

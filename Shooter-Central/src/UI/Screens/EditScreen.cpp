@@ -185,7 +185,26 @@ void editItemWindow(
 
             break;
         case SubItem::AMMO:
+            if(data.selectedAmmoInfo != lastBuffers.selectedAmmoInfo){
+                resetText(data.nameBuffer, MAX_CHAR_METADATA_ITEM, data.selectedAmmoInfo.name.c_str());
+                data.ammoInfoBuffer.manufacturer = data.selectedAmmoInfo.manufacturer;
+                data.ammoInfoBuffer.grainWeight = data.selectedAmmoInfo.grainWeight;
+            }
 
+            lastBuffers.selectedAmmoInfo = data.selectedAmmoInfo;
+
+            if(data.selectedAmmoInfo != EMPTY_AMMO_METADATA){
+                selectedItemEmpty = false;
+                editAmmo(
+                        data.nameBuffer,
+                        MAX_CHAR_METADATA_ITEM,
+                        data.selectedAmmoInfo, 
+                        data.ammoInfoBuffer, 
+                        database.getManufacturers(),
+                        submitted, 
+                        screenData.buttonSize
+                    );
+            }
             break;
         case SubItem::MANUFACTURER:
             if(data.manufacturer != lastBuffers.manufacturer)
@@ -296,6 +315,12 @@ void editItemWindow(
             }
            break;
         case SubItem::AMMO:
+            data.ammoInfoBuffer.name        = data.nameBuffer;
+            data.ammoInfoBuffer.cartridge   = data.selectedAmmoInfo.cartridge;
+            {
+                DatabaseEvents::Edit::AmmoMetadata edit { data.selectedAmmoInfo, data.ammoInfoBuffer };
+                pushEvent(&edit);
+            }
 
             break;
         case SubItem::MANUFACTURER:
@@ -416,6 +441,62 @@ void editGun(
     submitted = centerButton("Submit", buttonSize);    
 
 }
+void editAmmo(
+        char* nameBuffer,
+        size_t size,
+        const AmmoMetadata& oldInfo,
+        AmmoMetadata& newInfo,
+        const std::set<Manufacturer>& manufacturers,
+        bool& submitted,
+        const ImVec2& buttonSize
+    )
+{
+    ImGui::Indent(20);
+    ImGui::Text("Directions");
+    ImGui::BulletText("Edit information an Ammo Type");
+    ImGui::BulletText("You CANNOT edit the Cartridge for the Ammo only. You must edit entire Cartridges themselves");
+    ImGui::BulletText("This will change all occurrences for EVERY use of the item");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made");
+    ImGui::Unindent();
 
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    // View and change info below
+    ImGui::Indent(20);
+    ImGui::BeginGroup();
+
+    ImGui::TextDisabled("Name:            ");
+    ImGui::SameLine();
+    ImGui::Text("%s", oldInfo.name.c_str());
+    ImGui::SameLine(250);
+    ImGui::SetNextItemWidth(200);
+    ImGui::InputText("##New Name", nameBuffer, size);
+
+    ImGui::TextDisabled("Manufacturer:    ");
+    ImGui::SameLine();
+    ImGui::Text("%s", oldInfo.manufacturer.getName()); 
+    ImGui::SameLine(250);
+    ImGui::SetNextItemWidth(200);
+    ComboBoxes::manufacturers(manufacturers, newInfo.manufacturer);
+
+    ImGui::TextDisabled("Grain Weight:    "); 
+    ImGui::SameLine();
+    ImGui::Text("%d", oldInfo.grainWeight); 
+    ImGui::SameLine(250);
+    ImGui::SetNextItemWidth(200);
+    ImGui::InputInt("##Grain Weight", &newInfo.grainWeight, 1, 5);
+
+    ImGui::TextDisabled("Cartridge:       ");
+    ImGui::SameLine();
+    ImGui::Text("%s", oldInfo.cartridge.getName());
+    ImGui::SameLine(250);
+    ImGui::TextDisabled("(Cannot Change Cartridge)");
+
+    ImGui::EndGroup();
+        
+    ImGui::Dummy( ImVec2 { 0, 50} );
+    submitted = centerButton("Submit", buttonSize);    
+
+}
 }   // End Edit namespace
 

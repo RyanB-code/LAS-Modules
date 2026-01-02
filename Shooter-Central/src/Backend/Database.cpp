@@ -1353,6 +1353,104 @@ bool changeAllOccurrences(Database& db, const GunMetadata& old, const GunMetadat
 
     return true;
 }
+bool changeAllOccurrences(Database& db, const AmmoMetadata& old, const AmmoMetadata& revised){
+    const Database snapshot { db };
+
+    // Edit stockpile
+    if(!db.addToStockpile(revised).wasAdded){
+        db = snapshot;
+        throw std::invalid_argument{
+            std::format("Failed to add revised AmmoMetadata '{}' to Stockpile", revised.name)
+        };
+    }
+
+    StockpileAmmo& newAmmo { db.getAmmo(revised) };
+
+    {
+        StockpileAmmo& oldAmmo { db.getAmmo(old) };
+        newAmmo.setActive( oldAmmo.isActive() );
+        newAmmo.addAmount( oldAmmo.getAmountOnHand() );
+
+        for(const GunMetadata& gunInfo : oldAmmo.getGunsUsed()){
+            if(!newAmmo.addGun(gunInfo)){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to copy Gun '{}' to revised StockpileAmmo '{}'", gunInfo.name, revised.name)
+                };
+            }
+        }
+    }
+    
+
+    // Edit all Events
+    for (const auto& [key, event] : db.getEvents()){
+        for(const auto& gunTrackingAmmoUsed : event.getGunsUsed() ){
+
+            // Skip if cartridges dont match
+            if(gunTrackingAmmoUsed.getGunInfo().cartridge != old.cartridge)
+                continue;
+
+            // Skip if the gun hasnt used the old ammo
+            if(!gunTrackingAmmoUsed.hasUsedAmmo(old))
+                continue;
+
+            // Find the old ammo and copy
+            AmountOfAmmo newAmountOfAmmo { revised };
+            for(const auto& oldAmountOfAmmo : gunTrackingAmmoUsed.getAmmoUsed() ){
+                if(oldAmountOfAmmo.getAmmoInfo() != old)
+                    continue;
+                
+                newAmountOfAmmo.addAmount( oldAmountOfAmmo.getAmount() );
+            }
+
+            // Apply edit to the Gun for the Event
+            ShootingEvent&          targetEvent { db.getEvent(event.getInfo()) };
+            GunTrackingAmmoUsed&    targetGun   { targetEvent.getGun(gunTrackingAmmoUsed.getGunInfo()) };
+
+            targetGun.removeAmmoUsed(old);
+            if(!targetGun.addAmmoUsed(newAmountOfAmmo)){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to revise AmmoMetadata '{}' used in Event {}", revised.name, eventName(targetEvent.getInfo()))
+                };
+            }
+        }   // End guns for event
+    }   // End going through Events
+
+
+    // Edit guns
+    for(const auto& [cartridge, map] : db.getArmory()){
+        if(cartridge != old.cartridge)
+            continue;
+            
+        for(const auto& [key, armoryGun] : map){
+            if(!armoryGun.hasUsedAmmo(old))
+                continue;
+
+            // Find the old ammo and copy
+            AmountOfAmmo newAmountOfAmmo { revised };
+            for(const auto& [key, oldAmountOfAmmo] : armoryGun.getAmmoUsed() ){
+                if(oldAmountOfAmmo.getAmmoInfo() != old)
+                    continue;
+                
+                newAmountOfAmmo.addAmount( oldAmountOfAmmo.getAmount() );
+            }
+
+            // Apply the change
+            ArmoryGun& targetGun { db.getGun(armoryGun.getGunInfo()) };
+
+            targetGun.removeAmmoUsed(old);
+            if(!targetGun.addAmmoUsed(newAmountOfAmmo)){
+                db = snapshot;
+                throw std::invalid_argument{
+                    std::format("Failed to revise AmmoMetadata '{}' in history for Gun '{}'", revised.name, targetGun.getGunInfo().name)
+                };
+            }
+        }
+    }
+
+    return true;
+}
 
 
 }   // End SC namespace

@@ -44,6 +44,15 @@ namespace ShooterCentral::UI::Edit {
             bool& submitted,
             const ImVec2& buttonSize
         );
+    void editAmmo(
+            char* nameBuffer,
+            size_t size,
+            const AmmoMetadata& oldInfo,
+            AmmoMetadata& newInfo,
+            const std::set<Manufacturer>& manufacturers,
+            bool& submitted,
+            const ImVec2& buttonSize
+        );
 
 }   // End SC::UI::ScreenData
 
