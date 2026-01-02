@@ -321,6 +321,7 @@ struct Edit{
     struct ItemBuffers{
         char metadataItemBuffer[MAX_CHAR_METADATA_ITEM] = "";   // Holds what new text will be
         char metadataItemOld[MAX_CHAR_METADATA_ITEM]    = "";   // Shows what the old item was 
+        char nameBuffer[MAX_CHAR_METADATA_ITEM] = "";
 
         Cartridge           cartridge       { };
         Manufacturer        manufacturer    { };
@@ -328,9 +329,13 @@ struct Edit{
         ShootingEventType   eventType       { };
         WeaponType          weaponType      { };
         
-        ShootingEventMetadata   eventInfo   { };
-        GunMetadata             gunInfo     { };
-        AmmoMetadata            ammoInfo    { };
+        ShootingEventMetadata   selectedEventInfo   { };
+        AmmoMetadata            selectedAmmoInfo    { };
+        GunMetadata             selectedGunInfo     { };
+
+        ShootingEventMetadata   eventInfoBuffer     { };
+        GunMetadata             gunInfoBuffer       { };
+        AmmoMetadata            ammoInfoBuffer      { };
         
     };
     static constexpr ImVec2 buttonSize      { 100, 40 };
