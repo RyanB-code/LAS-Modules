@@ -53,6 +53,21 @@ namespace ShooterCentral::UI::Edit {
             bool& submitted,
             const ImVec2& buttonSize
         );
+    void editEvent(
+            ScreenData::Edit::ItemBuffers& data, 
+            size_t notesSize,            
+            const std::set<Location>& locations,
+            const std::set<ShootingEventType>& eventTypes,
+            const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& stockpile,
+            const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory
+        );
+    void eventMetadataWindow(
+            ScreenData::Edit::ItemBuffers::EventMetadataBuffers& data,
+            const ShootingEventMetadata& oldInfo,
+            size_t notesSize,
+            const std::set<Location>&,
+            const std::set<ShootingEventType>&
+        );
 
 }   // End SC::UI::ScreenData
 

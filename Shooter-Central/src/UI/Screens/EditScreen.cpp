@@ -144,7 +144,30 @@ void editItemWindow(
 
     switch(selectedItem){
         case SubItem::EVENT:
+            if(data.selectedEventInfo != lastBuffers.selectedEventInfo){
+                resetText(data.eventBuffer.notes, ShootingEventMetadata::MAX_CHAR_NOTES, data.selectedEventInfo.notes.c_str());
+
+                data.eventBuffer.infoBuffer = data.selectedEventInfo;
+                data.eventBuffer.day = static_cast<int>(static_cast<unsigned int>(data.selectedEventInfo.date.day()));
+                data.eventBuffer.month = static_cast<int>(static_cast<unsigned int>(data.selectedEventInfo.date.month()));
+                data.eventBuffer.year = static_cast<int>(data.selectedEventInfo.date.year());
+            }
+
+            lastBuffers.selectedEventInfo = data.selectedEventInfo;
             
+            if(data.selectedEventInfo != EMPTY_EVENT_METADATA){
+                selectedItemEmpty = false;
+
+                editEvent(
+                        data,
+                        ShootingEventMetadata::MAX_CHAR_NOTES,
+                        database.getLocations(),
+                        database.getEventTypes(),
+                        database.getStockpile(),
+                        database.getArmory()
+                    );
+            }
+
             break;
         case SubItem::EVENT_TYPE:
             if(data.eventType != lastBuffers.eventType)
@@ -498,5 +521,127 @@ void editAmmo(
     submitted = centerButton("Submit", buttonSize);    
 
 }
+void editEvent(
+        ScreenData::Edit::ItemBuffers& data, 
+        size_t notesSize,            
+        const std::set<Location>& locations,
+        const std::set<ShootingEventType>& eventTypes,
+        const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& stockpile,
+        const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory
+    )
+{
+    ImGui::Indent(20);
+    ImGui::Text("Directions");
+    ImGui::BulletText("Edit Event information");
+    ImGui::BulletText("Must save before exiting otherwise changes will not be made");
+    ImGui::Unindent();
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+
+    if(ImGui::BeginTabBar("Edit Event Tabs")){
+        if(ImGui::BeginTabItem("Event Information")){
+            eventMetadataWindow(
+                    data.eventBuffer, 
+                    data.selectedEventInfo, 
+                    notesSize, 
+                    locations, 
+                    eventTypes
+                ); 
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Guns and Ammo")){
+            //gunsAndAmmoWindow(data, data.event, stockpile, armory); 
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("Review And Submit")){
+            //review(data.reviewWindow, data.event); 
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
+}
+void eventMetadataWindow(
+        ScreenData::Edit::ItemBuffers::EventMetadataBuffers& data,
+        const ShootingEventMetadata& oldInfo,
+        size_t notesSize,
+        const std::set<Location>& locations,
+        const std::set<ShootingEventType>& eventTypes
+    ) 
+{
+    using namespace std::chrono;
+
+    ImGui::Dummy(ImVec2{0.0f, 50.0f});
+
+    ImGui::Indent(20);
+    ImGui::Text("Location:");
+    ImGui::SameLine(150);
+    ImGui::TextDisabled("%s", oldInfo.location.getName());
+    ImGui::SameLine(400);
+    ImGui::SetNextItemWidth(200);
+    ComboBoxes::locations(locations, data.infoBuffer.location);
+
+    ImGui::Text("Event Type:");
+    ImGui::SameLine(150);
+    ImGui::TextDisabled("%s", oldInfo.eventType.getName());
+    ImGui::SameLine(400);
+    ImGui::SetNextItemWidth(200);
+    ComboBoxes::eventTypes(eventTypes, data.infoBuffer.eventType);
+
+    ImGui::Text("Date:");
+    ImGui::SameLine(150);
+    ImGui::TextDisabled("%s", printDate(oldInfo.date).c_str());
+    ImGui::SameLine(400);
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Input Day", &data.day);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Input Month", &data.month);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputInt("##Input Year", &data.year);
+
+    // Button to auto fill today's date
+    ImGui::SameLine(0, 30);
+    if(ImGui::Button("Today", ImVec2(75, 20))){
+        const std::chrono::zoned_time now {std::chrono::current_zone(), std::chrono::system_clock::now( ) };
+
+        const std::chrono::year_month_day ymd{std::chrono::floor<std::chrono::days>(now.get_local_time())};
+        data.day = static_cast<unsigned>(ymd.day());
+        data.month = static_cast<unsigned>(ymd.month());
+        data.year = static_cast<int>(ymd.year());
+    }
+    // Grayed out details, approximate centers of text box did the trick
+    ImGui::SetCursorPosX(400);
+    ImGui::TextDisabled("(Day)");
+    ImGui::SameLine(0, 70);
+    ImGui::TextDisabled("(Month)");
+    ImGui::SameLine(0, 70);
+    ImGui::TextDisabled("(Year)");
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("Notes:");
+    ImGui::SameLine(400);
+    ImGui::TextDisabled("(May be left blank)");
+
+    if(ImGui::BeginChild("Old Notes", ImVec2{350, 100}, ImGuiChildFlags_Border)){
+        ImGui::TextWrapped("%s", oldInfo.notes.c_str());
+    }
+    ImGui::EndChild();
+ 
+    ImGui::SameLine(400);
+    ImGui::InputTextMultiline(
+            "##Revised Notes", 
+            data.notes, 
+            notesSize, 
+            ImVec2{600, 100}, 
+            ImGuiInputTextFlags_CtrlEnterForNewLine
+        );
+
+    ImGui::Unindent();
+}
+
 }   // End Edit namespace
 

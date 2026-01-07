@@ -329,13 +329,25 @@ struct Edit{
         ShootingEventType   eventType       { };
         WeaponType          weaponType      { };
         
-        ShootingEventMetadata   selectedEventInfo   { };
         AmmoMetadata            selectedAmmoInfo    { };
         GunMetadata             selectedGunInfo     { };
 
-        ShootingEventMetadata   eventInfoBuffer     { };
         GunMetadata             gunInfoBuffer       { };
         AmmoMetadata            ammoInfoBuffer      { };
+
+
+        ShootingEventMetadata   selectedEventInfo   { };
+        struct EventMetadataBuffers{
+            char notes[ShootingEventMetadata::MAX_CHAR_NOTES] = "";
+
+            int day     { 0 };
+            int month   { 0 };
+            int year    { 0 };
+
+            ShootingEventMetadata infoBuffer { };
+        };
+
+        EventMetadataBuffers eventBuffer { };
         
     };
     static constexpr ImVec2 buttonSize      { 100, 40 };
