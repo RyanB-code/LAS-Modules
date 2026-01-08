@@ -765,6 +765,8 @@ void EventWindow::gunsAndAmmoWindow(
         event.removeGun(data.selectedGun);
         data.selectedGun    = EMPTY_GUN_METADATA;
         data.selectedAmmo   = EMPTY_AMMO_METADATA; 
+        data.selectedGunValid = false;
+        data.selectedAmmoValid = false;
     }
     
     if(!data.verticalLayout)
@@ -784,13 +786,9 @@ void EventWindow::gunsAndAmmoWindow(
         );
     if(removeAmmo){
         event.getGun(data.selectedGun).removeAmmoUsed(data.selectedAmmo);
-
         data.selectedAmmo = EMPTY_AMMO_METADATA;
         data.selectedAmmoValid = false;
-
-        ImGui::BeginDisabled();
     }
-
 
     
     if(!data.verticalLayout)
