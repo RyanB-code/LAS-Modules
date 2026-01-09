@@ -417,6 +417,20 @@ bool ArmoryGun::addAmmoUsed(const AmountOfAmmo& addAmmo) {
      
     return false;
 }
+bool ArmoryGun::removeAmountOfAmmo (const AmountOfAmmo& ammo){
+   if(!ammoUsed.contains(ammo.getAmmoInfo()))
+       return false;
+
+   AmountOfAmmo& targetAmountOfAmmo { ammoUsed.at(ammo.getAmmoInfo()) };
+
+   targetAmountOfAmmo.addAmount(ammo.getAmount() * -1 );
+
+   if(targetAmountOfAmmo.getAmount() <= 0)
+       ammoUsed.erase(ammo.getAmmoInfo());
+
+   return true;
+}
+
 bool ArmoryGun::removeAmmoUsed(const AmmoMetadata& ammo){
     if(!ammoUsed.contains(ammo))
         return true;

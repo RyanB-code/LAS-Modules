@@ -229,6 +229,7 @@ public:
     int totalAmmoTypesUsed()    const;
 
     bool addAmmoUsed    (const AmountOfAmmo& ammo);
+    bool removeAmountOfAmmo (const AmountOfAmmo& ammo);
     bool removeAmmoUsed (const AmmoMetadata& ammo);
     bool hasUsedAmmo    (const AmmoMetadata& ammo) const;
 
