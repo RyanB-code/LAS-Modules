@@ -423,7 +423,8 @@ bool ArmoryGun::removeAmountOfAmmo (const AmountOfAmmo& ammo){
 
    AmountOfAmmo& targetAmountOfAmmo { ammoUsed.at(ammo.getAmmoInfo()) };
 
-   targetAmountOfAmmo.addAmount(ammo.getAmount() * -1 );
+   targetAmountOfAmmo.addAmount( -ammo.getAmount() );
+   roundCount -= ammo.getAmount();
 
    if(targetAmountOfAmmo.getAmount() <= 0)
        ammoUsed.erase(ammo.getAmmoInfo());
@@ -536,7 +537,6 @@ const GunTrackingAmmoUsed& ShootingEvent::getGun (const GunMetadata& gun) const{
             std::format("ShootingEvent::getGun(), no GunTrackingAmmoUsed named [{}] found", gun.name)
         }; 
 }
-
 std::string ShootingEvent::printDate() const{
     return std::format("{:%Od %b %Y}", eventInfo.date);
 }
