@@ -536,7 +536,7 @@ void EventWindow::eventMetadataWindow(
     if(submit){
         data.triedToVerifyEventInfo = true;
 
-        ymd date { year{data.year}, month{data.month}, day{data.day} };
+        ymd date { year{data.year}, month{ static_cast<unsigned int>(data.month)}, day{static_cast<unsigned int>(data.day)} };
 
         if(verifyMetadata(data.selectedLocation, data.selectedET, date) ){
             data.triedToVerifyEventInfo = false;
