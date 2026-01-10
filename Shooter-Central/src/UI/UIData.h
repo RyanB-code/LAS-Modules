@@ -335,22 +335,65 @@ struct Edit{
         GunMetadata             gunInfoBuffer       { };
         AmmoMetadata            ammoInfoBuffer      { };
 
-
+        
         ShootingEventMetadata   selectedEventInfo   { };
-        struct EventMetadataBuffers{
-            char notes[ShootingEventMetadata::MAX_CHAR_NOTES] = "";
+        struct Event{
+            struct MetadataWindow{
+                char notes[ShootingEventMetadata::MAX_CHAR_NOTES] = "";
 
-            int day     { 0 };
-            int month   { 0 };
-            int year    { 0 };
+                int day     { 0 };
+                int month   { 0 };
+                int year    { 0 };
 
-            ShootingEventMetadata infoBuffer { };
+                Location          location  { };
+                ShootingEventType eventType { };
+            };
+            struct GunsAndAmmoWindow {
+                struct AddGunWindow {
+                    GunMetadata     selectedGun     { };
+
+                    bool selectedGunValid   { false };
+
+                    static constexpr ImVec2 buttonSize { 100, 40 };
+                };
+                struct AddAmmoWindow {
+                    AmmoMetadata selectedAmmo { };
+                    int amountBuffer { 0 };
+
+                    bool isAmountOfAmmoValid { false };
+                    static constexpr ImVec2 buttonSize { 100, 40 };
+                };
+
+                static constexpr ImVec2 buttonSize          { 100, 40 };
+                static constexpr ImVec2 minWinSize          { 400, 400 };
+                static constexpr float  minTableWidth       { 300 };
+                static constexpr float  maxTableWidth       { 800 };     
+
+                AddAmmoWindow   addAmmoWindow   { };
+                AddGunWindow    addGunWindow    { };
+
+                GunMetadata    selectedGun     { };
+                AmmoMetadata   selectedAmmo    { };
+
+                bool verticalLayout     { false };
+                bool selectedGunValid   { false };
+                bool selectedAmmoValid  { false };
+               
+                ImVec2 mainWindowSize   { minWinSize };
+                ImVec2 viewWindowSize   { minWinSize };
+                ImVec2 mainTableSize    { minTableWidth, 400 };
+                ImVec2 viewTableSize    { minTableWidth, 400 };
+            };
+            ShootingEvent buffer { };
+
+            MetadataWindow metadataWindow;
+            GunsAndAmmoWindow gunsAndAmmoWindow;
         };
 
-        EventMetadataBuffers eventBuffer { };
+        Event eventBuffer { };
         
     };
-    static constexpr ImVec2 buttonSize      { 100, 40 };
+    static constexpr ImVec2 buttonSize      { 150, 40 };
     static constexpr ImVec2 minWinSize      { 400, 600 };
     static constexpr float  minTableWidth   { 300 };
     static constexpr float  maxTableWidth   { 800 };     

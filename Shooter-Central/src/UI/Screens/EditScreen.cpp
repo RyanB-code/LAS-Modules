@@ -128,7 +128,6 @@ void editItemWindow(
         SubItem selectedItem
     )
 {
-
     ScreenData::Edit::ItemBuffers& data { screenData.itemBuffers };
 
     static SubItem lastItem { SubItem::NONE };
@@ -137,19 +136,22 @@ void editItemWindow(
     bool selectedItemEmpty { true };
     bool submitted { false };
 
-    if(selectedItem != lastItem)
-        resetText(data.metadataItemBuffer, MAX_CHAR_METADATA_ITEM);
+    if(selectedItem != lastItem) {
+        lastBuffers = ScreenData::Edit::ItemBuffers { };
+        data = ScreenData::Edit::ItemBuffers { };
+    }
     
     lastItem = selectedItem;
 
     switch(selectedItem){
         case SubItem::EVENT:
             if(data.selectedEventInfo != lastBuffers.selectedEventInfo){
-                resetText(data.eventBuffer.metadataWindow.notes, ShootingEventMetadata::MAX_CHAR_NOTES, data.selectedEventInfo.notes.c_str());
-
                 data.eventBuffer.buffer = database.getEvents().at(data.selectedEventInfo);
+                data.eventBuffer.gunsAndAmmoWindow = ScreenData::Edit::ItemBuffers::Event::GunsAndAmmoWindow { };
 
-                data.eventBuffer.metadataWindow.infoBuffer = data.selectedEventInfo;
+                resetText(data.eventBuffer.metadataWindow.notes, ShootingEventMetadata::MAX_CHAR_NOTES, data.selectedEventInfo.notes.c_str());
+                data.eventBuffer.metadataWindow.location = data.selectedEventInfo.location;
+                data.eventBuffer.metadataWindow.eventType = data.selectedEventInfo.eventType;
                 data.eventBuffer.metadataWindow.day = static_cast<int>(static_cast<unsigned int>(data.selectedEventInfo.date.day()));
                 data.eventBuffer.metadataWindow.month = static_cast<int>(static_cast<unsigned int>(data.selectedEventInfo.date.month()));
                 data.eventBuffer.metadataWindow.year = static_cast<int>(data.selectedEventInfo.date.year());
@@ -167,6 +169,7 @@ void editItemWindow(
                         database.getEventTypes(),
                         database.getStockpile(),
                         database.getArmory(),
+                        submitted,
                         screenData.buttonSize
                     );
             }
@@ -326,7 +329,23 @@ void editItemWindow(
     // Submitted, edit the information
     switch(selectedItem){
         case SubItem::EVENT:
-            
+            {
+                ShootingEventMetadata infoBuffer { 
+                    std::string{data.eventBuffer.metadataWindow.notes},
+                    data.eventBuffer.metadataWindow.location,
+                    data.eventBuffer.metadataWindow.eventType,
+                    ymd  { 
+                            std::chrono::year    { data.eventBuffer.metadataWindow.year}, 
+                            std::chrono::month   { static_cast<unsigned int>(data.eventBuffer.metadataWindow.month)}, 
+                            std::chrono::day     { static_cast<unsigned int>(data.eventBuffer.metadataWindow.day)} 
+                        }
+                };
+
+                data.eventBuffer.buffer.setInfo ( infoBuffer );
+
+                DatabaseEvents::Edit::Event edit { data.selectedEventInfo, data.eventBuffer.buffer  };
+                pushEvent(&edit);
+            }
             break;
         case SubItem::EVENT_TYPE:
             {
@@ -531,15 +550,14 @@ void editEvent(
         const std::set<ShootingEventType>& eventTypes,
         const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& stockpile,
         const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+        bool& submitted,
         const ImVec2& buttonSize
     )
 { 
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if(centerButton("Submit Changes", buttonSize)){
-        LAS::log_debug("Submit changes");
-    }
+    submitted = centerButton("Submit Changes", buttonSize);
 
     ImGui::Spacing();
     ImGui::Spacing();
@@ -585,14 +603,14 @@ void editEvent_metadataWindow(
     ImGui::TextDisabled("%s", oldInfo.location.getName());
     ImGui::SameLine(400);
     ImGui::SetNextItemWidth(200);
-    ComboBoxes::locations(locations, data.infoBuffer.location);
+    ComboBoxes::locations(locations, data.location);
 
     ImGui::Text("Event Type:");
     ImGui::SameLine(150);
     ImGui::TextDisabled("%s", oldInfo.eventType.getName());
     ImGui::SameLine(400);
     ImGui::SetNextItemWidth(200);
-    ComboBoxes::eventTypes(eventTypes, data.infoBuffer.eventType);
+    ComboBoxes::eventTypes(eventTypes, data.eventType);
 
     ImGui::Text("Date:");
     ImGui::SameLine(150);
@@ -656,6 +674,13 @@ void editEvent_gunsAndAmmoWindow(
     )
 {
     ScreenData::Edit::ItemBuffers::Event::GunsAndAmmoWindow& data { eventWindow.gunsAndAmmoWindow };
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Indent(20);
+    ImGui::Text("NOTE: Editing ammo amounts will NOT affect amount-on-hand in Stockpile, but will apply to Gun history");
+    ImGui::Unindent();
  
     ImGui::Dummy( ImVec2 {0, 50} );
 
@@ -684,6 +709,8 @@ void editEvent_gunsAndAmmoWindow(
         data.viewWindowSize.x = data.minWinSize.x;
     if(data.viewWindowSize.y < data.minWinSize.y)
         data.viewWindowSize.y = data.minWinSize.y;
+
+
 
     bool removeGunButton { false };
     editEvent_viewGunsUsedWindow(
@@ -872,14 +899,25 @@ void editEvent_addGun (
         ImGui::BeginDisabled();
 
     if(centerButton("Add Gun", data.buttonSize)){
-        // TODO -- add commands here for popup
-        if(event.hasUsedGun(data.selectedGun))
-            std::cout << "gun already exists popup\n";
+        if(event.hasUsedGun(data.selectedGun)){
+            SimpleClosePopup popup { 
+                "Gun Already Added",
+                "This Gun is already added to the Event"
+            };
+            UIEvents::PushPopup event { &popup };
+            pushEvent(&event);
+        }
         else{
             if(event.addGun(GunTrackingAmmoUsed{data.selectedGun}))
                 data.selectedGun = EMPTY_GUN_METADATA;
-            else
-                std::cout << "gun not added popup\n";
+            else{
+                SimpleClosePopup popup { 
+                    "Failed to Add Gun",
+                    "This Gun could not be added to the Event"
+                };
+                UIEvents::PushPopup event { &popup };
+                pushEvent(&event);
+            }
         }
     }
 

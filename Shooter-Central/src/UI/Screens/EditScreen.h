@@ -10,8 +10,6 @@
 #include <LAS/Logging.h>
 #include <imgui/imgui.h>
 
-#include <iostream> // For testing
-                    
                     
 namespace ShooterCentral::UI::Edit {
 
@@ -60,6 +58,7 @@ namespace ShooterCentral::UI::Edit {
             const std::set<ShootingEventType>& eventTypes,
             const std::map<Cartridge, std::map<AmmoMetadata, StockpileAmmo>>& stockpile,
             const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>& armory,
+            bool& submitted,
             const ImVec2& buttonSize
         );
     void editEvent_metadataWindow(

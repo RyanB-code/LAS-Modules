@@ -174,6 +174,17 @@ namespace Edit {
             ShooterCentral::AmmoMetadata old        { };
             ShooterCentral::AmmoMetadata revised    { };
     };
+    class Event: public DatabaseEvent {
+        public:
+            Event(const ShooterCentral::ShootingEventMetadata& setOld, const ShooterCentral::ShootingEvent& setNew );
+            ~Event() = default;
+
+            DATABASE_EVENT_FUNCTIONS(Event)
+
+        private:
+            ShooterCentral::ShootingEventMetadata oldInfo   { };
+            ShooterCentral::ShootingEvent revised           { };
+    };
 }   // Edit nameespce
 
 }   // End DatabaseEvents namespace

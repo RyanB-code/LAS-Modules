@@ -684,6 +684,104 @@ Status AmmoMetadata::execute (Database& db) {
         return Status { false };
     }
 }
+Event::Event(
+        const ShooterCentral::ShootingEventMetadata& setOld, 
+        const ShooterCentral::ShootingEvent& setNew
+    ):
+        oldInfo     { setOld },
+        revised { setNew }
+{
+
+}
+Status Event::execute (Database& db) {
+    using namespace ShooterCentral::UI;
+
+    bool success { false };
+    try {
+        success = changeAllOccurrences(db, oldInfo, revised);
+    }
+    catch(std::invalid_argument& e){
+        auto bodyFunction = [e]() {
+            centerText("Failed to Edit Event");
+            centerTextDisabled("(No changes were made)");
+
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::BulletText("%s", e.what());
+        };
+
+        CustomClosePopup popup { "Edit Event Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Edit Event failed" };
+    }
+    catch(AddEventFlags flags){
+        auto bodyFunction = [flags]() {
+            const VerifyEventFlags& verifyFlags { flags.verifyFlags };
+
+            centerText("Failed to Add Revised Event");
+            centerTextDisabled("(No changes were made)");
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            if(flags.alreadyExists)
+                ImGui::BulletText("Event Already Exists");
+            if(verifyFlags.locationInvalid)
+                ImGui::BulletText("Invalid Location");
+            if(verifyFlags.eventTypeInvalid)
+                ImGui::BulletText("Invalid Event Type");
+            if(verifyFlags.dateInvalid)
+                ImGui::BulletText("Invalid date");
+            if(verifyFlags.noGuns)
+                ImGui::BulletText("No Guns were used");
+            if(verifyFlags.gunWasInvalid)
+                ImGui::BulletText("A Gun used was invalid");
+            if(verifyFlags.ammoWasInvalid)
+                ImGui::BulletText("An Ammo type used was invalid");
+        };
+
+        CustomClosePopup popup { "Adding Revised Event Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Add revised event failed" };
+    }
+        
+    if(success){
+        SimpleClosePopup popup {"Event Changed Successfully", "Event was successfully changed"};
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        UIEvents::SetScreenData::Home resetBuffers1 { ScreenData::Home{ } };
+        UIEvents::SetScreenData::View resetBuffers2 { ScreenData::View{ } };
+        UIEvents::SetScreenData::Add  resetBuffers3 { ScreenData::Add{ } };
+        UIEvents::SetScreenData::Edit resetBuffers4 { ScreenData::Edit{ } };
+
+        pushEvent(&resetBuffers1);
+        pushEvent(&resetBuffers2);
+        pushEvent(&resetBuffers3);
+        pushEvent(&resetBuffers4);
+
+        return Status { true };
+    }
+    else{
+        SimpleClosePopup popup {"Edit Event Failed", "An Unknown Error Occurred"};
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        return Status { false };
+    }
+}
+
+
+
 }   // Edit namespace
 
 }   // End DatabaseEvents namespace

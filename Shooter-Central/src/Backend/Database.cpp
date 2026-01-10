@@ -538,7 +538,6 @@ bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bo
         }
     }
 
-
     if(applyToArmory){
        for(const auto& gunTrackingAmmoUsed : event.getGunsUsed()){
             const GunMetadata& gunInfo { gunTrackingAmmoUsed.getGunInfo() };
@@ -598,7 +597,7 @@ bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bo
             }
         }
     }   // End apply to armory
-    
+        
     const AddEventFlags addFlags { db.addEvent(event) };
         
     if(!addFlags.wasAdded){
@@ -1450,6 +1449,61 @@ bool changeAllOccurrences(Database& db, const AmmoMetadata& old, const AmmoMetad
     }
 
     return true;
+}
+bool changeAllOccurrences(Database& db, const ShootingEventMetadata& oldInfo, const ShootingEvent& revised){
+    const Database snapshot { db };
+
+    // Remove everything from old event
+    {
+        ShootingEvent& old { db.getEvent(oldInfo) };
+
+        for(const auto& gunTrackingAmmoUsed : old.getGunsUsed()){
+            const GunMetadata& gunInfo { gunTrackingAmmoUsed.getGunInfo() }; 
+
+            db.getGun(gunInfo).removeEvent(oldInfo);
+
+            for(const auto& amountOfAmmo: gunTrackingAmmoUsed.getAmmoUsed() ){
+                const AmmoMetadata& ammoInfo { amountOfAmmo.getAmmoInfo() };
+
+                if(!db.armoryContains(gunInfo)){
+                    db = snapshot;
+                    throw std::invalid_argument{
+                        std::format("Failed to find Gun '{}' in Armory to edit", gunInfo.name)
+                    };
+                }
+
+                ArmoryGun& gun { db.getGun(gunInfo) };
+
+                gun.removeAmountOfAmmo(amountOfAmmo);
+
+                // If amount used of that ammo type becomes <= 0, that entry is removed
+                // So need to update ammo history if that gun used 0 of that ammo
+                if(!gun.hasUsedAmmo(ammoInfo)){
+                    if(!db.stockpileContains(ammoInfo)){
+                        db = snapshot;
+                        throw std::invalid_argument{
+                            std::format("Failed to find Ammo '{}' in Stockpile to edit", ammoInfo.name)
+                        };
+                    }
+                    
+                    StockpileAmmo& ammo { db.getAmmo( amountOfAmmo.getAmmoInfo() ) };
+                    ammo.removeGun(gunInfo);
+                }
+            }
+        }
+    }   // End scope for old event reference
+
+    db.deleteEvent(oldInfo);
+
+    // Will throw items
+    // These should be caught in the command
+    try {
+        return applyEvent(db, revised, true, false);
+    }
+    catch(...){
+        db = snapshot;
+        throw;
+    }
 }
 
 

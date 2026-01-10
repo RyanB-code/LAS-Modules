@@ -8,6 +8,7 @@
 #include <exception>
 #include <format>
 
+
 namespace ShooterCentral {
 
 struct VerifyEventFlags {
@@ -173,16 +174,17 @@ void addMetadataInfo (Database&, const AmmoMetadata& );
 void addMetadataInfo (Database&, const ShootingEventMetadata& );
 
 // Strong rollback gurantee if issue arises and throws invalid_argument with what
+// Throws a variety of items
 bool applyEvent(Database& db, const ShootingEvent& event, bool applyToArmory, bool applyToStockpile); 
 
+// ALL of these functions throw a variety of items
 bool changeAllOccurrences(Database& db, const Manufacturer& old, const Manufacturer& revised);
 bool changeAllOccurrences(Database& db, const Location& old, const Location& revised);
 bool changeAllOccurrences(Database& db, const ShootingEventType& old, const ShootingEventType& revised);
 bool changeAllOccurrences(Database& db, const WeaponType& old, const WeaponType& revised);
 bool changeAllOccurrences(Database& db, const Cartridge& old, const Cartridge& revised);
-
 bool changeAllOccurrences(Database& db, const GunMetadata& old, const GunMetadata& revised);
 bool changeAllOccurrences(Database& db, const AmmoMetadata& old, const AmmoMetadata& revised);
-
+bool changeAllOccurrences(Database& db, const ShootingEventMetadata& old, const ShootingEvent& revised);
 
 }   // End SC namespace
