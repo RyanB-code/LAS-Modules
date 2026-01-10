@@ -933,14 +933,25 @@ void EventWindow::addGun (
         ImGui::BeginDisabled();
 
     if(centerButton("Add Gun", data.buttonSize)){
-        // TODO -- add commands here for popup
-        if(event.hasUsedGun(data.selectedGun))
-            std::cout << "gun already exists popup\n";
+        if(event.hasUsedGun(data.selectedGun)){
+            SimpleClosePopup popup { 
+                "Gun Already Added",
+                "This Gun is already added to the Event"
+            };
+            UIEvents::PushPopup event { &popup };
+            pushEvent(&event);
+        }
         else{
             if(event.addGun(GunTrackingAmmoUsed{data.selectedGun}))
                 data.selectedGun = EMPTY_GUN_METADATA;
-            else
-                std::cout << "gun not added popup\n";
+            else{
+                SimpleClosePopup popup { 
+                    "Failed to Add Gun",
+                    "This Gun could not be added to the Event"
+                };
+                UIEvents::PushPopup event { &popup };
+                pushEvent(&event);
+            }
         }
     }
 
