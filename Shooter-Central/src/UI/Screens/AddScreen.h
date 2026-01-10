@@ -73,6 +73,10 @@ namespace EventWindow {
             const ShootingEventType& et,
             const ymd& date
         );
+
+    // NOTE:
+    // Any changes through to the next comment should be mirrored in Edit Event functions
+    // to keep similar UX
     void gunsAndAmmoWindow(
             ScreenData::Add::EventWindow& data, 
             ShootingEvent& event,
@@ -113,6 +117,9 @@ namespace EventWindow {
             const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>&,
             const ImVec2& tableSize
         );
+    // End keeping similar with Edit Event UX
+    // ---
+
     void review(
             ScreenData::Add::EventWindow::ReviewWindow& data,
             ShootingEvent& event
