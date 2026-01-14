@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Events.h"
-#include "CommonItems.h"
 #include "UI/UIControl.h"
 #include "UI/UIHelperElements.h"
 #include "UI/UIEvents.h"
@@ -52,11 +51,12 @@ public:
 private:
     Database                database        { };
     UI::UIController        view            { };
-    UnsavedChanges          unsavedChanges  { };
+    bool                    unsavedChanges  { false };
+    Filepaths               paths           { };
 };
 
-namespace Setup {
-    bool    setupFilesystem(Framework::Filepaths& paths); // Needs parentDir set first
-}
+bool    setupFilesystem (Framework::Filepaths& paths); // Needs parentDir set first
+bool    save            (const Database& db, const Framework::Filepaths& paths);
+
     
 }   // End SC namespace

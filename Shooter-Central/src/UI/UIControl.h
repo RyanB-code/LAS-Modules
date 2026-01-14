@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CommonItems.h"
 #include "Backend/Database.h"
 
 #include "Events.h"
@@ -25,7 +24,7 @@ public:
     UIController()  = default;
     ~UIController() = default;
 
-    void draw(const Database& database, const UnsavedChanges& unsavedChanges);
+    void draw(const Database& database, bool unsavedChanges, bool& attemptSave);
 
     void setScreen(const Screen& screen);
 

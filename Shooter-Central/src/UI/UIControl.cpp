@@ -2,7 +2,7 @@
 
 namespace ShooterCentral::UI {
 
-void UIController::draw(const Database& database, const UnsavedChanges& unsavedChanges) {
+void UIController::draw(const Database& database, bool unsavedChanges, bool& attemptSave) {
     // Stores last screen, checks if equal to current screen (set after ImGui does its thing)
     // If not equal, it means an Event changed the screen, so force ImGui to show which tab we want
     // from the Event
@@ -53,6 +53,32 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
         }
     }
 
+    // Status bar
+    ImGui::Indent(20);
+
+    ImGui::Spacing();
+    ImGui::Button("<", ImVec2{ 20, 20 });
+    ImGui::SameLine();
+    ImGui::Button(">", ImVec2{ 20, 20 });
+
+    ImGui::SameLine();
+    ImGui::Dummy( ImVec2{ 10, 0 });
+    ImGui::SameLine();
+
+    if(!unsavedChanges)
+        ImGui::BeginDisabled();
+
+    attemptSave = ImGui::Button("Save", ImVec2 {100, 20} );
+
+    if(!unsavedChanges)
+        ImGui::EndDisabled();
+
+    
+    ImGui::Spacing();
+    ImGui::Unindent();
+
+
+    // Page navigation
     if(ImGui::BeginTabBar("Tabs")){
         if(ImGui::BeginTabItem("Home", nullptr, homeFlags)){
             currentScreen = Screen::HOME;
@@ -78,7 +104,7 @@ void UIController::draw(const Database& database, const UnsavedChanges& unsavedC
 
     switch(currentScreen){
         case Screen::HOME:
-            Home::main(database, homeData, unsavedChanges);
+            Home::main(database, homeData);
             break;
         case Screen::VIEW:
             View::main(database, viewData);

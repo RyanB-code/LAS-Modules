@@ -2,7 +2,6 @@
 
 #include "Backend/DatabaseEvents.h"
 #include "Backend/Database.h"
-#include "CommonItems.h"
 
 #include "UI/UIData.h"
 #include "UI/UIEvents.h" 
@@ -18,8 +17,7 @@ namespace ShooterCentral::UI::Home {
 
     void main(
             const Database&, 
-            ScreenData::Home&, 
-            const UnsavedChanges&
+            ScreenData::Home&
         );
     void gunWindow(
             const std::map<Cartridge, std::map<GunMetadata, ArmoryGun>>&, 

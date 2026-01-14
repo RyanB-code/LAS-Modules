@@ -2,7 +2,7 @@
 
 namespace ShooterCentral::UI::Home {
 
-void main (const Database& database, ScreenData::Home& screenData, const UnsavedChanges& changes) {
+void main (const Database& database, ScreenData::Home& screenData) {
     UI::ScreenData::Home::MainWindow& data { screenData.mainWindow };
 
     data.oneThirdWindowSize.x = ImGui::GetContentRegionAvail().x / 3;

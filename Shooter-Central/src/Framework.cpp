@@ -1,7 +1,8 @@
 #include "Framework.h"
 
-using namespace ShooterCentral;
 using namespace LAS;
+
+namespace ShooterCentral {
 
 Framework::Framework() {
 
@@ -10,9 +11,7 @@ Framework::~Framework() {
 
 }
 bool Framework::setup(const std::string& directory){
-    using namespace ShooterCentral::Setup;
-
-    Filepaths paths {directory};
+    paths.parentDir = directory;
 
     if(!setupFilesystem(paths)){
         log_fatal("Failed to setup filesystem");
@@ -109,6 +108,8 @@ void Framework::update() {
 
         if (!s.didSucceed)
             log_error(std::format("Database Event failed. What: {}", s.msg));
+        else
+            unsavedChanges = true;
     }
     if(uiEvent){
         Status s {uiEvent->execute(view)};
@@ -120,9 +121,23 @@ void Framework::update() {
 
 }
 void Framework::draw() {
-    view.draw(database, unsavedChanges);
+    using namespace UI;
+
+    bool attemptSave { false };
+    view.draw(database, unsavedChanges, attemptSave);
+
+    if(attemptSave){
+        if(!save(database, paths)){
+            SimpleClosePopup popup {"Saving Failed", "Failed saving database items"};
+            UIEvents::PushPopup pushPopup { &popup };
+
+            pushEvent(&pushPopup);
+        }
+        else
+            unsavedChanges = false;
+    }
 }
-bool Setup::setupFilesystem(Framework::Filepaths& paths){
+bool setupFilesystem(Framework::Filepaths& paths){
     if(paths.parentDir.empty())
         return false;
 
@@ -152,3 +167,8 @@ bool Setup::setupFilesystem(Framework::Filepaths& paths){
     }
     return true;
 }
+bool save(const Database& db, const Framework::Filepaths& paths){
+    return false;
+}
+
+}   // End SC namespace
