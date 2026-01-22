@@ -1393,6 +1393,8 @@ bool changeAllOccurrences(Database& db, const AmmoMetadata& old, const AmmoMetad
                 };
             }
         }
+
+        db.deleteFromStockpile(old);
     }
     
 
