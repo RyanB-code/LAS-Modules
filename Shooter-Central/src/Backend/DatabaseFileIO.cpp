@@ -225,6 +225,60 @@ bool write (std::string directory, const ShootingEvent& data){
    
     return true;
 }
+bool write (
+        std::string                 path, 
+        std::set<Manufacturer>      manufacturers,
+        std::set<Cartridge>         cartridges,
+        std::set<WeaponType>        weaponTypes,
+        std::set<Location>          locations,
+        std::set<ShootingEventType> eventTypes
+    )
+{
+    using LAS::json;
+
+    if(path.empty())
+       return false;
+
+    json manufacturersArray = json::array();
+    for(const auto& item : manufacturers ){
+        manufacturersArray.emplace_back(item.getName());
+    }
+
+    json cartridgesArray = json::array();
+    for(const auto& item : cartridges ){
+        cartridgesArray.emplace_back(item.getName());
+    }
+
+    json weaponTypesArray = json::array();
+    for(const auto& item : weaponTypes ){
+        weaponTypesArray.emplace_back(item.getName());
+    }
+
+    json locationsArray = json::array();
+    for(const auto& item : locations ){
+        locationsArray.emplace_back(item.getName());
+    }
+
+    json eventTypesArray = json::array();
+    for(const auto& item : eventTypes ){
+        eventTypesArray.emplace_back(item.getName());
+    }
+
+
+    json final;
+
+    final["manufacturers"]      = manufacturersArray;
+    final["locations"]          = locationsArray;
+    final["cartridges"]         = cartridgesArray;
+    final["weaponTypes"]        = weaponTypesArray;
+    final["eventTypes"]         = eventTypesArray;
+
+    std::ofstream file{ path };
+    file << std::setw(1) << std::setfill('\t') << final;
+    file.close();
+   
+    return true;
+}
 
 
 
@@ -293,6 +347,74 @@ bool readEvents(Database& db, const std::filesystem::path& workingDirectory) {
     
 	return true;
 }
+bool readMetadataItems  (Database& db, const std::filesystem::path& filePath){
+    using namespace LAS;
+
+    if(!std::filesystem::exists(filePath))
+        return false;
+
+    std::ifstream file{ filePath, std::ios::in };
+    try{
+        json j = LAS::json::parse(file);
+
+        for (const auto& item : j.at("manufacturers").items()){
+            std::string textBuf { };
+            item.value().get_to(textBuf);
+
+            if(!db.addMetadataItem( Manufacturer{ textBuf.c_str() } )){
+                LAS::log_error(std::format("Failed to add Manufacturer [{}]", textBuf));
+                continue;
+            }
+        }
+
+        for (const auto& item : j.at("cartridges").items()){
+            std::string textBuf { };
+            item.value().get_to(textBuf);
+
+            if(!db.addMetadataItem( Cartridge{ textBuf.c_str() } )){
+                LAS::log_error(std::format("Failed to add Cartridge [{}]", textBuf));
+                continue;
+            }
+        }
+
+        for (const auto& item : j.at("weaponTypes").items()){
+            std::string textBuf { };
+            item.value().get_to(textBuf);
+
+            if(!db.addMetadataItem( WeaponType{ textBuf.c_str() } )){
+                LAS::log_error(std::format("Failed to add WeaponType [{}]", textBuf));
+                continue;
+            }
+        }
+
+        for (const auto& item : j.at("locations").items()){
+            std::string textBuf { };
+            item.value().get_to(textBuf);
+
+            if(!db.addMetadataItem( Location{ textBuf.c_str() } )){
+                LAS::log_error(std::format("Failed to add Location [{}]", textBuf));
+                continue;
+            }
+        }
+
+        for (const auto& item : j.at("eventTypes").items()){
+            std::string textBuf { };
+            item.value().get_to(textBuf);
+
+            if(!db.addMetadataItem( ShootingEventType{ textBuf.c_str() } )){
+                LAS::log_error(std::format("Failed to add ShootingEventType [{}]", textBuf));
+                continue;
+            }
+        }
+    }
+    catch(std::exception& e){
+        LAS::log_error(std::format("Failed to parse Metadata Items JSON. What: {}", e.what()) );
+        return false;
+    }
+
+    return true;
+}
+
 bool readGuns(Database& db, const std::filesystem::path& workingDirectory) {
     using namespace LAS;
 

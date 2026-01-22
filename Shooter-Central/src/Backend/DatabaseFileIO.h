@@ -43,13 +43,23 @@ void from_json      (const LAS::json&, ShootingEvent& );
 bool write (std::string directory, const StockpileAmmo& ); 
 bool write (std::string directory, const ArmoryGun& ); 
 bool write (std::string directory, const ShootingEvent& ); 
+bool write (
+        std::string                 path, 
+        std::set<Manufacturer>      manufacturers,
+        std::set<Cartridge>         cartridges,
+        std::set<WeaponType>        weaponTypes,
+        std::set<Location>          locations,
+        std::set<ShootingEventType> eventTypes
+    );
+
 
 bool read (std::ifstream&, ShootingEvent& );
 bool read (std::ifstream&, ArmoryGun& );
 bool read (std::ifstream&, StockpileAmmo& );
 
 // Read/Write for directory/list
-bool readEvents (Database&, const std::filesystem::path& directory); // Need to find better spot
+bool readEvents         (Database&, const std::filesystem::path& directory); // Need to find better spot
+bool readMetadataItems  (Database&, const std::filesystem::path& file); 
                                                                      
 // Overwrites existing guns/ammo. Must re-associate events afterward                                                                
 bool readGuns   (Database&, const std::filesystem::path& directory); 

@@ -38,6 +38,7 @@ public:
         std::string gunsDir;
 
         std::string miscDir;
+        std::string metadataItems;
     };
 
     bool setup(const std::string& directory);   // Called inside LASM_init
@@ -51,8 +52,9 @@ public:
 private:
     Database                database        { };
     UI::UIController        view            { };
-    bool                    unsavedChanges  { false };
     Filepaths               paths           { };
+    bool                    unsavedChanges  { false };
+    bool                    attemptSave     { false };
 };
 
 bool    setupFilesystem (Framework::Filepaths& paths); // Needs parentDir set first
