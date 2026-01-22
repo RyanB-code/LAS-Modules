@@ -117,6 +117,11 @@ public:
     ShootingEvent& getEvent (const ShootingEventMetadata& );    // Throws out_of_range if not present
     StockpileAmmo& getAmmo  (const AmmoMetadata& );             // Throws out_of_range if not present
     ArmoryGun&     getGun   (const GunMetadata& );              // Throws out_of_range if not present
+                                                                //
+    const ShootingEvent& getEvent (const ShootingEventMetadata& ) const;    // Throws out_of_range if not present
+    const StockpileAmmo& getAmmo  (const AmmoMetadata& ) const;             // Throws out_of_range if not present
+    const ArmoryGun&     getGun   (const GunMetadata& ) const;              // Throws out_of_range if not present
+
 
     int amountInStockpile   (const Cartridge& ) const;
     int amountInStockpile   (const AmmoMetadata& ) const;

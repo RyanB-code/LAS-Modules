@@ -226,6 +226,21 @@ ArmoryGun& Database::getGun (const GunMetadata& info) {
 
     return armory.at(info.cartridge).at(info);
 }
+const ShootingEvent& Database::getEvent(const ShootingEventMetadata& info) const {
+    return events.at(info);
+}
+const StockpileAmmo& Database::getAmmo   (const AmmoMetadata& info) const {
+    if(!stockpile.contains(info.cartridge))
+        throw std::out_of_range{std::format("Database::getAmmo(), no StockpileAmmo named [{}] found", info.name)};
+
+    return stockpile.at(info.cartridge).at(info);
+}
+const ArmoryGun& Database::getGun (const GunMetadata& info) const{
+    if(!armory.contains(info.cartridge))
+       throw std::out_of_range{std::format("Database::getGun(), no ArmoryGun named [{}] found", info.name)};
+
+    return armory.at(info.cartridge).at(info);
+}
 bool Database::addMetadataItem  (const Manufacturer& add){
     return manufacturers.emplace(add).second;
 }
