@@ -103,9 +103,18 @@ void gunWindow_selectedGunInformation(const ArmoryGun& gun){
 
     if(ImGui::BeginChild("Selected Gun Details Left", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
         ImGui::Indent(20);
-        ImGui::Text("Name:          %s", gunInfo.name.c_str());
-        ImGui::Text("Weapon Type:   %s", gunInfo.weaponType.getName()); 
-        ImGui::Text("Cartridge:     %s", gunInfo.cartridge.getName());
+        ImGui::TextDisabled("Name:");
+        ImGui::SameLine(150);
+        ImGui::Text("%s", gunInfo.name.c_str());
+
+        ImGui::TextDisabled("Weapon Type:");
+        ImGui::SameLine(150);
+        ImGui::Text("%s", gunInfo.weaponType.getName()); 
+
+
+        ImGui::TextDisabled("Cartridge:");
+        ImGui::SameLine(150);
+        ImGui::Text("%s", gunInfo.cartridge.getName());
         ImGui::Unindent(20);
     }
     ImGui::EndChild();
@@ -113,8 +122,13 @@ void gunWindow_selectedGunInformation(const ArmoryGun& gun){
     ImGui::SameLine();
 
     if(ImGui::BeginChild("Selected Gun Details Right", ImVec2{ImGui::GetContentRegionAvail().x/2, 75}, 0)){
-        ImGui::Text("Round Count:       %d", gun.getRoundCount()    );
-        ImGui::Text("Events Used In:    %d", gun.totalEventsUsed()  ); 
+        ImGui::TextDisabled("Round Count:");
+        ImGui::SameLine(150);
+        ImGui::Text("%d", gun.getRoundCount()    );
+
+        ImGui::TextDisabled("Events Used In:");
+        ImGui::SameLine(150);
+        ImGui::Text("%d", gun.totalEventsUsed()  ); 
     }
     ImGui::EndChild();
 }
