@@ -37,8 +37,10 @@ namespace ShooterCentral::UI::Edit {
             char* nameBuffer,
             size_t size,
             const GunMetadata& oldInfo,
+            bool oldIsActive,
             GunMetadata& newInfo,
             const std::set<WeaponType>& weaponTypes,
+            bool& newIsActive,
             bool& submitted,
             const ImVec2& buttonSize
         );
@@ -46,8 +48,10 @@ namespace ShooterCentral::UI::Edit {
             char* nameBuffer,
             size_t size,
             const AmmoMetadata& oldInfo,
+            bool oldIsActive,
             AmmoMetadata& newInfo,
             const std::set<Manufacturer>& manufacturers,
+            bool& newIsActive,
             bool& submitted,
             const ImVec2& buttonSize
         );

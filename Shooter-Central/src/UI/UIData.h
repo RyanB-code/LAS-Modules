@@ -331,9 +331,11 @@ struct Edit{
         
         AmmoMetadata            selectedAmmoInfo    { };
         GunMetadata             selectedGunInfo     { };
+        bool                    selectedIsActive    { };
 
         GunMetadata             gunInfoBuffer       { };
         AmmoMetadata            ammoInfoBuffer      { };
+        bool                    isActiveBuffer      { };
 
         
         ShootingEventMetadata   selectedEventInfo   { };

@@ -218,6 +218,9 @@ void editItemWindow(
                 resetText(data.nameBuffer, MAX_CHAR_METADATA_ITEM, data.selectedAmmoInfo.name.c_str());
                 data.ammoInfoBuffer.manufacturer = data.selectedAmmoInfo.manufacturer;
                 data.ammoInfoBuffer.grainWeight = data.selectedAmmoInfo.grainWeight;
+
+                data.selectedIsActive = database.getAmmo(data.selectedAmmoInfo).isActive();
+                data.isActiveBuffer = data.selectedIsActive;
             }
 
             lastBuffers.selectedAmmoInfo = data.selectedAmmoInfo;
@@ -228,8 +231,10 @@ void editItemWindow(
                         data.nameBuffer,
                         MAX_CHAR_METADATA_ITEM,
                         data.selectedAmmoInfo, 
+                        data.selectedIsActive,
                         data.ammoInfoBuffer, 
                         database.getManufacturers(),
+                        data.isActiveBuffer,
                         submitted, 
                         screenData.buttonSize
                     );
@@ -276,6 +281,9 @@ void editItemWindow(
             if(data.selectedGunInfo != lastBuffers.selectedGunInfo){
                 resetText(data.nameBuffer, MAX_CHAR_METADATA_ITEM, data.selectedGunInfo.name.c_str());
                 data.gunInfoBuffer.weaponType = data.selectedGunInfo.weaponType;
+
+                data.selectedIsActive = database.getGun(data.selectedGunInfo).isActive();
+                data.isActiveBuffer = data.selectedIsActive;
             }
 
             lastBuffers.selectedGunInfo = data.selectedGunInfo;
@@ -286,8 +294,10 @@ void editItemWindow(
                         data.nameBuffer,
                         MAX_CHAR_METADATA_ITEM,
                         data.selectedGunInfo, 
+                        data.selectedIsActive,
                         data.gunInfoBuffer, 
                         database.getWeaponTypes(),
+                        data.isActiveBuffer,
                         submitted, 
                         screenData.buttonSize
                     );
@@ -362,9 +372,23 @@ void editItemWindow(
         case SubItem::AMMO:
             data.ammoInfoBuffer.name        = data.nameBuffer;
             data.ammoInfoBuffer.cartridge   = data.selectedAmmoInfo.cartridge;
-            {
+            
+            if(data.ammoInfoBuffer == data.selectedAmmoInfo){
+                if(data.selectedIsActive == data.isActiveBuffer){
+                    SimpleClosePopup popup {"No Changes Made", "No Changes Were Made"};
+                    UIEvents::PushPopup pushPopup { &popup };
+                    pushEvent(&pushPopup);
+                }
+                else{
+                    DatabaseEvents::Edit::AmmoIsActive editStatus{ data.selectedAmmoInfo, data.isActiveBuffer };
+                    pushEvent(&editStatus);
+                }
+            }
+            else{
                 DatabaseEvents::Edit::AmmoMetadata edit { data.selectedAmmoInfo, data.ammoInfoBuffer };
+                DatabaseEvents::Edit::AmmoIsActive editStatus{ data.ammoInfoBuffer, data.isActiveBuffer };
                 pushEvent(&edit);
+                pushEvent(&editStatus);
             }
 
             break;
@@ -383,9 +407,23 @@ void editItemWindow(
         case SubItem::GUN:
             data.gunInfoBuffer.name         = data.nameBuffer;
             data.gunInfoBuffer.cartridge    = data.selectedGunInfo.cartridge;
-            {
-                DatabaseEvents::Edit::GunMetadata edit { data.selectedGunInfo, data.gunInfoBuffer };
+
+            if(data.gunInfoBuffer == data.selectedGunInfo){
+                if(data.selectedIsActive == data.isActiveBuffer){
+                    SimpleClosePopup popup {"No Changes Made", "No Changes Were Made"};
+                    UIEvents::PushPopup pushPopup { &popup };
+                    pushEvent(&pushPopup);
+                }
+                else{
+                    DatabaseEvents::Edit::GunIsActive editStatus{ data.selectedGunInfo, data.isActiveBuffer };
+                    pushEvent(&editStatus);
+                }
+            }
+            else{
+                DatabaseEvents::Edit::GunMetadata edit      { data.selectedGunInfo, data.gunInfoBuffer };
+                DatabaseEvents::Edit::GunIsActive editStatus{ data.gunInfoBuffer, data.isActiveBuffer };
                 pushEvent(&edit);
+                pushEvent(&editStatus);
             }
 
             break;
@@ -439,8 +477,10 @@ void editGun(
         char* nameBuffer,
         size_t size,
         const GunMetadata& oldInfo,
+        bool oldIsActive,
         GunMetadata& newInfo,
         const std::set<WeaponType>& weaponTypes,
+        bool& newIsActive,
         bool& submitted,
         const ImVec2& buttonSize
     )
@@ -480,6 +520,18 @@ void editGun(
 
     ImGui::SameLine(250);
     ImGui::TextDisabled("(Cannot Change Cartridge)");
+
+    ImGui::Dummy( ImVec2 { 0, 20} );
+
+    ImGui::TextDisabled("Is Active:       ");
+    ImGui::SameLine();
+    ImGui::BeginDisabled();
+    ImGui::Checkbox("##Old isActive", &oldIsActive);
+    ImGui::EndDisabled();
+    
+    ImGui::SameLine(250);
+    ImGui::Checkbox("##New isActive", &newIsActive);
+
     ImGui::EndGroup();
         
     ImGui::Dummy( ImVec2 { 0, 50} );
@@ -490,8 +542,10 @@ void editAmmo(
         char* nameBuffer,
         size_t size,
         const AmmoMetadata& oldInfo,
+        bool oldIsActive,
         AmmoMetadata& newInfo,
         const std::set<Manufacturer>& manufacturers,
+        bool& newIsActive,
         bool& submitted,
         const ImVec2& buttonSize
     )
@@ -536,6 +590,17 @@ void editAmmo(
     ImGui::Text("%s", oldInfo.cartridge.getName());
     ImGui::SameLine(250);
     ImGui::TextDisabled("(Cannot Change Cartridge)");
+
+    ImGui::Dummy( ImVec2 { 0, 20} );
+
+    ImGui::TextDisabled("Is Active:       ");
+    ImGui::SameLine();
+    ImGui::BeginDisabled();
+    ImGui::Checkbox("##Old isActive", &oldIsActive);
+    ImGui::EndDisabled();
+    
+    ImGui::SameLine(250);
+    ImGui::Checkbox("##New isActive", &newIsActive);
 
     ImGui::EndGroup();
         
