@@ -779,7 +779,110 @@ Status Event::execute (Database& db) {
         return Status { false };
     }
 }
+GunIsActive::GunIsActive(
+        const ShooterCentral::GunMetadata& setInfo, 
+        bool setStatus 
+    ):
+        gunInfo         { setInfo },
+        activeStatus    { setStatus }
+{
 
+}
+Status GunIsActive::execute (Database& db) {
+    using namespace ShooterCentral::UI;
+
+    try {
+        db.getGun(gunInfo).setActive(activeStatus);
+    }
+    catch(std::out_of_range& e){
+        auto bodyFunction = [e]() {
+            centerText("Failed to Change Active Status");
+            centerTextDisabled("(No changes were made)");
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::TextWrapped("%s", e.what());
+        };
+
+        CustomClosePopup popup { "Edit Gun Status Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Change Active Status for Gun Failed" };
+    }
+
+
+    SimpleClosePopup popup {"Gun Status Updated", "Gun status successfully updated"};
+    UIEvents::PushPopup pushPopup { &popup };
+    pushEvent(&pushPopup);
+
+
+    UIEvents::SetScreenData::Home resetBuffers1 { ScreenData::Home{ } };
+    UIEvents::SetScreenData::View resetBuffers2 { ScreenData::View{ } };
+    UIEvents::SetScreenData::Add  resetBuffers3 { ScreenData::Add{ } };
+    UIEvents::SetScreenData::Edit resetBuffers4 { ScreenData::Edit{ } };
+
+    pushEvent(&resetBuffers1);
+    pushEvent(&resetBuffers2);
+    pushEvent(&resetBuffers3);
+    pushEvent(&resetBuffers4);
+
+    return Status{ true };
+}
+AmmoIsActive::AmmoIsActive(
+        const ShooterCentral::AmmoMetadata& setInfo, 
+        bool setStatus 
+    ):
+        ammoInfo        { setInfo },
+        activeStatus    { setStatus }
+{
+
+}
+Status AmmoIsActive::execute (Database& db) {
+    using namespace ShooterCentral::UI;
+
+    try {
+        db.getAmmo(ammoInfo).setActive(activeStatus);
+    }
+    catch(std::out_of_range& e){
+        auto bodyFunction = [e]() {
+            centerText("Failed to Change Active Status");
+            centerTextDisabled("(No changes were made)");
+            ImGui::Separator();
+            ImGui::Dummy( ImVec2{400, 0} );
+            ImGui::Spacing();
+            ImGui::Spacing();
+
+            ImGui::TextWrapped("%s", e.what());
+        };
+
+        CustomClosePopup popup { "Edit Ammo Status Failed", bodyFunction };
+
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+        return Status { false, "Change Active Status for Ammo Failed" };
+    }
+
+
+    SimpleClosePopup popup {"Ammo Status Updated", "Ammo status successfully updated"};
+    UIEvents::PushPopup pushPopup { &popup };
+    pushEvent(&pushPopup);
+
+
+    UIEvents::SetScreenData::Home resetBuffers1 { ScreenData::Home{ } };
+    UIEvents::SetScreenData::View resetBuffers2 { ScreenData::View{ } };
+    UIEvents::SetScreenData::Add  resetBuffers3 { ScreenData::Add{ } };
+    UIEvents::SetScreenData::Edit resetBuffers4 { ScreenData::Edit{ } };
+
+    pushEvent(&resetBuffers1);
+    pushEvent(&resetBuffers2);
+    pushEvent(&resetBuffers3);
+    pushEvent(&resetBuffers4);
+
+    return Status{ true };
+}
 
 
 }   // Edit namespace

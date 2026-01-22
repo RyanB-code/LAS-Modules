@@ -174,7 +174,7 @@ namespace Edit {
             ShooterCentral::AmmoMetadata old        { };
             ShooterCentral::AmmoMetadata revised    { };
     };
-    class Event: public DatabaseEvent {
+    class Event : public DatabaseEvent {
         public:
             Event(const ShooterCentral::ShootingEventMetadata& setOld, const ShooterCentral::ShootingEvent& setNew );
             ~Event() = default;
@@ -185,6 +185,29 @@ namespace Edit {
             ShooterCentral::ShootingEventMetadata oldInfo   { };
             ShooterCentral::ShootingEvent revised           { };
     };
+    class GunIsActive : public DatabaseEvent {
+        public:
+            GunIsActive(const ShooterCentral::GunMetadata& ifo, bool status);
+            ~GunIsActive() = default;
+
+            DATABASE_EVENT_FUNCTIONS(GunIsActive)
+
+        private:
+            ShooterCentral::GunMetadata gunInfo   { };
+            bool activeStatus { false };
+    };
+    class AmmoIsActive : public DatabaseEvent {
+        public:
+            AmmoIsActive(const ShooterCentral::AmmoMetadata& ifo, bool status);
+            ~AmmoIsActive() = default;
+
+            DATABASE_EVENT_FUNCTIONS(AmmoIsActive)
+
+        private:
+            ShooterCentral::AmmoMetadata ammoInfo   { };
+            bool activeStatus { false };
+    };
+
 }   // Edit nameespce
 
 }   // End DatabaseEvents namespace
