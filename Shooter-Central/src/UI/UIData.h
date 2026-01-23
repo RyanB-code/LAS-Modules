@@ -200,14 +200,30 @@ struct Add {
     };
 
     struct AmmoWindow {
+        struct NewAmmoType {
+            char name[MAX_CHAR_METADATA_ITEM] = "";
+            Manufacturer    manufacturer    { };
+            Cartridge       cartridge       { };
+            int             grainWeight     { 0 };
+            int             amount          { 0 };
+        };
+        struct ExistingAmmoType{
+            static constexpr float  minTableWidth       { 300 };
+            static constexpr float  maxTableWidth       { 800 };
+
+            Cartridge       selectedCartridge       { };
+            AmmoMetadata    selectedAmmo            { };
+
+            int amount { 0 };
+
+            ImVec2 tableSize    { minTableWidth, 400 };
+        };
+
         static constexpr ImVec2 buttonSize          { 100, 40 };
         static constexpr ImVec2 minWinSize          { 400, 400 };
 
-        char name[MAX_CHAR_METADATA_ITEM] = "";
-        Manufacturer    manufacturer    { };
-        Cartridge       cartridge       { };
-        int             grainWeight     { 0 };
-        int             amount          { 0 };
+        NewAmmoType         newAmmoTypeBuffers      { };
+        ExistingAmmoType    existingAmmoTypeBuffers { };
 
         ImVec2 topWinSize   { minWinSize.x, 100 };
         ImVec2 mainWinSize  { minWinSize };

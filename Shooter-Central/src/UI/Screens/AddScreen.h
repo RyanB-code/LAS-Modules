@@ -38,8 +38,22 @@ namespace AmmoWindow {
     void main(
             ScreenData::Add::AmmoWindow&    ammoWinndow, 
             const std::set<Cartridge>&      cartridges,
+            const std::set<Manufacturer>&   manufacturers,
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& stockpile
+        );
+    void newAmmoType(
+            ScreenData::Add::AmmoWindow&    ammoWinndow, 
+            const std::set<Cartridge>&      cartridges,
             const std::set<Manufacturer>&   manufacturers
         );
+    void addToExistingAmmo(
+            ScreenData::Add::AmmoWindow&    ammoWinndow, 
+            const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& stockpile,
+            const std::set<Cartridge>&      cartridges
+
+        );
+
+
 }
 
 namespace EventWindow {

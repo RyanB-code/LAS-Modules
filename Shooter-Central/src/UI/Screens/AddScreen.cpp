@@ -187,7 +187,12 @@ void addItemWindow(const Database& database, ScreenData::Add& data){
             Add::add_Location(data.subItemBuffers.location, MAX_CHAR_METADATA_ITEM);
             break;
         case SubItem::AMMO:
-            Add::AmmoWindow::main(data.ammoWindow, database.getCartridges(), database.getManufacturers());       
+            Add::AmmoWindow::main(
+                    data.ammoWindow, 
+                    database.getCartridges(), 
+                    database.getManufacturers(),
+                    database.getStockpile()
+                );       
             break;
         case SubItem::MANUFACTURER:
             Add::add_Manufacturer(data.subItemBuffers.manufacturer, MAX_CHAR_METADATA_ITEM);
@@ -391,12 +396,17 @@ void GunWindow::main(
 void AmmoWindow::main(
         ScreenData::Add::AmmoWindow&    data, 
         const std::set<Cartridge>&      cartridges,
-        const std::set<Manufacturer>&   manufacturers
+        const std::set<Manufacturer>&   manufacturers,
+        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& stockpile
     )
 {
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // Calc Size AFTER spacing
     const ImVec2 regionAvail { ImGui::GetContentRegionAvail() };
     data.topWinSize.x   = regionAvail.x / 2 - 5;
-    data.mainWinSize    = ImVec2{ regionAvail.x - 2, regionAvail.y - data.topWinSize.y - 5};
+    data.mainWinSize    = ImVec2{ regionAvail.x - 2, regionAvail.y - data.topWinSize.y - 20};
 
     if(data.topWinSize.x < data.minWinSize.x)
         data.topWinSize.x = data.minWinSize.x;
@@ -406,7 +416,32 @@ void AmmoWindow::main(
     if(data.mainWinSize.y < data.minWinSize.y)
         data.mainWinSize.y = data.minWinSize.y;
 
-    if(ImGui::BeginChild("Directions", data.topWinSize)){
+
+    if(ImGui::BeginTabBar("Ammo Tabs")){
+        if(ImGui::BeginTabItem("Existing Ammo", nullptr)){
+            addToExistingAmmo(data, stockpile, cartridges);
+            ImGui::EndTabItem();
+        }
+        if(ImGui::BeginTabItem("New Ammo", nullptr)){
+            newAmmoType(data, cartridges, manufacturers);
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    } 
+
+}
+void AmmoWindow::newAmmoType(
+        ScreenData::Add::AmmoWindow&    ammoWindow, 
+        const std::set<Cartridge>&      cartridges,
+        const std::set<Manufacturer>&   manufacturers
+    )
+{
+    auto& data { ammoWindow.newAmmoTypeBuffers };
+
+    if(ImGui::BeginChild("Directions", ammoWindow.topWinSize)){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
         ImGui::Indent(20);
         ImGui::Text("Directions");
         ImGui::BulletText("Enter in new Ammo type information");
@@ -417,11 +452,11 @@ void AmmoWindow::main(
 
     ImGui::SameLine();
 
-    if(ImGui::BeginChild("Submit", data.topWinSize)){
-        centerNextItemX(data.buttonSize.x * 2 + 20); // 20 is dummy size
+    if(ImGui::BeginChild("Submit", ammoWindow.topWinSize)){
+        centerNextItemX(ammoWindow.buttonSize.x * 2 + 20); // 20 is dummy size
         ImGui::BeginGroup();
 
-        if(ImGui::Button("Add Ammo", data.buttonSize)){
+        if(ImGui::Button("Add Ammo", ammoWindow.buttonSize)){
             AmmoMetadata ammoInfo { data.name, data.cartridge, data.manufacturer, data.grainWeight };
             DatabaseEvents::Add::Ammo addAmmo { AmountOfAmmo { ammoInfo, data.amount } }; 
             pushEvent(&addAmmo);
@@ -429,7 +464,7 @@ void AmmoWindow::main(
         ImGui::SameLine();
         ImGui::Dummy( ImVec2 { 20, 10} );
         ImGui::SameLine();
-        if(ImGui::Button("Reset All", data.buttonSize)){
+        if(ImGui::Button("Reset All", ammoWindow.buttonSize)){
             UIEvents::SetScreenData::Add_AmmoWindow resetInputs { };
             pushEvent(&resetInputs);
         }
@@ -438,7 +473,7 @@ void AmmoWindow::main(
     }
     ImGui::EndChild();
 
-    if(ImGui::BeginChild("Ammo Info", data.mainWinSize)){
+    if(ImGui::BeginChild("Ammo Info", ammoWindow.mainWinSize)){
         ImGui::SeparatorText("Input Ammo Information");
         ImGui::Spacing();
         ImGui::Spacing();
@@ -472,9 +507,82 @@ void AmmoWindow::main(
 
     }
     ImGui::EndChild();
+}
+void AmmoWindow::addToExistingAmmo(
+        ScreenData::Add::AmmoWindow&    ammoWindow, 
+        const std::map<Cartridge, std::map<AmmoMetadata,  StockpileAmmo>>& stockpile,
+        const std::set<Cartridge>&      cartridges
+    )
+{
+    auto& data { ammoWindow.existingAmmoTypeBuffers };
+
+    if(ImGui::BeginChild("Directions", ammoWindow.topWinSize)){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::Indent(20);
+        ImGui::Text("Directions");
+        ImGui::BulletText("Select Ammo type to add amount");
+        ImGui::BulletText("Must save before exiting LAS otherwise changes will not be made");
+        ImGui::Unindent();
+    }
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    if(ImGui::BeginChild("Submit", ammoWindow.topWinSize)){
+        centerNextItemX(ammoWindow.buttonSize.x * 2 + 20); // 20 is dummy size
+        ImGui::BeginGroup();
+
+        if(ImGui::Button("Add Ammo", ammoWindow.buttonSize)){
+            DatabaseEvents::Add::AmmoAmount addAmmo { AmountOfAmmo { data.selectedAmmo, data.amount } }; 
+            pushEvent(&addAmmo);
+        }
+        ImGui::SameLine();
+        ImGui::Dummy( ImVec2 { 20, 10} );
+        ImGui::SameLine();
+        if(ImGui::Button("Reset All", ammoWindow.buttonSize)){
+            UIEvents::SetScreenData::Add_AmmoWindow resetInputs { };
+            pushEvent(&resetInputs);
+        }
+
+        ImGui::EndGroup();
+    }
+    ImGui::EndChild();
+
+
+    if(ImGui::BeginChild("Ammo Info", ammoWindow.mainWinSize)){
+        ImGui::SeparatorText("Add To Existing Ammo");
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        ImGui::Indent(20);
+        ImGui::TextDisabled("Select Cartridge: ");
+        ImGui::SameLine(150);
+        ComboBoxes::cartridges(cartridges, data.selectedCartridge);
+
+        ImGui::TextDisabled("Ammo: ");
+        ImGui::SameLine(150);
+
+        if(stockpile.contains(data.selectedCartridge))
+            ComboBoxes::ammoMetadata(stockpile.at(data.selectedCartridge), data.selectedAmmo);
+        else
+            ImGui::TextDisabled("No Ammo Found");
+
+        ImGui::TextDisabled("Amount To Add:"); 
+        ImGui::SameLine(150);
+        ImGui::SetNextItemWidth(200);
+        ImGui::InputInt("##Amount", &data.amount, 1, 50);
+
+        ImGui::Unindent();
+
+    }
+    ImGui::EndChild();
+
+    // Select and amount here
+    
 
 }
-
 
 void EventWindow::main(  
         ScreenData::Add::EventWindow& data, 
