@@ -140,6 +140,9 @@ namespace ComboBoxes{
     void cartridges     (const std::set<Cartridge>& list, Cartridge& selected);
     void weaponTypes    (const std::set<WeaponType>& list, WeaponType& selected);
     void manufacturers  (const std::set<Manufacturer>& list, Manufacturer& selected);
+
+    // Displays name and GrainWeight for the ammo
+    void ammoMetadata   (const std::map<AmmoMetadata,  StockpileAmmo>& list, AmmoMetadata& selected);
 }
 
 

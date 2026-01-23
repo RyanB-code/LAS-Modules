@@ -970,6 +970,27 @@ void ComboBoxes::manufacturers  (const std::set<Manufacturer>& list, Manufacture
         ImGui::EndCombo();
     }
 }
+// HERE HERE
+void ComboBoxes::ammoMetadata(const std::map<AmmoMetadata, StockpileAmmo>& list, AmmoMetadata& selected){
+    std::string text { };
+
+    if(selected == EMPTY_AMMO_METADATA)
+        text = "Select An Item";
+    else
+        text = ammoAndGWName(selected);
+
+    if (ImGui::BeginCombo("##Ammo Combo", text.c_str(), ImGuiComboFlags_HeightLarge)) {
+        for (const auto& [key, ammo] : list) {
+            bool isSelected {selected == ammo.getAmmoInfo()};
+
+            if (ImGui::Selectable(ammoAndGWName(ammo.getAmmoInfo()).c_str(), isSelected)){
+                selected = ammo.getAmmoInfo();
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
 
 
 
