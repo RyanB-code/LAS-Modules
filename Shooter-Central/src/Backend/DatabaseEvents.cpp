@@ -191,7 +191,30 @@ Status Ammo::execute (Database& db) {
 
     }
 }
+AmmoAmount::AmmoAmount(const AmountOfAmmo& setAmmo) : amountOfAmmo { setAmmo } {
+    
+}
+Status AmmoAmount::execute (Database& db) {
+    using namespace ShooterCentral::UI;
 
+    if(!db.addToExistingAmmo(amountOfAmmo)){
+        SimpleClosePopup popup {"Failed Adding To Ammo", "Could Not Add Amount To Ammo"};
+        UIEvents::PushPopup pushPopup { &popup };
+        pushEvent(&pushPopup);
+
+        return Status{false, "Failed to add to Ammo Type"};
+    }
+    
+    SimpleClosePopup popup {"Updated Ammo Amount", "Successfully Added Amount"};
+
+    UIEvents::PushPopup pushPopup { &popup };
+    UIEvents::SetScreenData::Add_AmmoWindow resetBuffers { };
+
+    pushEvent(&pushPopup);
+    pushEvent(&resetBuffers);
+
+    return Status{true};
+}
 Manufacturer::Manufacturer(const ShooterCentral::Manufacturer& m) : manufacturer { m } {
 
 }

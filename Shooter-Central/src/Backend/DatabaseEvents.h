@@ -41,7 +41,16 @@ namespace Add {
         private:
             AmountOfAmmo amountOfAmmo { };
     };
+    class AmmoAmount : public DatabaseEvent {
+        public:
+            AmmoAmount(const AmountOfAmmo& setAmmo);
+            ~AmmoAmount() = default;
 
+            DATABASE_EVENT_FUNCTIONS(AmmoAmount)
+
+        private:
+            AmountOfAmmo amountOfAmmo { };
+    };
     // Metadata items
     class Manufacturer : public DatabaseEvent {
         public:
