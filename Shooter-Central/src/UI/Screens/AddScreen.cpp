@@ -453,6 +453,9 @@ void AmmoWindow::newAmmoType(
     ImGui::SameLine();
 
     if(ImGui::BeginChild("Submit", ammoWindow.topWinSize)){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
         centerNextItemX(ammoWindow.buttonSize.x * 2 + 20); // 20 is dummy size
         ImGui::BeginGroup();
 
@@ -531,6 +534,9 @@ void AmmoWindow::addToExistingAmmo(
     ImGui::SameLine();
 
     if(ImGui::BeginChild("Submit", ammoWindow.topWinSize)){
+        ImGui::Spacing();
+        ImGui::Spacing();
+
         centerNextItemX(ammoWindow.buttonSize.x * 2 + 20); // 20 is dummy size
         ImGui::BeginGroup();
 
