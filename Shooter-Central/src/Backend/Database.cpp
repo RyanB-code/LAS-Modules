@@ -197,9 +197,6 @@ bool Database::addToExistingAmmo  (const AmountOfAmmo& amountOfAmmo){
 
     StockpileAmmo& target { getAmmo(amountOfAmmo.getAmmoInfo()) };
 
-    if(target.getAmountOnHand() < amountOfAmmo.getAmount())
-        return false;
-
     target.addAmount(amountOfAmmo.getAmount());
     amountPerCartridge.at(amountOfAmmo.getAmmoInfo().cartridge) += amountOfAmmo.getAmount();
     
