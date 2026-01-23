@@ -113,6 +113,7 @@ public:
     void deleteGun              (const GunMetadata& );
 
     bool useAmmo            (const AmountOfAmmo& );
+    bool addToExistingAmmo  (const AmountOfAmmo& );
 
     ShootingEvent& getEvent (const ShootingEventMetadata& );    // Throws out_of_range if not present
     StockpileAmmo& getAmmo  (const AmmoMetadata& );             // Throws out_of_range if not present

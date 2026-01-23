@@ -188,6 +188,24 @@ bool Database::useAmmo (const AmountOfAmmo& amountOfAmmo){
     
     return true;
 }
+bool Database::addToExistingAmmo  (const AmountOfAmmo& amountOfAmmo){
+    if(amountOfAmmo.getAmount() <= 0)
+        return false;
+
+    if(!stockpileContains(amountOfAmmo.getAmmoInfo()))
+        return false;
+
+    StockpileAmmo& target { getAmmo(amountOfAmmo.getAmmoInfo()) };
+
+    if(target.getAmountOnHand() < amountOfAmmo.getAmount())
+        return false;
+
+    target.addAmount(amountOfAmmo.getAmount());
+    amountPerCartridge.at(amountOfAmmo.getAmmoInfo().cartridge) += amountOfAmmo.getAmount();
+    
+    return true;
+}
+
 void Database::deleteEvent(const ShootingEventMetadata& info){
     events.erase(info);
 }
