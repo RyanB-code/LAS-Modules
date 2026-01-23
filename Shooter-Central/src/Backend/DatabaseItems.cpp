@@ -559,6 +559,10 @@ std::string ShooterCentral::eventName(const ShootingEventMetadata& info){
     return std::format("{} at {} on {}", info.eventType.getName(), info.location.getName(), printDate(info.date));
 
 }
+std::string ShooterCentral::ammoAndGWName   (const AmmoMetadata& info){
+    return std::format("{: >5} | {}", std::to_string(info.grainWeight) + "gr", info.name); 
+}
+
 
 
 
